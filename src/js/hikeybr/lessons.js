@@ -173,7 +173,7 @@
             const unlockedKeySet = new Set(unlockedItems.map(x => x.k));
             const unlockedBytes = new Set();
             unlockedItems.forEach(x => {
-                if (x.conjunct) {
+                if (x.conjunct && !x.skip) { // skipped Alt-only glyphs never appear in guided lessons; book/paragraph mode still shows them with the Alt hint
                     for (const c of unicodeToKrutiDev(x.h)) {
                         unlockedBytes.add(c);
                     }
@@ -193,24 +193,6 @@
                 })).map(item=>item.word));
             }
             const eligibleRealWords=eligibleWordCache.get(highestUnlocked);
-
-            // Skipped rare Alt-code levels (ड्ड, फ्र, ह्र, ह्ल, ह्न, फ्, ऽ) get no
-            // dedicated lesson; their words surface naturally instead - about one
-            // word in a lesson, and only when the word's other letters are already
-            // unlocked (Kartik 2026-11-08). The glyph's own Alt bytes are exempt
-            // from the unlock check: typing that glyph is the point of the word.
-            const skippedAltGlyphs=KEY_PROGRESSION.filter(x=>x.skip&&x.alt).map(x=>unicodeToKrutiDev(x.h)).filter(s=>s.length);
-            let sprinklePool=[];
-            if(skippedAltGlyphs.length){
-                if(!sprinkleCache.has(highestUnlocked)){
-                    sprinkleCache.set(highestUnlocked,encodedWordBank.filter(({seq})=>skippedAltGlyphs.some(g=>{
-                        const i=seq.indexOf(g);if(i<0)return false;
-                        const rest=seq.slice(0,i)+seq.slice(i+g.length);
-                        return [...rest].every(c=>{const pk=physKey(c);return unlockedBytes.has(c)||(pk!==undefined&&unlockedKeySet.has(pk));});
-                    })).map(item=>item.word));
-                }
-                sprinklePool=sprinkleCache.get(highestUnlocked);
-            }
 
             const words = [];
 
@@ -337,13 +319,6 @@
                 for(let cycle=0;cycle<opts.repeat;cycle++){
                     words.push(...arrangeNoAdjacent(base,words.length?words[words.length-1]:''));
                 }
-            }
-            // One occasional skipped-Alt-code word, replacing a non-first slot so
-            // the lesson's word count and normal mix stay intact. Never forced:
-            // nothing is added when no such word fits the unlocked letters yet.
-            if(!mixedStarters&&sprinklePool.length>0&&words.length>1){
-                const pick=draw(sprinklePool);
-                if(pick)words[1+Math.floor(Math.random()*(words.length-1))]=pick;
             }
             if(opts.punct>0&&unlockedKeySet.has('a')){for(let i=0;i<words.length;i++)if(Math.random()*100<opts.punct&&!words[i].includes('।'))words[i]+='।';}
             document.getElementById('word-pool-status').textContent=`${focusedPool.length.toLocaleString()} target words / ${eligibleRealWords.length.toLocaleString()} usable at this level / ${encodedWordBank.length.toLocaleString()} total`+(mixedStarters?' · Mixed starter practice: क, ा, ि, र.':allUnlocked?(weakRotation.length?` · All keys unlocked: lessons target your weakest keys (${weakRotation.map(item=>item.h).join(', ')}).`:' · All keys unlocked: full-bank practice.'):focusedPool.length===0?' · New glyph plus unlocked-word practice.':focusedPool.length<wordCount?' · Small target pool: some repetition needed.':'');

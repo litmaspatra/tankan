@@ -39,35 +39,36 @@ const path=require('node:path');
  await fresh({unlockedIndex:0,highestUnlocked:3});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),3,'repair old starter save');
  await setJump('0');assert.ok(await page.evaluate(()=>HiKeybr.targetKrutiText.includes('d')));
  await setJump('auto');
- // All progression levels, passing over skipped ones. ऽ (index 69) is skipped,
- // so the last trainable key is ड़ (68).
+ // All progression levels, passing over skipped ones (फ्र 58, ह्र 60, ँ 63, फ् 64,
+ // य् 65, ऊ 66, ञ 67, ऽ 69 - Alt-only or wordless glyphs). Last trainable: ड़ (68).
  for(let lesson=0;lesson<90;lesson++){
   const level=await page.evaluate(()=>HiKeybr.unlockedIndex);if(lesson%10===0)console.log('lesson',lesson,'level',level);if(level===68)break;
-  r=await complete(100);assert.equal(r.mid,r.before);assert.ok(r.after-r.before<=4,'unlock passes over skipped runs (max 3 consecutive: ह्र/ह्ल/ह्न)');
+  r=await complete(100);assert.equal(r.mid,r.before);assert.ok(r.after-r.before<=6,'unlock passes over skipped runs (max 5 consecutive: ँ/फ्/य्/ऊ/ञ)');
   await page.evaluate(()=>HiKeybr.regenerateLesson());
  }
  assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),68,'all trainable levels must remain reachable');
  await page.reload();assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),68);
- // Skipped levels (ड्ड 55, फ्र 58, ह्र/ह्ल/ह्न 60-62, फ् 64, य् 65, ञ 67, ऽ 69): passed over on unlock, repaired on load.
- await fresh({unlockedIndex:65,highestUnlocked:65});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),66,'save on skipped य् repairs to ऊ');
- await fresh({unlockedIndex:67,highestUnlocked:67});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),68,'save on skipped ञ repairs to ड़');
+ // Skipped levels: passed over on unlock, repaired on load.
+ await fresh({unlockedIndex:65,highestUnlocked:65});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),68,'save on skipped य् repairs past the Alt-only run to ड़');
  await fresh({unlockedIndex:69,highestUnlocked:69});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),68,'save on skipped final level ऽ falls back to ड़');
- await fresh({unlockedIndex:64,highestUnlocked:64});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),66,'save on skipped फ् repairs past य् to ऊ');
+ await fresh({unlockedIndex:58,highestUnlocked:58});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),59,'save on skipped फ्र repairs to ट्ठ');
  await fresh({unlockedIndex:57,highestUnlocked:57});r=await complete(100);assert.equal(r.after,59,'clearing क्र skips फ्र and lands on ट्ठ');
- await fresh({unlockedIndex:59,highestUnlocked:59});r=await complete(100);assert.equal(r.after,63,'clearing ट्ठ skips ह्र/ह्ल/ह्न and lands on चँद्रबिंदु');
- await fresh({unlockedIndex:68,highestUnlocked:69});assert.equal(await page.locator('.ak-badge.skipped').count(),8,'skipped badges shown inside the unlocked range (ऽ clamps out of range)');
- assert.equal(await page.evaluate(()=>[...document.getElementById('jump-select').options].some(o=>/Half-Ya|Nya|Ddda conjunct|Phra|Hra|Hla|Hna|Half-Pha|Avagraha/.test(o.textContent))),false,'skipped levels not in review list');
- // Sprinkle: skipped Alt-code words appear about once per lesson, only where their other letters are unlocked.
- const sprinkleCount=()=>page.evaluate(()=>{
-  const glyphs=HiKeybr.KEY_PROGRESSION.filter(x=>x.skip&&x.alt).map(x=>HiKeybr.unicodeToKrutiDev(x.h));
+ await fresh({unlockedIndex:62,highestUnlocked:62});r=await complete(100);assert.equal(r.after,68,'clearing ह्न skips the ँ-ञ run and lands on ड़');
+ await fresh({unlockedIndex:68,highestUnlocked:69});assert.equal(await page.locator('.ak-badge.skipped').count(),9,'skipped badges shown inside the unlocked range (ऽ clamps out of range)');
+ assert.equal(await page.evaluate(()=>[...document.getElementById('jump-select').options].some(o=>/Half-Ya|Nya|Phra|Hra conjunct|Half-Pha|Avagraha|Chandrabindu|Badi Oo vowel|Dda conjunct|Tta \(dental\)/.test(o.textContent))),false,'skipped levels not in review list');
+ // Alt-only glyphs never appear in guided lessons (book/paragraph mode only).
+ const altByteCount=()=>page.evaluate(()=>{
+  const glyphs=HiKeybr.KEY_PROGRESSION.filter(x=>x.skip&&x.alt).map(x=>HiKeybr.unicodeToKrutiDev(x.h)); // फ्र, ह्र, ँ, फ्, ऊ, ञ, ऽ - kept क्र (Ø, typed dz) is intentional
   return HiKeybr.currentLessonText.split(/\s+/).filter(w=>{const s=HiKeybr.unicodeToKrutiDev(w.replace('।',''));return glyphs.some(g=>s.includes(g));}).length;
  });
- await fresh({unlockedIndex:5,highestUnlocked:5});
- for(let i=0;i<3;i++){await page.evaluate(()=>HiKeybr.regenerateLesson());assert.equal(await sprinkleCount(),0,'no skipped-glyph words before their other letters unlock');}
- await fresh({unlockedIndex:6,highestUnlocked:6});
- for(let i=0;i<3;i++){await page.evaluate(()=>HiKeybr.regenerateLesson());assert.equal(await sprinkleCount(),1,'ह्रास fits once स/ा are unlocked (ह lives inside the Alt glyph)');}
- await fresh({unlockedIndex:68,highestUnlocked:69});
- for(let i=0;i<4;i++){await page.evaluate(()=>HiKeybr.regenerateLesson());assert.ok(await sprinkleCount()>=1,'at least one skipped-glyph word per lesson at full unlock (some, like खड्डा, are also naturally eligible)');}
+ for(const seed of [{unlockedIndex:30,highestUnlocked:30},{unlockedIndex:59,highestUnlocked:59},{unlockedIndex:68,highestUnlocked:69}]){
+  await fresh(seed);
+  for(let i=0;i<3;i++){await page.evaluate(()=>HiKeybr.regenerateLesson());assert.equal(await altByteCount(),0,'no Alt-code glyph words in guided lessons');}
+ }
+ // Kept conjuncts teach real keystrokes, never Alt codes.
+ const fingers=await page.evaluate(()=>Object.fromEntries(HiKeybr.KEY_PROGRESSION.filter(x=>!x.skip).map(x=>[x.k,x.finger])));
+ for(const g of ['क्त','द्ध','द्य','क्र','ड्ड','ह्ल','ह्न','ड़'])assert.ok(fingers[g]&&!/Alt/i.test(fingers[g]),g+' teaches a real keystroke');
+ assert.equal(fingers['द्ध'],'Shift + 0');assert.equal(fingers['द्य'],'Shift + \\');
  // All keys unlocked: lessons stop pinning the final glyph and target the weakest keys.
  await fresh({unlockedIndex:68,highestUnlocked:69,keyStats:{d:{hits:100,errors:5,ttt:2000,tttSamples:50,modelTtt:2000,modelSamples:50}}});
  r=await page.evaluate(()=>{
@@ -80,6 +81,6 @@ const path=require('node:path');
  assert.ok(r.withDda<=2,`final glyph ड़ must not pin lessons after full unlock (${r.withDda}/${r.total})`);
  assert.deepEqual(errors,[]);
  await fresh();await page.screenshot({path:'/tmp/hikeybr-starter.png',fullPage:true});
- console.log('PASS: starter coverage, speed/accuracy gates, lesson-end single unlock, review isolation, saved-progress recovery, skip-level repair, Alt-code sprinkling.');
+ console.log('PASS: starter coverage, speed/accuracy gates, lesson-end single unlock, review isolation, saved-progress recovery, skip-level repair, Alt-only exclusion, real-keystroke conjuncts.');
  await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});
