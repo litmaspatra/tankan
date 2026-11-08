@@ -270,15 +270,6 @@
             return {top:FOCUS_TOP,left:Math.round((w-width)/2),width,height:Math.max(160,window.innerHeight-FOCUS_TOP-FOCUS_BOTTOM)};
         };
         const applyCanvasRect=(cv,r)=>{cv.style.top=r.top+'px';cv.style.left=r.left+'px';cv.style.width=r.width+'px';cv.style.height=r.height+'px';};
-        const focusFont=()=>{
-            // Grow the text ~25% from its current rendered size (capped), so
-            // the "come forward" is visible on phones too (the small-screen
-            // CSS cap would otherwise pin the size and hide any bump).
-            // Desktop: fixed 32px (user's choice). Phone: 25% above the small-screen
-            // size, which the CSS cap would otherwise pin and hide.
-            const fs=window.innerWidth>=640?32:Math.min(42,Math.round((parseFloat(getComputedStyle($id('text-stream-container')).fontSize)||28)*1.25));
-            document.documentElement.style.setProperty('--focus-fs',fs+'px');
-        };
         const setFocusMode=on=>{
             const cv=$id('typing-canvas'),b=$id('focus-toggle');
             if(on){
@@ -290,12 +281,10 @@
                 cv.classList.add('focus-canvas');
                 document.documentElement.classList.add('focus-mode');
                 b.textContent='\u2715';b.title='Exit focus mode (Esc)';
-                focusFont();
                 requestAnimationFrame(()=>requestAnimationFrame(()=>{if(focusMode)applyCanvasRect(cv,focusTargetRect());}));
             }else{
                 focusMode=false;
                 document.documentElement.classList.remove('focus-mode');
-                document.documentElement.style.removeProperty('--focus-fs');
                 b.textContent='\u26F6';b.title='Focus mode: show only the typing text';
                 if(focusRect)applyCanvasRect(cv,focusRect); // glides back; .focus-canvas still on
                 setTimeout(()=>{
@@ -307,7 +296,7 @@
         };
         $id('focus-toggle').addEventListener('click',()=>setFocusMode(!focusMode));
         document.addEventListener('keydown',e=>{if(e.key==='Escape'&&focusMode){e.preventDefault();setFocusMode(false);}});
-        window.addEventListener('resize',()=>{if(focusMode){applyCanvasRect($id('typing-canvas'),focusTargetRect());focusFont();}});
+        window.addEventListener('resize',()=>{if(focusMode)applyCanvasRect($id('typing-canvas'),focusTargetRect());});
         document.querySelectorAll('input[name=snd]').forEach(r=>r.onchange=()=>{opts.soundMode=r.value;applyOpts(false);sound.click();});
         $id('opt-volume').oninput=e=>{opts.volume=parseInt(e.target.value,10);$id('opt-volume-val').textContent=opts.volume+'%';};
         $id('opt-volume').onchange=()=>{saveStorage();sound.click();};
