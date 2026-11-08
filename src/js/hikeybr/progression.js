@@ -76,27 +76,38 @@
             { k: 'द्ध', h: 'द्ध', sh: 'द्ध', d: 'Ddha conjunct',  finger: 'Alt + 0205', conjunct: true, alt: '0205' },
             { k: 'द्य', h: 'द्य', sh: 'द्य', d: 'Dya conjunct',   finger: 'Alt + 0206', conjunct: true, alt: '0206' },
             { k: 'ट्ट', h: 'ट्ट', sh: 'ट्ट', d: 'Tta conjunct',   finger: 'Type V~V', conjunct: true },
-            { k: 'ड्ड', h: 'ड्ड', sh: 'ड्ड', d: 'Ddda conjunct',  finger: 'Alt + 0212', conjunct: true, alt: '0212' },
+            { k: 'ड्ड', h: 'ड्ड', sh: 'ड्ड', d: 'Ddda conjunct',  finger: 'Alt + 0212', conjunct: true, alt: '0212', skip: true, skipReason: 'Rare Alt code: no dedicated lesson - its words appear occasionally in regular lessons' },
             { k: 'त्त', h: 'त्त', sh: 'त्त', d: 'Tta (dental) conjunct', finger: 'Alt + 0217', conjunct: true, alt: '0217' },
             { k: 'क्र', h: 'क्र', sh: 'क्र', d: 'Kra conjunct',   finger: 'Alt + 0216', conjunct: true, alt: '0216' },
-            { k: 'फ्र', h: 'फ्र', sh: 'फ्र', d: 'Phra conjunct',  finger: 'Alt + 0221', conjunct: true, alt: '0221' },
+            { k: 'फ्र', h: 'फ्र', sh: 'फ्र', d: 'Phra conjunct',  finger: 'Alt + 0221', conjunct: true, alt: '0221', skip: true, skipReason: 'Rare Alt code: no dedicated lesson - its words appear occasionally in regular lessons' },
             { k: 'ट्ठ', h: 'ट्ठ', sh: 'ट्ठ', d: 'Ttha conjunct',  finger: 'Type V~B', conjunct: true },
-            { k: 'ह्र', h: 'ह्र', sh: 'ह्र', d: 'Hra conjunct',   finger: 'Alt + 0235', conjunct: true, alt: '0235' },
-            { k: 'ह्ल', h: 'ह्ल', sh: 'ह्ल', d: 'Hla conjunct',   finger: 'Alt + 0186', conjunct: true, alt: '0186' },
-            { k: 'ह्न', h: 'ह्न', sh: 'ह्न', d: 'Hna conjunct',   finger: 'Alt + 0224', conjunct: true, alt: '0224' },
+            { k: 'ह्र', h: 'ह्र', sh: 'ह्र', d: 'Hra conjunct',   finger: 'Alt + 0235', conjunct: true, alt: '0235', skip: true, skipReason: 'Rare Alt code: no dedicated lesson - its words appear occasionally in regular lessons' },
+            { k: 'ह्ल', h: 'ह्ल', sh: 'ह्ल', d: 'Hla conjunct',   finger: 'Alt + 0186', conjunct: true, alt: '0186', skip: true, skipReason: 'Rare Alt code: no dedicated lesson - its words appear occasionally in regular lessons' },
+            { k: 'ह्न', h: 'ह्न', sh: 'ह्न', d: 'Hna conjunct',   finger: 'Alt + 0224', conjunct: true, alt: '0224', skip: true, skipReason: 'Rare Alt code: no dedicated lesson - its words appear occasionally in regular lessons' },
             { k: 'ँ',  h: 'ँ',  sh: 'ँ',  d: 'Chandrabindu',  finger: 'Alt + 0161', conjunct: true, alt: '0161' },
-            { k: 'फ्', h: 'फ्', sh: 'फ्', d: 'Half-Pha',      finger: 'Alt + 0182', conjunct: true, alt: '0182' },
-            { k: 'य्', h: 'य्', sh: 'य्', d: 'Half-Ya',       finger: 'Type ;~', conjunct: true, skip: true }, // skipped: no word produces the ;~ byte sequence (Kartik 2026-11-08)
+            { k: 'फ्', h: 'फ्', sh: 'फ्', d: 'Half-Pha',      finger: 'Alt + 0182', conjunct: true, alt: '0182', skip: true, skipReason: 'Rare Alt code: no dedicated lesson - its words appear occasionally in regular lessons' },
+            { k: 'य्', h: 'य्', sh: 'य्', d: 'Half-Ya',       finger: 'Type ;~', conjunct: true, skip: true, skipReason: 'No Hindi word produces this keystroke sequence' },
             { k: 'ऊ',  h: 'ऊ',  sh: 'ऊ',  d: 'Badi Oo vowel', finger: 'Alt + 0197', conjunct: true, alt: '0197' },
-            { k: 'ञ',  h: 'ञ',  sh: 'ञ',  d: 'Nya consonant', finger: 'Alt + 0165', conjunct: true, alt: '0165', skip: true }, // skipped: no standard Hindi word contains standalone ञ (Kartik 2026-11-08)
+            { k: 'ञ',  h: 'ञ',  sh: 'ञ',  d: 'Nya consonant', finger: 'Alt + 0165', conjunct: true, alt: '0165', skip: true, skipReason: 'No standard Hindi word contains standalone ञ' },
             { k: 'ड़',  h: 'ड़',  sh: 'ड़',  d: 'Dda nukta',    finger: 'Alt + 0179', conjunct: true, alt: '0179' },
-            { k: 'ऽ',  h: 'ऽ',  sh: 'ऽ',  d: 'Avagraha',      finger: 'Alt + 0183', conjunct: true, alt: '0183' }
+            { k: 'ऽ',  h: 'ऽ',  sh: 'ऽ',  d: 'Avagraha',      finger: 'Alt + 0183', conjunct: true, alt: '0183', skip: true, skipReason: 'Rare Alt code: no dedicated lesson - its words appear occasionally in regular lessons' }
         ];
 
-        // Levels flagged skip:true are passed over automatically: no word in
-        // the language can train them, so they never become the current key.
+        // Levels flagged skip:true are passed over automatically. Two kinds:
+        // glyphs no word can train (य्, ञ) and rare Alt-code glyphs (ड्ड, फ्र,
+        // ह्र, ह्ल, ह्न, फ्, ऽ) whose few words surface inside regular lessons
+        // instead of holding a dedicated level (Kartik 2026-11-08).
         // Indices stay put, so saved progress (unlockedIndex) remains valid.
-        const advancePastSkipped = i => { while (i < KEY_PROGRESSION.length - 1 && KEY_PROGRESSION[i].skip) i++; return i; };
+        const advancePastSkipped = i => {
+            let j = i;
+            while (j < KEY_PROGRESSION.length - 1 && KEY_PROGRESSION[j].skip) j++;
+            // ऽ is the final level: if skips run to the end, rest on the last
+            // trainable key rather than on a skipped one.
+            while (j > 0 && KEY_PROGRESSION[j].skip) j--;
+            return j;
+        };
+        // Last trainable key (ड़, index 68): reaching it means every key is unlocked.
+        const LAST_TRAINABLE_INDEX = (() => { let i = KEY_PROGRESSION.length - 1; while (i > 0 && KEY_PROGRESSION[i].skip) i--; return i; })();
 
         // Virtual Keyboard Matrix (Remington GAIL physical positions)
         const KB_MATRIX = [
@@ -293,5 +304,6 @@
         }
         let encodedWordBank = null;
         const eligibleWordCache = new Map();
+        const sprinkleCache = new Map(); // skipped Alt-code words eligible at highestUnlocked
         let recentLessonWords = [];
 

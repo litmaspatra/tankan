@@ -194,6 +194,24 @@
             }
             const eligibleRealWords=eligibleWordCache.get(highestUnlocked);
 
+            // Skipped rare Alt-code levels (ड्ड, फ्र, ह्र, ह्ल, ह्न, फ्, ऽ) get no
+            // dedicated lesson; their words surface naturally instead - about one
+            // word in a lesson, and only when the word's other letters are already
+            // unlocked (Kartik 2026-11-08). The glyph's own Alt bytes are exempt
+            // from the unlock check: typing that glyph is the point of the word.
+            const skippedAltGlyphs=KEY_PROGRESSION.filter(x=>x.skip&&x.alt).map(x=>unicodeToKrutiDev(x.h)).filter(s=>s.length);
+            let sprinklePool=[];
+            if(skippedAltGlyphs.length){
+                if(!sprinkleCache.has(highestUnlocked)){
+                    sprinkleCache.set(highestUnlocked,encodedWordBank.filter(({seq})=>skippedAltGlyphs.some(g=>{
+                        const i=seq.indexOf(g);if(i<0)return false;
+                        const rest=seq.slice(0,i)+seq.slice(i+g.length);
+                        return [...rest].every(c=>{const pk=physKey(c);return unlockedBytes.has(c)||(pk!==undefined&&unlockedKeySet.has(pk));});
+                    })).map(item=>item.word));
+                }
+                sprinklePool=sprinkleCache.get(highestUnlocked);
+            }
+
             const words = [];
 
             // Real-word-first lessons. Repeat familiar words rather than inventing
@@ -211,6 +229,14 @@
             let reviewPool = weak ? focusedPool.filter(word => unicodeToKrutiDev(word).includes(reviewSequence)) : [];
             const reviewQuota=reviewPool.length?Math.min(Math.ceil(wordCount*.60),wordCount):0;
             const mixedStarters=!reviewMode&&highestUnlocked===INITIAL_UNLOCKED_COUNT-1;
+            // Every key unlocked (keybr-style): stop pinning lessons to the final
+            // glyph. The whole lesson spreads across the weakest unlocked keys
+            // instead (Kartik 2026-11-08). Top 5 by smoothed time-to-type, so a
+            // lesson repairs several weak spots rather than hammering one.
+            const allUnlocked=!reviewMode&&highestUnlocked>=LAST_TRAINABLE_INDEX;
+            const weakRotation=allUnlocked?unlockedItems.filter(item=>!item.skip&&((keyStats[item.k]||{}).tttSamples||0)>=6)
+                .sort((a,b)=>keyStats[b.k].ttt-keyStats[a.k].ttt).slice(0,5):[];
+            let weakTurn=0;
             const starterCounts=Object.fromEntries(unlockedItems.map(item=>[item.k,0]));
             let reviewWords = 0;
             let previous = '';
@@ -272,6 +298,15 @@
                     }
                     const seq=unicodeToKrutiDev(chosen);
                     unlockedItems.forEach(item=>{starterCounts[item.k]+=seq.split(item.k).length-1;});
+                } else if (allUnlocked) {
+                    if(weakRotation.length){
+                        const item=weakRotation[weakTurn++%weakRotation.length];
+                        const weakSeq=(!item.conjunct&&!item.alt&&item.k.length===1)?item.k:unicodeToKrutiDev(item.h);
+                        if(!starterPools['weak:'+item.k])starterPools['weak:'+item.k]=realPool.filter(word=>unicodeToKrutiDev(word).includes(weakSeq));
+                        chosen=draw(starterPools['weak:'+item.k])||draw(realPool)||previous;
+                    }else{
+                        chosen=draw(realPool)||previous;
+                    }
                 } else if (reviewWords < reviewQuota) {
                     chosen = draw(reviewPool)||draw(focusedPool)||draw(realPool);
                     if(chosen&&unicodeToKrutiDev(chosen).includes(reviewSequence))reviewWords++;
@@ -303,8 +338,15 @@
                     words.push(...arrangeNoAdjacent(base,words.length?words[words.length-1]:''));
                 }
             }
+            // One occasional skipped-Alt-code word, replacing a non-first slot so
+            // the lesson's word count and normal mix stay intact. Never forced:
+            // nothing is added when no such word fits the unlocked letters yet.
+            if(!mixedStarters&&sprinklePool.length>0&&words.length>1){
+                const pick=draw(sprinklePool);
+                if(pick)words[1+Math.floor(Math.random()*(words.length-1))]=pick;
+            }
             if(opts.punct>0&&unlockedKeySet.has('a')){for(let i=0;i<words.length;i++)if(Math.random()*100<opts.punct&&!words[i].includes('।'))words[i]+='।';}
-            document.getElementById('word-pool-status').textContent=`${focusedPool.length.toLocaleString()} target words / ${eligibleRealWords.length.toLocaleString()} usable at this level / ${encodedWordBank.length.toLocaleString()} total`+(mixedStarters?' · Mixed starter practice: क, ा, ि, र.':focusedPool.length===0?' · New glyph plus unlocked-word practice.':focusedPool.length<wordCount?' · Small target pool: some repetition needed.':'');
+            document.getElementById('word-pool-status').textContent=`${focusedPool.length.toLocaleString()} target words / ${eligibleRealWords.length.toLocaleString()} usable at this level / ${encodedWordBank.length.toLocaleString()} total`+(mixedStarters?' · Mixed starter practice: क, ा, ि, र.':allUnlocked?(weakRotation.length?` · All keys unlocked: lessons target your weakest keys (${weakRotation.map(item=>item.h).join(', ')}).`:' · All keys unlocked: full-bank practice.'):focusedPool.length===0?' · New glyph plus unlocked-word practice.':focusedPool.length<wordCount?' · Small target pool: some repetition needed.':'');
             return words.join(' ');
         }
 

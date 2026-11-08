@@ -159,7 +159,7 @@
                 badge.className = 'ak-badge';
                 if (item.skip) {
                     badge.classList.add('skipped');
-                    badge.title = `${item.h} — skipped: no Hindi words can train this glyph`;
+                    badge.title = `${item.h} — ${item.skipReason || 'skipped'}`;
                     badge.innerHTML = `<span class="ak-char">${item.h}</span><span class="ak-key">${item.alt ? item.alt : item.h}</span>`;
                     el.alphabetContainer.appendChild(badge);
                     return;
