@@ -1342,7 +1342,6 @@
             .text-stream-container { max-height: 84px; font-size: clamp(1.15rem, 2.1vw, 1.5rem); }
             .k-key { height: 34px; min-width: 32px; }
             .target-card { padding: 6px 14px; }
-            .confidence-hint { display: none; }
         }
     
         .insight-panel{display:grid;gap:7px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface-card);font-size:.78rem;color:var(--text-dim)}
@@ -1591,10 +1590,10 @@ html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;t
 
         footer { padding: 4px 16px; font-size: .6rem; }
 
-        /* Shorter laptop screens: trim harder */
+        /* Shorter laptop screens: trim harder (the confidence-hint stays
+           visible - it carries the unlock conditions the user needs) */
         @media (max-height: 740px) {
             header { height: 40px; }
-            .confidence-hint { display: none; }
             .heat-legend { display: none; }
             .k-key { height: 30px; min-width: 30px; }
             .text-stream-container { font-size: clamp(1.05rem, 1.7vw, 1.3rem) !important; }
@@ -1677,7 +1676,6 @@ html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;t
         /* Keep the whole practice view inside one 1366x768-class viewport */
         @media (min-width: 651px) and (max-height: 800px) {
             header { height: 40px; }
-            .confidence-hint { display: none; }
             .heat-legend { display: none; }
             footer { display: none; }
             .k-key { height: 29px; min-width: 30px; }
@@ -1686,11 +1684,13 @@ html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;t
             .typing-canvas { padding: 4px 14px 2px !important; }
         }
 
-        /* Practice header compaction (2026-11-08, per user): the four stat
-           tiles read as ONE box (no individual card borders), and the
+        /* Practice header compaction (2026-11-08, per user): the
            key-readiness bar sits inside the target-identity row instead of
-           occupying its own row. */
-        #panel-practice .stats-strip { background: var(--surface-card); border: 1px solid var(--border); border-radius: 14px; padding: 10px 16px; }
-        #panel-practice .stat-card { background: transparent; border: none; border-radius: 0; padding: 2px 0; }
+           occupying its own row. (The one-box stats strip was reverted to
+           four individual tiles at the user's request.) */
         .target-card-top .progress-track-wrapper { flex: 1 1 180px; }
         @media(max-width:650px){ .target-card-top .progress-track-wrapper { flex-basis: 100%; order: 3; } .target-card-top .target-metrics { order: 2; } }
+
+        /* Word-pool status shares one row with the recent-lessons mini bars */
+        .practice-substats .substats-bars-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex-basis: 100%; }
+        .practice-substats .substats-bars-row .wp-status { flex: 1 1 auto; }
