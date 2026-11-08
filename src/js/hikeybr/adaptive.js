@@ -550,8 +550,6 @@
             }
             g+=`<text x="8" y="${padT+2}" font-size="10">WPM</text>`;
             const ty=padT+ih*(1-targetSpeedGoal/maxV);
-            g+=`<line x1="${padL}" y1="${ty.toFixed(1)}" x2="${W-padR}" y2="${ty.toFixed(1)}" stroke="var(--error)" stroke-dasharray="6 4" stroke-width="1.5"/>`;
-            g+=`<text x="${W-padR-4}" y="${(ty-5).toFixed(1)}" font-size="11" text-anchor="end" fill="var(--error)">target ${targetSpeedGoal} wpm</text>`;
             rows.forEach((r,i)=>{
                 const cx=padL+(i+.5)*iw/rows.length;
                 const h=ih*Math.min(r.wpm,maxV)/maxV;
@@ -561,6 +559,10 @@
                 g+=`<text x="${cx.toFixed(1)}" y="${(padT+ih+16).toFixed(1)}" font-size="12" text-anchor="middle" style="font-family:'Noto Sans Devanagari'">${r.h}</text>`;
                 g+=`<text x="${cx.toFixed(1)}" y="${(padT+ih+29).toFixed(1)}" font-size="9" text-anchor="middle" fill="var(--text-faint)">${r.wpm.toFixed(0)}</text>`;
             });
+            // Target line and label drawn last: SVG paints in document order, so
+            // drawing them before the bars hid the line behind any bar that tall.
+            g+=`<line x1="${padL}" y1="${ty.toFixed(1)}" x2="${W-padR}" y2="${ty.toFixed(1)}" stroke="var(--error)" stroke-dasharray="6 4" stroke-width="1.5"/>`;
+            g+=`<text x="${W-padR-4}" y="${(ty-5).toFixed(1)}" font-size="11" text-anchor="end" fill="var(--error)">target ${targetSpeedGoal} wpm</text>`;
             box.innerHTML=svgWrap(W,H,g);
         }
 
@@ -588,7 +590,10 @@
                 g+=`<rect x="${(cx+1).toFixed(1)}" y="${(padT+ih-eh).toFixed(1)}" width="${bw}" height="${eh.toFixed(1)}" fill="var(--error)"><title>${r.h}: ${r.errors} misses</title></rect>`;
                 g+=`<text x="${cx.toFixed(1)}" y="${(padT+ih+15).toFixed(1)}" font-size="11" text-anchor="middle" style="font-family:'Noto Sans Devanagari'">${r.h}</text>`;
                 const miss=Math.round(r.errors/(r.hits+r.errors)*100);
-                g+=`<text x="${cx.toFixed(1)}" y="${(padT+ih+28).toFixed(1)}" font-size="9" text-anchor="middle" fill="var(--text-faint)">${miss}% miss</text>`;
+                // Just the number (the chart desc already says it is the miss
+                // ratio), staggered onto two rows so adjacent keys never overlap.
+                const my=padT+ih+(i%2?37:27);
+                g+=`<text x="${cx.toFixed(1)}" y="${my.toFixed(1)}" font-size="8" text-anchor="middle" fill="var(--text-faint)">${miss}%</text>`;
             });
             box.innerHTML=svgWrap(W,H,g);
         }
@@ -688,7 +693,11 @@
                 if (!showAllKeys && idx > unlockedIndex && (s.hits || 0) === 0) return;
                 const total = s.hits + s.errors;
                 const acc = total > 0 ? Math.round((s.hits / total) * 100) + '%' : '—';
-                const isMastered = keyHeatLevel(item)===3 && (s.modelSamples||0)>=10;
+                // Learned = currently green (recent speed at/above goal and a
+                // recent 95%+ lesson), the same rule as the key colour, so the
+                // tag can never contradict a green key. keybr behaves the same:
+                // a key that later slows down turns red again and needs review.
+                const isMastered = keyHeatLevel(item)===3;
                 const isLearning = idx === unlockedIndex;
                 if (isMastered) masteredCount++;
 
@@ -702,7 +711,7 @@
                     <td style="font-weight:700;">${acc}</td>
                     <td>
                         <span class="badge-status ${isMastered ? 'mastered' : isLearning ? 'learning' : 'locked'}">
-                            ${isMastered ? '✓ Learned' : idx>highestUnlocked ? 'Locked' : !(s.modelSamples||0) ? 'Unmeasured' : isLearning ? 'Learning' : 'Needs review'}
+                            ${isMastered ? '✓ Learned' : idx>highestUnlocked ? 'Locked' : !(s.modelSamples||s.tttSamples||0) ? 'Unmeasured' : isLearning ? 'Learning' : 'Needs review'}
                         </span>
                     </td>
                 `;
