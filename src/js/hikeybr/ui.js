@@ -276,10 +276,16 @@
             cv.style.transform='';
             const dy=Math.round(window.innerHeight*0.42-(r.top+r.height/2));
             $id('typing-canvas').style.setProperty('--focus-dy',dy+'px');
+            // Grow the text ~25% from its current rendered size (capped), so
+            // the "come forward" is visible on phones too (CSS cap would
+            // otherwise pin the phone size and hide any bump).
+            const fs=parseFloat(getComputedStyle($id('text-stream-container')).fontSize)||32;
+            document.documentElement.style.setProperty('--focus-fs',Math.min(42,Math.round(fs*1.25))+'px');
         };
         const setFocusMode=on=>{
             focusMode=on;
             if(on)focusGlide();
+            else document.documentElement.style.removeProperty('--focus-fs');
             document.documentElement.classList.toggle('focus-mode',on);
             const b=$id('focus-toggle');
             b.textContent=on?'\u2715':'\u26F6';

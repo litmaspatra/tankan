@@ -1448,9 +1448,10 @@ html.focus-mode .practice-toolbar .lesson-settings,
 html.focus-mode .typing-canvas .canvas-hint{opacity:0;visibility:hidden;transition:opacity .3s ease,visibility 0s linear .3s}
 html.focus-mode .typing-canvas{position:relative;z-index:10;transform:translateY(var(--focus-dy,0px));box-shadow:0 10px 34px rgba(0,0,0,.20)}
 @media (min-width:640px){html.focus-mode .typing-canvas{transform:translateY(var(--focus-dy,0px)) scale(1.04)}}
+html.focus-mode .text-stream-container{font-size:var(--focus-fs,var(--practice-fs))!important}
 html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;top:10px;right:12px;z-index:1200}
 @media (prefers-reduced-motion:reduce){
-  .typing-canvas,header,footer,
+  .typing-canvas,.text-stream-container,header,footer,
   #panel-practice>*:not(.typing-canvas):not(.practice-toolbar),
   .practice-toolbar .lesson-settings,
   .typing-canvas .canvas-hint{transition:none!important}
@@ -1631,6 +1632,7 @@ html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;t
             overflow-x: hidden !important;
             line-height: 1.6 !important;
             font-size: var(--practice-fs, clamp(1.6rem, 2.6vw, 2rem)) !important;
+            transition: font-size .38s cubic-bezier(.22,.8,.3,1);
         }
         :root[data-lesson-style="spaced"] .text-stream-container { height: calc(3 * 2.0667em) !important; max-height: calc(3 * 2.0667em) !important; }
 
