@@ -269,8 +269,17 @@
 
         // Focus mode: only the typing text stays visible; Esc or the button exits.
         let focusMode=false;
+        const focusGlide=()=>{
+            const cv=$id('typing-canvas');
+            cv.style.transform='none'; // measure the natural spot even mid-animation
+            const r=cv.getBoundingClientRect();
+            cv.style.transform='';
+            const dy=Math.round(window.innerHeight*0.42-(r.top+r.height/2));
+            $id('typing-canvas').style.setProperty('--focus-dy',dy+'px');
+        };
         const setFocusMode=on=>{
             focusMode=on;
+            if(on)focusGlide();
             document.documentElement.classList.toggle('focus-mode',on);
             const b=$id('focus-toggle');
             b.textContent=on?'\u2715':'\u26F6';
@@ -279,6 +288,7 @@
         };
         $id('focus-toggle').addEventListener('click',()=>setFocusMode(!focusMode));
         document.addEventListener('keydown',e=>{if(e.key==='Escape'&&focusMode){e.preventDefault();setFocusMode(false);}});
+        window.addEventListener('resize',()=>{if(focusMode)focusGlide();});
         document.querySelectorAll('input[name=snd]').forEach(r=>r.onchange=()=>{opts.soundMode=r.value;applyOpts(false);sound.click();});
         $id('opt-volume').oninput=e=>{opts.volume=parseInt(e.target.value,10);$id('opt-volume-val').textContent=opts.volume+'%';};
         $id('opt-volume').onchange=()=>{saveStorage();sound.click();};

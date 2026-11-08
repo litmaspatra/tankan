@@ -792,7 +792,7 @@
             justify-content: center;
             cursor: text;
             position: relative;
-            transition: all 0.2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.3s ease, transform 0.38s cubic-bezier(.22,.8,.3,1);
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
         }
 
@@ -1435,14 +1435,26 @@ html.cur-off .text-current{background:transparent!important;box-shadow:none!impo
 .practice-toolbar .lesson-settings{flex:0 1 auto}
 .focus-toggle{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);cursor:pointer;padding:6px 12px;font-size:1rem;line-height:1}
 .focus-toggle:hover{color:var(--text);border-color:var(--text-dim)}
-html.focus-mode header,html.focus-mode footer{display:none!important}
-html.focus-mode #panel-practice>*:not(.typing-canvas){display:none!important}
-html.focus-mode .typing-canvas .canvas-hint{display:none!important}
-html.focus-mode main{padding-left:0!important;padding-right:0!important}
-html.focus-mode .typing-canvas{max-width:860px;margin:10vh auto 0;width:calc(100% - 32px)}
-html.focus-mode #panel-practice>.practice-toolbar{display:contents!important}
-html.focus-mode #panel-practice>.practice-toolbar>.lesson-settings{display:none!important}
-html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{display:block!important;position:fixed;top:10px;right:12px;z-index:1200}
+/* Focus mode transition: no re-layout. Everything except the paragraph
+   fades out in place (visibility delayed until the fade finishes), while
+   the canvas glides to the vertical centre and slightly forward. */
+header,footer,
+#panel-practice>*:not(.typing-canvas):not(.practice-toolbar),
+.practice-toolbar .lesson-settings,
+.typing-canvas .canvas-hint{transition:opacity .3s ease}
+html.focus-mode header,html.focus-mode footer,
+html.focus-mode #panel-practice>*:not(.typing-canvas):not(.practice-toolbar),
+html.focus-mode .practice-toolbar .lesson-settings,
+html.focus-mode .typing-canvas .canvas-hint{opacity:0;visibility:hidden;transition:opacity .3s ease,visibility 0s linear .3s}
+html.focus-mode .typing-canvas{position:relative;z-index:10;transform:translateY(var(--focus-dy,0px));box-shadow:0 10px 34px rgba(0,0,0,.20)}
+@media (min-width:640px){html.focus-mode .typing-canvas{transform:translateY(var(--focus-dy,0px)) scale(1.04)}}
+html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;top:10px;right:12px;z-index:1200}
+@media (prefers-reduced-motion:reduce){
+  .typing-canvas,header,footer,
+  #panel-practice>*:not(.typing-canvas):not(.practice-toolbar),
+  .practice-toolbar .lesson-settings,
+  .typing-canvas .canvas-hint{transition:none!important}
+}
 @media(max-width:600px){.ls-row>label{flex:1 1 100%}.ls-tab{padding:8px 9px;font-size:.85rem}}
 
         /* keybr-style practice metrics + profile charts */
