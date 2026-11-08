@@ -272,14 +272,19 @@
         // Esc or the corner button exits; everything animates back.
         let focusMode=false,focusRect=null;
         const FOCUS_TOP=54,FOCUS_SIDE=12,FOCUS_BOTTOM=12;
-        const focusTargetRect=()=>({top:FOCUS_TOP,left:FOCUS_SIDE,width:Math.max(280,window.innerWidth-2*FOCUS_SIDE),height:Math.max(160,window.innerHeight-FOCUS_TOP-FOCUS_BOTTOM)});
+        const focusTargetRect=()=>{
+            const w=window.innerWidth,width=Math.min(Math.max(280,w-2*FOCUS_SIDE),920); // comfortable reading width on desktop
+            return {top:FOCUS_TOP,left:Math.round((w-width)/2),width,height:Math.max(160,window.innerHeight-FOCUS_TOP-FOCUS_BOTTOM)};
+        };
         const applyCanvasRect=(cv,r)=>{cv.style.top=r.top+'px';cv.style.left=r.left+'px';cv.style.width=r.width+'px';cv.style.height=r.height+'px';};
         const focusFont=()=>{
             // Grow the text ~25% from its current rendered size (capped), so
             // the "come forward" is visible on phones too (the small-screen
             // CSS cap would otherwise pin the size and hide any bump).
-            const fs=parseFloat(getComputedStyle($id('text-stream-container')).fontSize)||32;
-            document.documentElement.style.setProperty('--focus-fs',Math.min(42,Math.round(fs*1.25))+'px');
+            // Desktop: fixed 32px (user's choice). Phone: 25% above the small-screen
+            // size, which the CSS cap would otherwise pin and hide.
+            const fs=window.innerWidth>=640?32:Math.min(42,Math.round((parseFloat(getComputedStyle($id('text-stream-container')).fontSize)||28)*1.25));
+            document.documentElement.style.setProperty('--focus-fs',fs+'px');
         };
         const setFocusMode=on=>{
             const cv=$id('typing-canvas'),b=$id('focus-toggle');
