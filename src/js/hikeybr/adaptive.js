@@ -96,9 +96,10 @@
                 el.leadSamplesStatus.textContent += ' - goal reached; finish the lesson';
             }
 
-            el.metricUnlocked.textContent = highestUnlocked + 1;
-            if (document.getElementById('metric-total-keys')) document.getElementById('metric-total-keys').textContent = KEY_PROGRESSION.length;
-            if (document.getElementById('total-keys-header')) document.getElementById('total-keys-header').textContent = KEY_PROGRESSION.length;
+            el.metricUnlocked.textContent = KEY_PROGRESSION.filter((it,i)=>i<=highestUnlocked&&!it.skip).length;
+            const activeTotal=KEY_PROGRESSION.filter(it=>!it.skip).length;
+            if (document.getElementById('metric-total-keys')) document.getElementById('metric-total-keys').textContent = activeTotal;
+            if (document.getElementById('total-keys-header')) document.getElementById('total-keys-header').textContent = activeTotal;
             el.jumpSelect.value = reviewMode ? String(unlockedIndex) : 'auto';
             const weak = reviewKey();
             if (weak && !lessonCompleted) el.leadSamplesStatus.textContent += ` - practice focus: ${weak.h}`;
@@ -156,6 +157,13 @@
                 if (!showAllKeys && idx > highestUnlocked) return;
                 const badge = document.createElement('div');
                 badge.className = 'ak-badge';
+                if (item.skip) {
+                    badge.classList.add('skipped');
+                    badge.title = `${item.h} — skipped: no Hindi words can train this glyph`;
+                    badge.innerHTML = `<span class="ak-char">${item.h}</span><span class="ak-key">${item.alt ? item.alt : item.h}</span>`;
+                    el.alphabetContainer.appendChild(badge);
+                    return;
+                }
                 badge.title = `${item.h} (Key ${item.k.toUpperCase()}) — ${item.d}\nFinger: ${item.finger}`;
 
                 if (idx <= highestUnlocked) {
@@ -204,7 +212,8 @@
                 el.alphabetContainer.appendChild(badge);
             });
 
-            el.progressionSummary.textContent = `${highestUnlocked+1} keys available · ${reviewMode ? "reviewing key "+(unlockedIndex+1) : "automatic progression"}`;
+            const availableCount=KEY_PROGRESSION.filter((it,i)=>i<=highestUnlocked&&!it.skip).length;
+            el.progressionSummary.textContent = `${availableCount} keys available · ${reviewMode ? "reviewing key "+(unlockedIndex+1) : "automatic progression"}`;
         }
 
         function applyPracticeTextPrefs() {
@@ -362,7 +371,7 @@
             el.jumpSelect.innerHTML = '';
             el.jumpSelect.add(new Option('Auto: learn '+KEY_PROGRESSION[highestUnlocked].h+' (next key unlocks at goal)', 'auto'));
             KEY_PROGRESSION.forEach((item, idx) => {
-                if(idx>highestUnlocked)return;
+                if(idx>highestUnlocked||item.skip)return;
                 const opt = document.createElement('option');
                 opt.value = idx;
                 opt.textContent = `Review L${idx + 1}: ${item.h} (${item.alt ? ('Alt+' + item.alt) : (item.conjunct ? item.h : item.k.toUpperCase())}) — ${item.d}`;

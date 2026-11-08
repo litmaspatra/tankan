@@ -560,6 +560,12 @@
             cursor: not-allowed;
         }
 
+        .ak-badge.skipped {
+            opacity: 0.35;
+            cursor: default;
+        }
+        .ak-badge.skipped .ak-char { text-decoration: line-through; }
+
         /* ═══════════════════════════════════════════════════════════
            KEYBR CONFIDENCE & SPEED MASTERY CARD
            ═══════════════════════════════════════════════════════════ */

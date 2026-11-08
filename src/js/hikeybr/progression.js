@@ -86,12 +86,17 @@
             { k: 'ह्न', h: 'ह्न', sh: 'ह्न', d: 'Hna conjunct',   finger: 'Alt + 0224', conjunct: true, alt: '0224' },
             { k: 'ँ',  h: 'ँ',  sh: 'ँ',  d: 'Chandrabindu',  finger: 'Alt + 0161', conjunct: true, alt: '0161' },
             { k: 'फ्', h: 'फ्', sh: 'फ्', d: 'Half-Pha',      finger: 'Alt + 0182', conjunct: true, alt: '0182' },
-            { k: 'य्', h: 'य्', sh: 'य्', d: 'Half-Ya',       finger: 'Type ;~', conjunct: true },
+            { k: 'य्', h: 'य्', sh: 'य्', d: 'Half-Ya',       finger: 'Type ;~', conjunct: true, skip: true }, // skipped: no word produces the ;~ byte sequence (Kartik 2026-11-08)
             { k: 'ऊ',  h: 'ऊ',  sh: 'ऊ',  d: 'Badi Oo vowel', finger: 'Alt + 0197', conjunct: true, alt: '0197' },
-            { k: 'ञ',  h: 'ञ',  sh: 'ञ',  d: 'Nya consonant', finger: 'Alt + 0165', conjunct: true, alt: '0165' },
+            { k: 'ञ',  h: 'ञ',  sh: 'ञ',  d: 'Nya consonant', finger: 'Alt + 0165', conjunct: true, alt: '0165', skip: true }, // skipped: no standard Hindi word contains standalone ञ (Kartik 2026-11-08)
             { k: 'ड़',  h: 'ड़',  sh: 'ड़',  d: 'Dda nukta',    finger: 'Alt + 0179', conjunct: true, alt: '0179' },
             { k: 'ऽ',  h: 'ऽ',  sh: 'ऽ',  d: 'Avagraha',      finger: 'Alt + 0183', conjunct: true, alt: '0183' }
         ];
+
+        // Levels flagged skip:true are passed over automatically: no word in
+        // the language can train them, so they never become the current key.
+        // Indices stay put, so saved progress (unlockedIndex) remains valid.
+        const advancePastSkipped = i => { while (i < KEY_PROGRESSION.length - 1 && KEY_PROGRESSION[i].skip) i++; return i; };
 
         // Virtual Keyboard Matrix (Remington GAIL physical positions)
         const KB_MATRIX = [

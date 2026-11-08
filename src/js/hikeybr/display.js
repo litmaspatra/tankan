@@ -109,13 +109,13 @@
                     const cleared = !reviewMode && textSource==='words' && unlockedIndex === highestUnlocked && pendingUnlockIndex === unlockedIndex &&
                         sessionCorrect/Math.max(1,sessionCorrect+sessionErrors)>=.95 && unlockedIndex < KEY_PROGRESSION.length - 1;
                     if (cleared) {
-                        unlockedIndex++;
+                        unlockedIndex=advancePastSkipped(unlockedIndex+1);
                         highestUnlocked=Math.max(highestUnlocked,unlockedIndex);
                         pendingUnlockIndex = null;
                         targetKeyBuffer = [];
                         populateJumpSelect();
                         updateAlphabetStrip();
-                        el.metricUnlocked.textContent = highestUnlocked + 1;
+                        el.metricUnlocked.textContent = KEY_PROGRESSION.filter((it,i)=>i<=highestUnlocked&&!it.skip).length;
                         el.leadSamplesStatus.textContent = 'Key cleared - the next lesson has begun';
                         el.liveHintChar.textContent = `Key cleared: ${item.h}!`;
                         el.liveHintDetail.textContent = `Next lesson introduces ${KEY_PROGRESSION[unlockedIndex].h}`;

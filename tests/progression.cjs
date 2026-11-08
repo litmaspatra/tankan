@@ -42,11 +42,17 @@ const path=require('node:path');
  // All 70 progression levels, including rare Alt-code fallback lessons.
  for(let lesson=0;lesson<90;lesson++){
   const level=await page.evaluate(()=>HiKeybr.unlockedIndex);if(lesson%10===0)console.log('lesson',lesson,'level',level);if(level===69)break;
-  r=await complete(100);assert.equal(r.mid,r.before);assert.ok(r.after-r.before<=1);
+  r=await complete(100);assert.equal(r.mid,r.before);assert.ok(r.after-r.before<=2,'unlock advances at most one real key (skipped levels passed over)');
   await page.evaluate(()=>HiKeybr.regenerateLesson());
  }
  assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),69,'all levels must remain reachable');
  await page.reload();assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),69);
+ // Skipped levels (य् index 65, ञ index 67): passed over on unlock and repaired on load.
+ await fresh({unlockedIndex:65,highestUnlocked:65});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),66,'save on skipped य् repairs to ऊ');
+ await fresh({unlockedIndex:67,highestUnlocked:67});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),68,'save on skipped ञ repairs to ड़');
+ await fresh({unlockedIndex:64,highestUnlocked:64});r=await complete(100);assert.equal(r.after,66,'clearing फ् skips य् and lands on ऊ');
+ await fresh({unlockedIndex:68,highestUnlocked:68});assert.equal(await page.locator('.ak-badge.skipped').count(),2,'two skipped badges shown once both are inside the unlocked range');
+ assert.equal(await page.evaluate(()=>[...document.getElementById('jump-select').options].some(o=>o.textContent.includes('Half-Ya')||o.textContent.includes('Nya'))),false,'skipped levels not in review list');
  assert.deepEqual(errors,[]);
  await fresh();await page.screenshot({path:'/tmp/hikeybr-starter.png',fullPage:true});
  console.log('PASS: starter coverage, speed/accuracy gates, lesson-end single unlock, review isolation, saved-progress recovery, all 70 levels.');
