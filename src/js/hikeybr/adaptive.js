@@ -176,9 +176,12 @@
                 if (idx <= highestUnlocked) {
                     const hs2 = keyStats[item.k];
                     if (hs2 && hs2.modelTtt > 0 && (hs2.modelSamples||0) >= 1) {
-                        const wpm = 12000/hs2.modelTtt, ratio = Math.min(1.25, wpm/targetSpeedGoal);
+                        // Full bar = goal reached (matches the legend "bar = key
+                        // speed vs your target"); faster than goal stays full.
+                        const wpm = 12000/hs2.modelTtt, ratio = Math.min(1, wpm/targetSpeedGoal);
                         const color = ratio>=1?'var(--correct)':ratio>=.8?'#eab308':'var(--error)';
-                        bar = `<i class="ak-bar" style="height:${Math.max(6,Math.round(ratio/1.25*100))}%;background:${color}"></i>`;
+                        bar = `<i class="ak-bar" style="height:${Math.max(6,Math.round(ratio*100))}%;background:${color}"></i>`;
+                        badge.title += '\nBar: fills to the top at your goal speed';
                     }
                 }
                 badge.innerHTML = bar+`<span class="ak-char">${item.h}</span><span class="ak-key">${item.alt ? item.alt : (item.conjunct ? item.h : item.k.toUpperCase())}</span>`;
