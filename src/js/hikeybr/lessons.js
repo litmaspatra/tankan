@@ -138,7 +138,7 @@
             });
             const cur=document.getElementById('lp-current');
             const item=KEY_PROGRESSION[unlockedIndex];
-            cur.textContent=free?'All keys are unlocked (practice text, no unlocking).':'Current key: '+item.h+' ('+(item.alt?'Alt+'+item.alt:(item.conjunct?item.h:item.k.toUpperCase()))+')';
+            cur.textContent=free?'All keys are unlocked (practice text, no unlocking).':'Current key: '+item.h+' ('+(item.alt?'Alt+'+item.alt:(item.conjunct?(item.finger||item.h):item.k.toUpperCase()))+')';
             const smp=document.getElementById('lp-sample');
             smp.textContent=(currentLessonText||'').split(' ').slice(0,8).join(' ')+' …';
         }
