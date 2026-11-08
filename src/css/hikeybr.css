@@ -1448,7 +1448,10 @@ html.focus-mode .typing-canvas .canvas-hint{opacity:0;visibility:hidden;transiti
    The old fixed focus size overrode the user's choice on every screen. */
 html.focus-mode .text-stream-container{font-size:var(--practice-fs)!important}
 html.focus-mode body{overflow:hidden}
-html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;top:10px;right:12px;z-index:1200}
+/* Keep the exit button in the toolbar's flow slot (fixed positioning pulled
+   it out of the layout and shifted everything below by 12px on entry/exit);
+   the raised toolbar floats above the gliding canvas instead. */
+html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201}
 @media (prefers-reduced-motion:reduce){
   .typing-canvas,.typing-canvas.focus-canvas,.text-stream-container,header,footer,
   #panel-practice>*:not(.typing-canvas):not(.practice-toolbar),

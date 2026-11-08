@@ -263,7 +263,11 @@
         // Focus mode: the paragraph box glides from its current spot to fill
         // the screen (below the exit button), the rest of the UI fades out.
         // Esc or the corner button exits; everything animates back.
-        let focusMode=false,focusRect=null;
+        // A placeholder keeps the canvas's slot in the layout the whole time,
+        // so nothing below it (keyboard, stats) shifts when the canvas goes
+        // fixed on entry or snaps back into the flow on exit - that snap was
+        // the visible choppiness on exit.
+        let focusMode=false,focusRect=null,focusPlaceholder=null;
         const FOCUS_TOP=54,FOCUS_SIDE=12,FOCUS_BOTTOM=12;
         const focusTargetRect=()=>{
             const w=window.innerWidth,width=Math.min(Math.max(280,w-2*FOCUS_SIDE),920); // comfortable reading width on desktop
@@ -274,8 +278,11 @@
             const cv=$id('typing-canvas'),b=$id('focus-toggle');
             if(on){
                 focusMode=true;
-                const r=cv.getBoundingClientRect();
+                const r=cv.getBoundingClientRect(),cs=getComputedStyle(cv);
                 focusRect={top:r.top,left:r.left,width:r.width,height:r.height};
+                focusPlaceholder=document.createElement('div');
+                focusPlaceholder.style.cssText=`height:${r.height}px;margin:${cs.margin};flex:0 0 auto;visibility:hidden;pointer-events:none`;
+                cv.parentNode.insertBefore(focusPlaceholder,cv);
                 cv.style.position='fixed';cv.style.margin='0';cv.style.zIndex='100';
                 applyCanvasRect(cv,focusRect);
                 cv.classList.add('focus-canvas');
@@ -286,11 +293,19 @@
                 focusMode=false;
                 document.documentElement.classList.remove('focus-mode');
                 b.textContent='\u26F6';b.title='Focus mode: show only the typing text';
-                if(focusRect)applyCanvasRect(cv,focusRect); // glides back; .focus-canvas still on
+                // Glide back to the placeholder's live rect (it tracks the
+                // layout even after a resize), then land in the flow.
+                const target=focusPlaceholder?(()=>{const r=focusPlaceholder.getBoundingClientRect();return {top:r.top,left:r.left,width:r.width,height:r.height};})():focusRect;
+                if(target)applyCanvasRect(cv,target); // glides back; .focus-canvas still on
+                // Land just after the .38s glide ends. A timer (not
+                // transitionend) so reduced-motion and re-entry behave:
+                // if focus mode was re-entered meanwhile, do nothing.
                 setTimeout(()=>{
+                    if(focusMode)return;
+                    if(focusPlaceholder){focusPlaceholder.remove();focusPlaceholder=null;}
                     cv.classList.remove('focus-canvas');
                     cv.style.position='';cv.style.top='';cv.style.left='';cv.style.width='';cv.style.height='';cv.style.margin='';cv.style.zIndex='';
-                },450);
+                },420);
             }
             el.hiddenInput.focus({preventScroll:true});
         };
