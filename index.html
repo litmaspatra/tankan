@@ -11,9 +11,9 @@
     <link rel="preload" href="./fonts/DevLys-040-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-021-Italic.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-070-Bold.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261108s">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">    <link rel="stylesheet" href="theme.css?v=20261108s">
-    <link rel="stylesheet" href="src/css/keyboard.css?v=20261108s">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261108t">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">    <link rel="stylesheet" href="theme.css?v=20261108t">
+    <link rel="stylesheet" href="src/css/keyboard.css?v=20261108t">
 </head>
 <body>
 
@@ -429,6 +429,33 @@
                         </div>
                     </div>
 
+                    <div class="settings-row" style="grid-column: 1 / -1;">
+                        <div class="settings-info">
+                            <strong>Export progress</strong>
+                            <p>Save your unlocked keys, stats and settings as a backup file or a copy-able code - for moving to another device or address. Book progress and keymash history are included.</p>
+                        </div>
+                        <div class="settings-ctrl">
+                            <button class="btn-modal cancel" id="backup-download-btn">Download Backup File</button>
+                            <button class="btn-modal cancel" id="backup-code-btn">Show Backup Code</button>
+                            <textarea id="backup-code-output" readonly rows="2" hidden style="width:100%; margin-top:8px; font-size:0.72rem;" placeholder="Your backup code appears here"></textarea>
+                            <p id="backup-export-status" style="margin:6px 0 0; font-size:0.8rem;"></p>
+                        </div>
+                    </div>
+
+                    <div class="settings-row" style="grid-column: 1 / -1;">
+                        <div class="settings-info">
+                            <strong>Import progress</strong>
+                            <p>Restore from a backup file or a pasted code. Progress on this device is replaced only after you confirm.</p>
+                        </div>
+                        <div class="settings-ctrl">
+                            <input type="file" id="backup-file-input" accept=".json,application/json" hidden>
+                            <button class="btn-modal cancel" id="backup-file-btn">Choose Backup File</button>
+                            <textarea id="backup-code-input" rows="2" placeholder="...or paste a backup code here" style="width:100%; margin-top:8px; font-size:0.72rem;"></textarea>
+                            <button class="btn-modal danger" id="backup-import-btn" style="margin-top:6px;">Import</button>
+                            <p id="backup-import-status" style="margin:6px 0 0; font-size:0.8rem;"></p>
+                        </div>
+                    </div>
+
                     <div class="settings-row" style="grid-column: 1 / -1; background: var(--surface-card); border-left: 1px solid var(--border);">
                         <div class="settings-info">
                             <strong>How measurements work</strong>
@@ -457,6 +484,20 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
+         IMPORT CONFIRMATION MODAL
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="import-modal">
+        <div class="modal-dialog">
+            <h3>Import Progress?</h3>
+            <p id="import-modal-text">This replaces the progress saved on this device.</p>
+            <div class="modal-actions">
+                <button class="btn-modal cancel" id="import-cancel-btn">Cancel</button>
+                <button class="btn-modal danger" id="import-confirm-btn">Yes, Import Progress</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
          FOOTER
          ═══════════════════════════════════════════════════════════ -->
     <footer>
@@ -466,21 +507,22 @@
     <!-- ═══════════════════════════════════════════════════════════
          APPLICATION JAVASCRIPT
          ═══════════════════════════════════════════════════════════ -->
-    <script src="data/books/nirmala.js?v=20261108s"></script>
-    <script src="data/books/godan.js?v=20261108s"></script>
-    <script src="books.js?v=20261108s"></script>
-    <script src="data/essays.js?v=20261108s"></script>
-    <script src="src/js/hikeybr/progression.js?v=20261108s"></script>
-    <script src="src/js/hikeybr/state.js?v=20261108s"></script>
-    <script src="src/js/hikeybr/audio.js?v=20261108s"></script>
-    <script src="src/js/hikeybr/storage.js?v=20261108s"></script>
-    <script src="src/js/hikeybr/engine.js?v=20261108s"></script>
-    <script src="src/js/hikeybr/keyboard.js?v=20261108s"></script>
-    <script src="src/js/hikeybr/adaptive.js?v=20261108s"></script>
-    <script src="src/js/hikeybr/lessons.js?v=20261108s"></script>
-    <script src="src/js/hikeybr/display.js?v=20261108s"></script>
-    <script src="src/js/hikeybr/input.js?v=20261108s"></script>
-    <script src="src/js/hikeybr/ui.js?v=20261108s"></script>
-    <script src="src/js/hikeybr/init.js?v=20261108s"></script>
+    <script src="data/books/nirmala.js?v=20261108t"></script>
+    <script src="data/books/godan.js?v=20261108t"></script>
+    <script src="books.js?v=20261108t"></script>
+    <script src="data/essays.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/progression.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/state.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/audio.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/storage.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/engine.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/keyboard.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/adaptive.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/lessons.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/display.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/input.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/ui.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/backup.js?v=20261108t"></script>
+    <script src="src/js/hikeybr/init.js?v=20261108t"></script>
 </body>
 </html>
