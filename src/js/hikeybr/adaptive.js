@@ -103,11 +103,13 @@
             const weak = reviewKey();
             if (weak && !lessonCompleted) el.leadSamplesStatus.textContent += ` - practice focus: ${weak.h}`;
             if(!unlockState.ready){
-                const current=keyStats[currentItem.k];
-                if((current.recentLessonAccuracy||current.lastAccuracy||0)<95)el.leadSamplesStatus.textContent+=' · need 95% lesson accuracy';
-                else if((current.accurateBest||Infinity)>12000/targetSpeedGoal)el.leadSamplesStatus.textContent+=' · best '+(unlockState.measuredBest?(12000/unlockState.measuredBest).toFixed(1):'0.0')+' / '+targetSpeedGoal+' WPM goal';
-                else if(!unlockState.starterReady)el.leadSamplesStatus.textContent+=' · calibrating starter keys';
-                else if(!unlockState.strictOk)el.leadSamplesStatus.textContent+=' · earlier keys must also reach the target speed';
+                const current=keyStats[currentItem.k],unmet=[];
+                if((current.recentLessonAccuracy||current.lastAccuracy||0)<95)unmet.push('need 95% lesson accuracy');
+                if((current.modelSamples||0)<10)unmet.push('need '+(10-(current.modelSamples||0))+' more clean timings');
+                if((current.accurateBest||Infinity)>12000/targetSpeedGoal)unmet.push('best '+(unlockState.measuredBest?(12000/unlockState.measuredBest).toFixed(1):'0.0')+' / '+targetSpeedGoal+' WPM goal');
+                if(!unlockState.starterReady)unmet.push('calibrating starter keys');
+                if(!unlockState.strictOk)unmet.push('earlier keys must also reach the target speed');
+                if(unmet.length)el.leadSamplesStatus.textContent+=' · '+unmet.join(' · ');
             }
 
             // Keep the per-key confidence heat map live as stats change

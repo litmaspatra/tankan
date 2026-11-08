@@ -1520,6 +1520,9 @@ html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;t
         .confidence-hint { font-size: .62rem; gap: 10px; }
         .confidence-hint>span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .confidence-hint>span:last-child { text-align: right; }
+        /* The unlock-status span can list several unmet conditions at once:
+           let it wrap to extra lines instead of truncating them away. */
+        .confidence-hint>span#lead-samples-status { white-space: normal; overflow: visible; text-overflow: clip; }
 
         .stats-strip { gap: 6px; }
         .stat-card { padding: 4px 10px; gap: 1px; }
@@ -1617,6 +1620,8 @@ html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;t
         .alphabet-header .btn-modal, .alphabet-header button { min-height: 0 !important; padding: 2px 8px !important; font-size: .66rem !important; }
         .confidence-hint { flex-wrap: nowrap; }
         .progress-stat { font-size: .66rem; }
+        /* On phones the multi-condition unlock status needs its own full-width row */
+        @media(max-width:650px){ .confidence-hint { flex-wrap: wrap; } .confidence-hint>span#lead-samples-status { flex-basis: 100%; text-align: left; } }
 
         /* ═══════════════════════════════════════════════════════════
            ROUND 3 (2026-11-05): narrower keybr-style centered column,
