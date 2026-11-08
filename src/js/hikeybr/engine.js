@@ -216,6 +216,19 @@
             // Check Alt-byte hint first (Bug 1c)
             if (KRUTI_BYTE_HINTS[expected]) {
                 const { glyph, code } = KRUTI_BYTE_HINTS[expected];
+                // A glyph with a multi-key alias (क्र -> dz) teaches the regular
+                // keystrokes; the exam bans Alt. The Alt code stays as a note.
+                const aliasRow = (typeof ALT_CODES_CATALOG !== 'undefined') ? ALT_CODES_CATALOG.find(x => x.glyph === glyph && x.gail && x.gail.length > 1) : null;
+                if (aliasRow) {
+                    const steps = [...aliasRow.gail].map(ch => ch.toUpperCase()).join(' then ');
+                    return {
+                        physicalKey: aliasRow.gail[0],
+                        keyLabel: steps,
+                        hindiChar: glyph,
+                        detail: 'Type ' + aliasRow.gail.split('').join(', ') + ' (Alt + ' + code + ' also works)',
+                        isShifted: false
+                    };
+                }
                 return {
                     physicalKey: null,
                     keyLabel: 'Alt + ' + code,

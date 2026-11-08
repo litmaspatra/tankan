@@ -39,28 +39,31 @@ const path=require('node:path');
  await fresh({unlockedIndex:0,highestUnlocked:3});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),3,'repair old starter save');
  await setJump('0');assert.ok(await page.evaluate(()=>HiKeybr.targetKrutiText.includes('d')));
  await setJump('auto');
- // All progression levels, passing over skipped ones (फ्र 58, ह्र 60, ँ 63, फ् 64,
- // य् 65, ऊ 66, ञ 67, ऽ 69 - Alt-only or wordless glyphs). Last trainable: ड़ (68).
+ // All progression levels, passing over skipped ones (क्त 50, द्द 51, ट्ट 54, ड्ड 55,
+ // त्त 56, क्र 57, फ्र 58, ट्ठ 59, ह्र 60, ह्ल 61, ह्न 62, ँ 63, फ् 64, य् 65, ऊ 66,
+ // ञ 67, ऽ 69 - Alt-only, wordless, or excluded conjuncts). Last trainable: ळ (70).
  for(let lesson=0;lesson<90;lesson++){
-  const level=await page.evaluate(()=>HiKeybr.unlockedIndex);if(lesson%10===0)console.log('lesson',lesson,'level',level);if(level===68)break;
-  r=await complete(100);assert.equal(r.mid,r.before);assert.ok(r.after-r.before<=6,'unlock passes over skipped runs (max 5 consecutive: ँ/फ्/य्/ऊ/ञ)');
+  const level=await page.evaluate(()=>HiKeybr.unlockedIndex);if(lesson%10===0)console.log('lesson',lesson,'level',level);if(level===70)break;
+  r=await complete(100);assert.equal(r.mid,r.before);assert.ok(r.after-r.before<=15,'unlock passes over skipped runs (max 14 consecutive: ट्ट-ञ)');
   await page.evaluate(()=>HiKeybr.regenerateLesson());
  }
- assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),68,'all trainable levels must remain reachable');
- await page.reload();assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),68);
+ assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),70,'all trainable levels must remain reachable');
+ await page.reload();assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),70);
  // Skipped levels: passed over on unlock, repaired on load.
  await fresh({unlockedIndex:65,highestUnlocked:65});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),68,'save on skipped य् repairs past the Alt-only run to ड़');
- await fresh({unlockedIndex:69,highestUnlocked:69});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),68,'save on skipped final level ऽ falls back to ड़');
- await fresh({unlockedIndex:58,highestUnlocked:58});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),59,'save on skipped फ्र repairs to ट्ठ');
- await fresh({unlockedIndex:57,highestUnlocked:57});r=await complete(100);assert.equal(r.after,59,'clearing क्र skips फ्र and lands on ट्ठ');
- await fresh({unlockedIndex:62,highestUnlocked:62});r=await complete(100);assert.equal(r.after,68,'clearing ह्न skips the ँ-ञ run and lands on ड़');
- await fresh({unlockedIndex:68,highestUnlocked:69});assert.equal(await page.locator('.ak-badge.skipped').count(),0,'skipped keys never shown in the strip');
- assert.equal(await page.locator('#metric-total-keys').textContent(),'60','total keys reads 60');
- assert.equal(await page.locator('#total-keys-header').textContent(),'60','header reads 60 keys');
- assert.equal(await page.locator('#toggle-locked-keys-btn').textContent(),'Show All 60 Keys','show-all button counts trainable keys');
- await page.locator('#toggle-locked-keys-btn').click();assert.equal(await page.locator('.ak-badge').count(),60,'show-all renders exactly the 60 trainable keys');
+ await fresh({unlockedIndex:69,highestUnlocked:69});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),70,'save on skipped ऽ advances to the new final level ळ');
+ await fresh({unlockedIndex:58,highestUnlocked:58});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),68,'save on skipped फ्र repairs past the excluded conjunct run to ड़');
+ await fresh({unlockedIndex:53,highestUnlocked:53});r=await complete(100);assert.equal(r.after,68,'clearing द्य skips the excluded conjunct run and lands on ड़');
+ await fresh({unlockedIndex:62,highestUnlocked:62});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),68,'save on skipped ह्न repairs to ड़');
+ await fresh({unlockedIndex:70,highestUnlocked:70});assert.equal(await page.locator('.ak-badge.skipped').count(),0,'skipped keys never shown in the strip');
+ assert.equal(await page.locator('#metric-total-keys').textContent(),'54','total keys reads 54');
+ assert.equal(await page.locator('#total-keys-header').textContent(),'54','header reads 54 keys');
+ assert.equal(await page.locator('#toggle-locked-keys-btn').textContent(),'Show All 54 Keys','show-all button counts trainable keys');
+ await page.locator('#toggle-locked-keys-btn').click();assert.equal(await page.locator('.ak-badge').count(),54,'show-all renders exactly the 54 trainable keys');
  await page.locator('#toggle-locked-keys-btn').click();
- assert.equal(await page.evaluate(()=>[...document.getElementById('jump-select').options].some(o=>/Half-Ya|Nya|Phra|Hra conjunct|Half-Pha|Avagraha|Chandrabindu|Badi Oo vowel|Dda conjunct|Tta \(dental\)/.test(o.textContent))),false,'skipped levels not in review list');
+ assert.equal(await page.locator('#lp-keys .lp-key').count(),54,'lesson preview matches the strip: 54 trainable keys, no skipped glyphs');
+ assert.equal(await page.evaluate(()=>[...document.getElementById('lp-keys').children].some(c=>['क्त','ट्ट','ड्ड','क्र','ट्ठ','ह्ल','ह्न','द्द','त्त','फ्र','ह्र','ँ','फ्','य्','ऊ','ञ','ऽ'].includes(c.textContent))),false,'preview hides every skipped glyph');
+ assert.equal(await page.evaluate(()=>[...document.getElementById('jump-select').options].some(o=>/Half-Ya|Nya|Phra|Hra conjunct|Half-Pha|Avagraha|Chandrabindu|Badi Oo vowel|Dda conjunct|Tta \(dental\)|Kta conjunct|Tta conjunct|Ddda|Kra conjunct|Ttha|Hla|Hna/.test(o.textContent))),false,'skipped levels not in review list');
  // Alt-only glyphs never appear in guided lessons (book/paragraph mode only).
  const altByteCount=()=>page.evaluate(()=>{
   const glyphs=HiKeybr.KEY_PROGRESSION.filter(x=>x.skip&&x.alt).map(x=>HiKeybr.unicodeToKrutiDev(x.h)); // फ्र, ह्र, ँ, फ्, ऊ, ञ, ऽ - kept क्र (Ø, typed dz) is intentional
@@ -72,10 +75,26 @@ const path=require('node:path');
  }
  // Kept conjuncts teach real keystrokes, never Alt codes.
  const fingers=await page.evaluate(()=>Object.fromEntries(HiKeybr.KEY_PROGRESSION.filter(x=>!x.skip).map(x=>[x.k,x.finger])));
- for(const g of ['क्त','द्ध','द्य','क्र','ड्ड','ह्ल','ह्न','ड़'])assert.ok(fingers[g]&&!/Alt/i.test(fingers[g]),g+' teaches a real keystroke');
+ for(const g of ['द्ध','द्य','ड़','G'])assert.ok(fingers[g]&&!/Alt/i.test(fingers[g]),g+' teaches a real keystroke');
  assert.equal(fingers['द्ध'],'Shift + 0');assert.equal(fingers['द्य'],'Shift + \\');
+ assert.equal(fingers['G'],'Shift + G','ळ teaches Shift + G');
+ // क्र words stay eligible (typed d then z) but rare; the other excluded conjuncts'
+ // words keep their regular bytes, so they remain in normal lessons.
+ await fresh({unlockedIndex:70,highestUnlocked:70});
+ const kra=await page.evaluate(()=>{
+  const seq=HiKeybr.unicodeToKrutiDev('क्र');let rare=0,other=0;
+  for(let i=0;i<40;i++){HiKeybr.regenerateLesson();const words=HiKeybr.currentLessonText.split(/\s+/);rare+=words.filter(w=>HiKeybr.unicodeToKrutiDev(w.replace('।','')).includes(seq)).length;other+=words.length;}
+  return {rare,other};
+ });
+ assert.ok(kra.rare>0,'क्र words still appear after full unlock');
+ assert.ok(kra.rare<kra.other*0.2,`क्र words stay rare (${kra.rare}/${kra.other})`);
+ // The hint for a क्र byte teaches d then z, never the Alt code.
+ const kraHint=await page.evaluate(()=>{
+  const s=HiKeybr.unicodeToKrutiDev('क्र');const h=HiKeybr.getKrutiKeystrokeHint?HiKeybr.getKrutiKeystrokeHint(s,null):null;return h?h.keyLabel+': '+h.detail:'';
+ });
+ assert.ok(/d/i.test(kraHint)&&!/Hold Alt/i.test(kraHint),'क्र hint teaches dz: '+kraHint);
  // All keys unlocked: lessons stop pinning the final glyph and target the weakest keys.
- await fresh({unlockedIndex:68,highestUnlocked:69,keyStats:{d:{hits:100,errors:5,ttt:2000,tttSamples:50,modelTtt:2000,modelSamples:50}}});
+ await fresh({unlockedIndex:70,highestUnlocked:70,keyStats:{d:{hits:100,errors:5,ttt:2000,tttSamples:50,modelTtt:2000,modelSamples:50}}});
  r=await page.evaluate(()=>{
   const words=HiKeybr.currentLessonText.split(/\s+/);
   const withK=words.filter(w=>HiKeybr.unicodeToKrutiDev(w.replace('।','')).includes('d')).length;

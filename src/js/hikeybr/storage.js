@@ -65,7 +65,7 @@
                 if (typeof data.unlockedIndex === 'number') {
                     unlockedIndex = Math.max(0, Math.min(data.unlockedIndex, KEY_PROGRESSION.length - 1));
                 }
-                highestUnlocked=Math.max(INITIAL_UNLOCKED_COUNT-1,Math.min(69,data.highestUnlocked??unlockedIndex));
+                highestUnlocked=Math.max(INITIAL_UNLOCKED_COUNT-1,Math.min(KEY_PROGRESSION.length-1,data.highestUnlocked??unlockedIndex));
                 highestUnlocked=advancePastSkipped(highestUnlocked); // Saves from before a level was skipped land on the next real key.
                 unlockedIndex=highestUnlocked; // Recover old saves stuck on a manually selected starter key.
                 hiddenWords=Array.isArray(data.hiddenWords)?data.hiddenWords:[];

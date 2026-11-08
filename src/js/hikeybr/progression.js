@@ -71,36 +71,40 @@
             { k: '*',  h: '’',  sh: '’',  d: 'Closing quote (Shift + 8)', finger: 'Right Middle', conjunct: true },
 
             // Alt-Code Conjuncts & Special Glyphs (Speed-Gated Exam Levels)
-            { k: 'क्त', h: 'क्त', sh: 'क्त', d: 'Kta conjunct',   finger: 'Type D then r', conjunct: true },
+            { k: 'क्त', h: 'क्त', sh: 'क्त', d: 'Kta conjunct',   finger: 'Type D then r', conjunct: true, skip: true, skipReason: 'No dedicated level - its words appear inside regular lessons, typed D then r' },
             { k: 'द्द', h: 'द्द', sh: 'द्द', d: 'Dda conjunct',   finger: 'Type n then ~ then n', conjunct: true, skip: true, skipReason: 'No dedicated level - its words appear inside regular lessons' },
             { k: 'द्ध', h: 'द्ध', sh: 'द्ध', d: 'Ddha conjunct',  finger: 'Shift + 0', conjunct: true },
             { k: 'द्य', h: 'द्य', sh: 'द्य', d: 'Dya conjunct',   finger: 'Shift + \\', conjunct: true },
-            { k: 'ट्ट', h: 'ट्ट', sh: 'ट्ट', d: 'Tta conjunct',   finger: 'Type V~V', conjunct: true },
-            { k: 'ड्ड', h: 'ड्ड', sh: 'ड्ड', d: 'Ddda conjunct',  finger: 'Type M then ~ then M', conjunct: true },
+            { k: 'ट्ट', h: 'ट्ट', sh: 'ट्ट', d: 'Tta conjunct',   finger: 'Type V~V', conjunct: true, skip: true, skipReason: 'No dedicated level - its words appear inside regular lessons, typed V~V' },
+            { k: 'ड्ड', h: 'ड्ड', sh: 'ड्ड', d: 'Ddda conjunct',  finger: 'Type M then ~ then M', conjunct: true, skip: true, skipReason: 'No dedicated level - its words appear inside regular lessons, typed M~M' },
             { k: 'त्त', h: 'त्त', sh: 'त्त', d: 'Tta (dental) conjunct', finger: 'Type Shift+r then r', conjunct: true, skip: true, skipReason: 'No dedicated level - its words appear inside regular lessons' },
-            { k: 'क्र', h: 'क्र', sh: 'क्र', d: 'Kra conjunct',   finger: 'Type d then z', conjunct: true },
+            { k: 'क्र', h: 'क्र', sh: 'क्र', d: 'Kra conjunct',   finger: 'Type d then z', conjunct: true, skip: true, keepWords: true, skipReason: 'No dedicated level - its words stay in regular lessons, typed d then z' },
             { k: 'फ्र', h: 'फ्र', sh: 'फ्र', d: 'Phra conjunct',  finger: 'Alt + 0221', conjunct: true, alt: '0221', skip: true, skipReason: 'Rare Alt code: no dedicated lesson - its words appear occasionally in regular lessons' },
-            { k: 'ट्ठ', h: 'ट्ठ', sh: 'ट्ठ', d: 'Ttha conjunct',  finger: 'Type V~B', conjunct: true },
+            { k: 'ट्ठ', h: 'ट्ठ', sh: 'ट्ठ', d: 'Ttha conjunct',  finger: 'Type V~B', conjunct: true, skip: true, skipReason: 'No dedicated level - its words appear inside regular lessons, typed V~B' },
             { k: 'ह्र', h: 'ह्र', sh: 'ह्र', d: 'Hra conjunct',   finger: 'Alt + 0235', conjunct: true, alt: '0235', skip: true, skipReason: 'Rare Alt code: no dedicated lesson - its words appear occasionally in regular lessons' },
-            { k: 'ह्ल', h: 'ह्ल', sh: 'ह्ल', d: 'Hla conjunct',   finger: 'Type g then ~ then y', conjunct: true },
-            { k: 'ह्न', h: 'ह्न', sh: 'ह्न', d: 'Hna conjunct',   finger: 'Type g then ~ then u', conjunct: true },
+            { k: 'ह्ल', h: 'ह्ल', sh: 'ह्ल', d: 'Hla conjunct',   finger: 'Type g then ~ then y', conjunct: true, skip: true, skipReason: 'No dedicated level - its words appear inside regular lessons, typed g~y' },
+            { k: 'ह्न', h: 'ह्न', sh: 'ह्न', d: 'Hna conjunct',   finger: 'Type g then ~ then u', conjunct: true, skip: true, skipReason: 'No dedicated level - its words appear inside regular lessons, typed g~u' },
             { k: 'ँ',  h: 'ँ',  sh: 'ँ',  d: 'Chandrabindu',  finger: 'Alt + 0161', conjunct: true, alt: '0161', skip: true, skipReason: 'No dedicated level: its words appear inside regular lessons - the hint shows its Alt code' },
             { k: 'फ्', h: 'फ्', sh: 'फ्', d: 'Half-Pha',      finger: 'Alt + 0182', conjunct: true, alt: '0182', skip: true, skipReason: 'Rare Alt code: no dedicated lesson - its words appear occasionally in regular lessons' },
             { k: 'य्', h: 'य्', sh: 'य्', d: 'Half-Ya',       finger: 'Type ;~', conjunct: true, skip: true, skipReason: 'No Hindi word produces this keystroke sequence' },
             { k: 'ऊ',  h: 'ऊ',  sh: 'ऊ',  d: 'Badi Oo vowel', finger: 'Alt + 0197', conjunct: true, alt: '0197', skip: true, skipReason: 'No dedicated level: its words appear inside regular lessons - the hint shows its Alt code' },
             { k: 'ञ',  h: 'ञ',  sh: 'ञ',  d: 'Nya consonant', finger: 'Alt + 0165', conjunct: true, alt: '0165', skip: true, skipReason: 'No standard Hindi word contains standalone ञ' },
             { k: 'ड़',  h: 'ड़',  sh: 'ड़',  d: 'Dda nukta',    finger: 'Type M then Shift+=', conjunct: true },
-            { k: 'ऽ',  h: 'ऽ',  sh: 'ऽ',  d: 'Avagraha',      finger: 'Alt + 0183', conjunct: true, alt: '0183', skip: true, skipReason: 'Rare Alt code: no dedicated lesson - its words appear occasionally in regular lessons' }
+            { k: 'ऽ',  h: 'ऽ',  sh: 'ऽ',  d: 'Avagraha',      finger: 'Alt + 0183', conjunct: true, alt: '0183', skip: true, skipReason: 'Rare Alt code: no dedicated lesson - its words appear occasionally in regular lessons' },
+            { k: 'G',  h: 'ळ',  sh: 'ळ',  d: 'La retroflex (Shift + G)', finger: 'Shift + G', conjunct: true }
         ];
 
-        // Levels flagged skip:true are passed over automatically. Two kinds:
-        // glyphs no word can train (य्, ञ), Alt-only glyphs (फ्र, ह्र, ँ, फ्,
-        // ऊ, ऽ), and rare conjuncts Kartik excludes (द्द, त्त): no dedicated
-        // level. Alt-only glyph words stay out of guided lessons entirely and
-        // appear in book/paragraph mode with the live Alt hint; द्द/त्त words
-        // (उत्तर, रद्दी ...) still appear - their bytes are regular keys.
-        // Conjuncts typed with regular keystrokes (क्त, द्ध, ड़, क्र ...) keep
-        // their dedicated levels. Indices stay put, so saves remain valid.
+        // Levels flagged skip:true are passed over automatically: glyphs no
+        // word can train (य्, ञ), Alt-only glyphs (फ्र, ह्र, ँ, फ्, ऊ, ऽ), and
+        // conjuncts Kartik excludes (द्द, त्त, क्त, ट्ट, ड्ड, क्र, ट्ठ, ह्ल,
+        // ह्न): no dedicated level. Alt-only glyph words stay out of guided
+        // lessons entirely and appear in book/paragraph mode with the live
+        // Alt hint. Skipped conjuncts typed with regular keystrokes (क्त D r,
+        // ट्ट V~V ...) keep their words in regular lessons; क्र is the one
+        // Alt-byte conjunct whose words stay (keepWords) because live typing
+        // is d then z - regular keys. Kept conjunct levels (द्ध, द्य, ड़) are
+        // typed with real keystrokes. Indices stay put, saves remain valid;
+        // ळ (Shift+G) was appended at the end so no index shifted.
         const advancePastSkipped = i => {
             let j = i;
             while (j < KEY_PROGRESSION.length - 1 && KEY_PROGRESSION[j].skip) j++;
@@ -111,7 +115,7 @@
         };
         // Last trainable key (ड़, index 68): reaching it means every key is unlocked.
         const LAST_TRAINABLE_INDEX = (() => { let i = KEY_PROGRESSION.length - 1; while (i > 0 && KEY_PROGRESSION[i].skip) i--; return i; })();
-        const TRAINABLE_KEY_COUNT = KEY_PROGRESSION.filter(it => !it.skip).length; // 60
+        const TRAINABLE_KEY_COUNT = KEY_PROGRESSION.filter(it => !it.skip).length; // 54
 
         // Virtual Keyboard Matrix (Remington GAIL physical positions)
         const KB_MATRIX = [

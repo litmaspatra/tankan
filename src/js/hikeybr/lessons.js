@@ -131,6 +131,7 @@
             keys.replaceChildren();
             const free=textSource!=='words';
             KEY_PROGRESSION.forEach((item,idx)=>{
+                if(item.skip)return; // preview matches the strip: trainable keys only
                 const c=document.createElement('span');
                 c.className='lp-key'+((free||idx<=highestUnlocked)?' on':'')+(!free&&idx===unlockedIndex?' cur':'');
                 c.textContent=item.h;c.title=item.d||'';keys.appendChild(c);
@@ -173,7 +174,7 @@
             const unlockedKeySet = new Set(unlockedItems.map(x => x.k));
             const unlockedBytes = new Set();
             unlockedItems.forEach(x => {
-                if (x.conjunct && !x.skip) { // skipped Alt-only glyphs never appear in guided lessons; book/paragraph mode still shows them with the Alt hint
+                if (x.conjunct && (!x.skip || x.keepWords)) { // skipped Alt-only glyphs never appear in guided lessons; book/paragraph mode still shows them with the Alt hint. क्र keeps its words: typed d then z, regular keys
                     for (const c of unicodeToKrutiDev(x.h)) {
                         unlockedBytes.add(c);
                     }
@@ -204,7 +205,14 @@
                 if (!targetSequence) return 0;
                 return seq.split(targetSequence).length - 1;
             };
-            const realPool = [...new Set(eligibleRealWords)];
+            // क्र words stay eligible (typed d then z) but surface only rarely -
+            // Kartik 2026-11-08: "important alt key... but will come rarely".
+            const KRA_SEQ = unicodeToKrutiDev('क्र');
+            const kraPool = [];
+            const realPool = [...new Set(eligibleRealWords)].filter(word => {
+                if (unicodeToKrutiDev(word).includes(KRA_SEQ)) { kraPool.push(word); return false; }
+                return true;
+            });
             const focusedPool = realPool.filter(word => targetHits(word) > 0);
             const weak = reviewKey();
             const reviewSequence = weak ? ((!weak.conjunct&&!weak.alt&&weak.k.length===1)?weak.k:unicodeToKrutiDev(weak.h)) : '';
@@ -246,6 +254,8 @@
                 }
                 return deck.cards[deck.i++];
             };
+            // General-pool draw: a क्र word lands roughly once in twelve slots.
+            const drawReal=()=>(kraPool.length&&Math.random()<0.08)?(draw(kraPool)||draw(realPool)):draw(realPool);
             // Arrange words so identical words are never adjacent whenever the
             // mix allows it (greedy most-frequent-first). Used for the final
             // mix and for each repeat cycle of the "repeat each word" option.
@@ -276,7 +286,7 @@
                         if(!starterPools[least.k])starterPools[least.k]=realPool.filter(word=>unicodeToKrutiDev(word).includes(least.k));
                         chosen=draw(starterPools[least.k])||draw(realPool)||least.h+KEY_PROGRESSION[0].h;
                     }else{
-                        chosen=draw(realPool)||previous;
+                        chosen=drawReal()||previous;
                     }
                     const seq=unicodeToKrutiDev(chosen);
                     unlockedItems.forEach(item=>{starterCounts[item.k]+=seq.split(item.k).length-1;});
@@ -285,12 +295,12 @@
                         const item=weakRotation[weakTurn++%weakRotation.length];
                         const weakSeq=(!item.conjunct&&!item.alt&&item.k.length===1)?item.k:unicodeToKrutiDev(item.h);
                         if(!starterPools['weak:'+item.k])starterPools['weak:'+item.k]=realPool.filter(word=>unicodeToKrutiDev(word).includes(weakSeq));
-                        chosen=draw(starterPools['weak:'+item.k])||draw(realPool)||previous;
+                        chosen=draw(starterPools['weak:'+item.k])||drawReal()||previous;
                     }else{
-                        chosen=draw(realPool)||previous;
+                        chosen=drawReal()||previous;
                     }
                 } else if (reviewWords < reviewQuota) {
-                    chosen = draw(reviewPool)||draw(focusedPool)||draw(realPool);
+                    chosen = draw(reviewPool)||draw(focusedPool)||drawReal();
                     if(chosen&&unicodeToKrutiDev(chosen).includes(reviewSequence))reviewWords++;
                 } else if (focusedPool.length) {
                     // Target-key training: never widen past the focused pool -
