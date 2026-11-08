@@ -63,6 +63,7 @@
         <section class="panel active" id="panel-practice">
 
             <!-- Lesson settings (keybr-style: collapsed by default) -->
+            <div class="practice-toolbar">
             <details class="lesson-settings" id="lesson-settings">
                 <summary>⚙ Lessons</summary>
                 <div class="ls-tabs" role="tablist">
@@ -113,6 +114,8 @@
                     <div class="ls-row"><label for="opt-theme">Sound theme</label><select class="ctrl-select" id="opt-theme"><option value="mechanical">Mechanical keyboard</option><option value="typewriter">Typewriter</option><option value="soft">Soft</option><option value="click">Click</option><option value="retro">Retro beep</option><option value="thock">Thock</option></select></div>
                 </div>
             </details>
+            <button type="button" id="focus-toggle" class="focus-toggle" title="Focus mode: show only the typing text" aria-label="Toggle focus mode">⛶</button>
+            </div>
 
 <div class="practice-live"><span class="mobile-notice">Use a physical keyboard for Remington practice.</span></div>
             <div class="insight-row" style="font-size:.75rem;color:var(--text-dim)"><span>Lesson completion: <strong id="lesson-completion-pct">0%</strong></span><div class="goal-track"><div class="goal-fill" id="lesson-completion-fill"></div></div></div>
@@ -213,7 +216,6 @@
 
             <!-- Typing Canvas (Continuous HarfBuzz Ligature-Safe Container) -->
             <div class="typing-canvas" id="typing-canvas">
-                <button type="button" id="focus-toggle" class="focus-toggle" title="Focus mode: show only the typing text" aria-label="Toggle focus mode">⛶</button>
                 <div class="canvas-hint">
                     <span class="pulse-dot"></span>
                     <span id="canvas-hint-text">Start typing</span>
