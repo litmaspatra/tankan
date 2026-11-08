@@ -307,19 +307,14 @@
                         chosen=drawReal()||previous;
                     }
                 } else if (reviewWords < reviewQuota) {
-                    // Tiny review pools (one or two words) loop robotically -
-                    // mix in a context word every fourth slot for variety.
-                    if(tinyPool(reviewPool.length?reviewPool:focusedPool)&&w%4===3)chosen=draw(contextPool)||draw(focusedPool)||previous;
-                    else chosen = draw(reviewPool)||draw(focusedPool)||drawReal();
+                    chosen = draw(reviewPool)||draw(focusedPool)||drawReal();
                     if(chosen&&unicodeToKrutiDev(chosen).includes(reviewSequence))reviewWords++;
                 } else if (focusedPool.length) {
-                    // Target-key training: focused words dominate, so every
-                    // trained word keeps containing the current key. A tiny
-                    // pool (early levels, rare-key review) degenerates into
-                    // robotic two-word alternation, so every fourth slot then
-                    // draws a context word from the unlocked pool instead.
-                    if(tinyPool(focusedPool)&&w%4===3)chosen=draw(contextPool)||draw(focusedPool)||previous;
-                    else chosen = draw(focusedPool)||previous;
+                    // Target-key training: never widen past the focused pool -
+                    // every lesson word keeps containing the current key. The
+                    // deck balances the small pool's repeats instead; a tiny
+                    // pool's variety words are mixed in after arranging.
+                    chosen = draw(focusedPool)||previous;
                 } else {
                     // No real word can teach this glyph yet (digits, rare Alt codes,
                     // or very early levels). Use only the minimum short glyph drill.
@@ -333,6 +328,16 @@
             // Mix drills and review words without changing their quotas, and
             // without landing identical words next to each other.
             const mixedOrder=arrangeNoAdjacent(words);words.length=0;words.push(...mixedOrder);
+            // Tiny pools (early levels, rare-key review) otherwise alternate
+            // the same two words all lesson. Mix a context word into every
+            // fourth slot AFTER arranging - doing it during selection lets the
+            // greedy mixer push the rare words to the tail. Context words are
+            // distinct from target words, so adjacency stays clean.
+            if(tinyPool(focusedPool))for(let i=3;i<words.length;i+=4){
+                let c=draw(contextPool),tries=0;
+                while(c&&(c===words[i-1]||c===words[i+1])&&tries++<3)c=draw(contextPool);
+                if(c&&c!==words[i-1]&&c!==words[i+1])words[i]=c;
+            }
             recentLessonWords=recentLessonWords.concat(words).slice(-150);
             if(opts.repeat>1){
                 // Spread each word's repeats across the lesson (shuffled cycles)

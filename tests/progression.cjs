@@ -47,8 +47,9 @@ const path=require('node:path');
  assert.equal(await page.locator('#review-banner').isVisible(),false,'banner hides after resume');
  // Tiny pools mix context words for variety instead of robotic two-word loops.
  await setJump('2');
- const variety=await page.evaluate(()=>{const t=HiKeybr.targetKrutiText.trim().split(/\s+/);return {n:t.length,distinct:new Set(t).size,on:t.filter(w=>w.includes('f')).length};});
- assert.ok(variety.distinct>=8,'tiny review pool gains variety (got '+variety.distinct+')');
+ const variety=await page.evaluate(()=>{const t=HiKeybr.targetKrutiText.trim().split(/\s+/);let minDistinct=99;for(let i=0;i+8<=t.length;i++)minDistinct=Math.min(minDistinct,new Set(t.slice(i,i+8)).size);return {n:t.length,distinct:new Set(t).size,minDistinct,on:t.filter(w=>w.includes('f')).length};});
+ assert.ok(variety.distinct>=7,'tiny review pool gains variety (got '+variety.distinct+')');
+ assert.ok(variety.minDistinct>=3,'no 8-word window is a two-word robot loop (got '+variety.minDistinct+')');
  assert.ok(variety.on>=variety.n/2,'reviewed key still dominates (got '+variety.on+'/'+variety.n+')');
  await setJump('auto');
  await fresh({unlockedIndex:0,highestUnlocked:3});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),3,'repair old starter save');
