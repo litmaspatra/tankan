@@ -245,14 +245,17 @@
         const applyOpts=(regen)=>{saveStorage();syncSettingsUI();if(regen)regenerateLesson();};
         document.querySelectorAll('.ls-tab').forEach(t=>t.addEventListener('click',()=>{
             const tab=t.dataset.lstab;
+            const books=window.HIKEYBR_BOOKS||[];
             if(tab==='words')textSource='words';
-            else if(tab==='books')textSource=opts.lastBook||((window.HIKEYBR_BOOKS||[])[0]||{}).id||'words';
+            else if(tab==='books'){const lb=findBook(opts.lastBook);textSource=(lb&&lb.kind!=='essay')?opts.lastBook:((books.find(b=>b.kind!=='essay')||{}).id)||'words';}
+            else if(tab==='essays'){const le=findBook(opts.lastEssay);textSource=(le&&le.kind==='essay')?opts.lastEssay:((books.find(b=>b.kind==='essay')||{}).id)||'words';}
             else textSource=opts.customText.trim()?'custom':'words';
             forceTab=(tab==='custom'&&!opts.customText.trim())?'custom':null;
             saveStorage();syncSettingsUI();regenerateLesson();
             if(forceTab)$id('custom-text').focus({preventScroll:true});else refocus();
         }));
         $id('book-select').addEventListener('change',e=>{opts.lastBook=e.target.value;textSource=e.target.value;applyOpts(true);refocus();});
+        $id('essay-select').addEventListener('change',e=>{opts.lastEssay=e.target.value;textSource=e.target.value;applyOpts(true);refocus();});
         $id('para-range').addEventListener('change',e=>{const b=findBook(textSource);if(!b)return;bookPos[b.id]=parseInt(e.target.value,10)-1;applyOpts(true);refocus();});
         $id('para-range').addEventListener('input',e=>{$id('para-val').textContent='#'+e.target.value;});
         const stepPara=d=>{const b=findBook(textSource);if(!b)return;const n=bookParagraphs(b).length;if(!n)return;bookPos[b.id]=(((lastLessonParaStart+d)%n)+n)%n;applyOpts(true);refocus();};

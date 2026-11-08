@@ -69,6 +69,7 @@
                 <div class="ls-tabs" role="tablist">
                     <button type="button" class="ls-tab" data-lstab="words" role="tab">Guided lessons</button>
                     <button type="button" class="ls-tab" data-lstab="books" role="tab">Books</button>
+                    <button type="button" class="ls-tab" data-lstab="essays" role="tab">Essays (निबंध)</button>
                     <button type="button" class="ls-tab" data-lstab="custom" role="tab">Custom text</button>
                 </div>
                 <div class="ls-body">
@@ -82,6 +83,11 @@
                     </div>
                     <div class="ls-pane" data-pane="books">
                         <div class="ls-row"><label for="book-select">Book</label><select class="ctrl-select" id="book-select"></select></div>
+                    </div>
+                    <div class="ls-pane" data-pane="essays">
+                        <div class="ls-row"><label for="essay-select">Essay</label><select class="ctrl-select" id="essay-select"></select></div>
+                    </div>
+                    <div class="ls-pane-shared" id="book-controls" hidden>
                         <div class="book-info" id="book-info"></div>
                         <div class="ls-row"><label for="para-range">Paragraph</label><input type="range" id="para-range" min="1" max="1" step="1" value="1"><span class="ls-val"><button type="button" class="ls-step" id="para-prev" aria-label="Previous paragraph">◀</button><button type="button" class="ls-step" id="para-next" aria-label="Next paragraph">▶</button> <span id="para-val">#1</span></span></div>
                         <div class="para-list" id="para-list"></div>
@@ -527,6 +533,7 @@
     <script src="data/books/nirmala.js"></script>
     <script src="data/books/godan.js"></script>
     <script src="books.js"></script>
+    <script src="data/essays.js"></script>
     <script src="src/js/hikeybr/progression.js"></script>
     <script src="src/js/hikeybr/state.js"></script>
     <script src="src/js/hikeybr/audio.js"></script>

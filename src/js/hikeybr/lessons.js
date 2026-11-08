@@ -51,20 +51,34 @@
         }
         let lastLessonParaStart=0;
         let forceTab=null;
-        function currentTab(){if(forceTab)return forceTab;return textSource==='words'?'words':(textSource==='custom'?'custom':'books');}
+        function currentTab(){if(forceTab)return forceTab;if(textSource==='words')return 'words';if(textSource==='custom')return 'custom';const b=findBook(textSource);return (b&&b.kind==='essay')?'essays':'books';}
         function populateTextSources(){
-            const sel=document.getElementById('book-select');if(!sel)return;
-            sel.replaceChildren();
-            const groups=[['novel','Novels'],['story','Stories'],['poem','Poems and dohas']];
-            for(const [kind,label] of groups){
-                const bs=(window.HIKEYBR_BOOKS||[]).filter(b=>b.kind===kind);if(!bs.length)continue;
-                const og=document.createElement('optgroup');og.label=label;
-                bs.forEach(b=>og.appendChild(new Option(`${b.title} - ${b.author}`,b.id)));sel.appendChild(og);
-            }
             const books=window.HIKEYBR_BOOKS||[];
-            if(!findBook(opts.lastBook)||opts.lastBook==='custom')opts.lastBook=books[0]?books[0].id:'';
-            if(textSource!=='words'&&textSource!=='custom'&&findBook(textSource))opts.lastBook=textSource;
-            sel.value=opts.lastBook;
+            const sel=document.getElementById('book-select');
+            if(sel){
+                sel.replaceChildren();
+                const groups=[['novel','Novels'],['story','Stories'],['poem','Poems and dohas']];
+                for(const [kind,label] of groups){
+                    const bs=books.filter(b=>b.kind===kind);if(!bs.length)continue;
+                    const og=document.createElement('optgroup');og.label=label;
+                    bs.forEach(b=>og.appendChild(new Option(`${b.title} - ${b.author}`,b.id)));sel.appendChild(og);
+                }
+                const plain=books.filter(b=>b.kind!=='essay');
+                if(!findBook(opts.lastBook)||opts.lastBook==='custom'||(findBook(opts.lastBook)||{}).kind==='essay')opts.lastBook=plain[0]?plain[0].id:'';
+                const tb=findBook(textSource);
+                if(textSource!=='words'&&textSource!=='custom'&&tb&&tb.kind!=='essay')opts.lastBook=textSource;
+                sel.value=opts.lastBook;
+            }
+            const esel=document.getElementById('essay-select');
+            if(esel){
+                esel.replaceChildren();
+                const essays=books.filter(b=>b.kind==='essay');
+                essays.forEach(b=>esel.appendChild(new Option(`${b.title} - ${b.author}`,b.id)));
+                const eb=findBook(textSource);
+                if(eb&&eb.kind==='essay')opts.lastEssay=textSource;
+                if(!findBook(opts.lastEssay)||(findBook(opts.lastEssay)||{}).kind!=='essay')opts.lastEssay=essays[0]?essays[0].id:'';
+                esel.value=opts.lastEssay;
+            }
             syncSettingsUI();
         }
         function syncSettingsUI(){
@@ -72,6 +86,7 @@
             const tab=currentTab();
             document.querySelectorAll('.ls-tab').forEach(t=>t.classList.toggle('active',t.dataset.lstab===tab));
             document.querySelectorAll('.ls-pane').forEach(p=>p.hidden=p.dataset.pane!==tab);
+            const bc=$('book-controls');if(bc)bc.hidden=!(tab==='books'||tab==='essays');
             $('opt-strict').checked=!!opts.strict;
             $('opt-repeat').value=opts.repeat;$('opt-repeat-val').textContent=opts.repeat;
             $('opt-punct').value=opts.punct;$('opt-punct-val').textContent=opts.punct+'%';
@@ -90,7 +105,7 @@
             updateTextSourceNote();updateBookPanel();
         }
         function updateBookPanel(){
-            const book=currentTab()==='books'?findBook(textSource):null;
+            const _tab=currentTab();const book=(_tab==='books'||_tab==='essays')?findBook(textSource):null;
             const info=document.getElementById('book-info'),list=document.getElementById('para-list'),range=document.getElementById('para-range');
             if(!info)return;
             if(!book){info.replaceChildren();list.replaceChildren();return;}
@@ -137,14 +152,14 @@
             if(total)pos=((pos%total)+total)%total;
             paraEl.textContent=total?String(pos+1):'\u2013';
             document.getElementById('metric-book-total').textContent=total?total.toLocaleString():'\u2013';
-            document.getElementById('metric-book-label').textContent=b.id==='custom'?'Custom Text Progress':'Book Progress';
+            document.getElementById('metric-book-label').textContent=b.id==='custom'?'Custom Text Progress':(b.kind==='essay'?'Essay Progress':'Book Progress');
             document.getElementById('metric-book-title').textContent=b.id==='custom'?'your custom text':`${b.title} - ${b.author}`;
         }
         function updateTextSourceNote(){
             const note=document.getElementById('text-source-note');if(!note)return;
             const b=textSource==='words'?null:findBook(textSource);
             document.documentElement.classList.toggle('book-mode',!!b);
-            note.textContent=b?(b.id==='custom'?'Custom text: lessons follow your text in order. Key unlocking is paused.':`${b.title} by ${b.author} (d. ${b.died}, public domain). Practice mode: lessons follow the text in order, key unlocking is paused. Source: ${b.source}`):'Guided lessons: every lesson is built from the keys you have unlocked.';
+            note.textContent=b?(b.id==='custom'?'Custom text: lessons follow your text in order. Key unlocking is paused.':(b.died?`${b.title} by ${b.author} (d. ${b.died}, public domain). Practice mode: lessons follow the text in order, key unlocking is paused. Source: ${b.source}`:`${b.title} - original essay written for Tankan. Practice mode: lessons follow the text in order, key unlocking is paused.`)):'Guided lessons: every lesson is built from the keys you have unlocked.';
             updateBookStatCard();
         }
         function generateLessonText() {

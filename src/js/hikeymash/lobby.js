@@ -8,7 +8,7 @@
         let inputLocked = false;
         let paraToastTimer = null;
 
-        function allBooks() { return Array.isArray(window.HIKEYBR_BOOKS) ? window.HIKEYBR_BOOKS : []; }
+        function allBooks() { return (Array.isArray(window.HIKEYBR_BOOKS) ? window.HIKEYBR_BOOKS : []).filter(b => b.kind !== 'essay'); }
         function currentBook() { return allBooks().find(b => b.id === bookState.bookId) || null; }
         function bookProgress(id) {
             const v = parseInt(localStorage.getItem('hikeybr_book_progress_' + id) || '0', 10);
