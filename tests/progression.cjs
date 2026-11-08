@@ -54,7 +54,12 @@ const path=require('node:path');
  await fresh({unlockedIndex:58,highestUnlocked:58});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),59,'save on skipped फ्र repairs to ट्ठ');
  await fresh({unlockedIndex:57,highestUnlocked:57});r=await complete(100);assert.equal(r.after,59,'clearing क्र skips फ्र and lands on ट्ठ');
  await fresh({unlockedIndex:62,highestUnlocked:62});r=await complete(100);assert.equal(r.after,68,'clearing ह्न skips the ँ-ञ run and lands on ड़');
- await fresh({unlockedIndex:68,highestUnlocked:69});assert.equal(await page.locator('.ak-badge.skipped').count(),9,'skipped badges shown inside the unlocked range (ऽ clamps out of range)');
+ await fresh({unlockedIndex:68,highestUnlocked:69});assert.equal(await page.locator('.ak-badge.skipped').count(),0,'skipped keys never shown in the strip');
+ assert.equal(await page.locator('#metric-total-keys').textContent(),'60','total keys reads 60');
+ assert.equal(await page.locator('#total-keys-header').textContent(),'60','header reads 60 keys');
+ assert.equal(await page.locator('#toggle-locked-keys-btn').textContent(),'Show All 60 Keys','show-all button counts trainable keys');
+ await page.locator('#toggle-locked-keys-btn').click();assert.equal(await page.locator('.ak-badge').count(),60,'show-all renders exactly the 60 trainable keys');
+ await page.locator('#toggle-locked-keys-btn').click();
  assert.equal(await page.evaluate(()=>[...document.getElementById('jump-select').options].some(o=>/Half-Ya|Nya|Phra|Hra conjunct|Half-Pha|Avagraha|Chandrabindu|Badi Oo vowel|Dda conjunct|Tta \(dental\)/.test(o.textContent))),false,'skipped levels not in review list');
  // Alt-only glyphs never appear in guided lessons (book/paragraph mode only).
  const altByteCount=()=>page.evaluate(()=>{

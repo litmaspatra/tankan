@@ -111,6 +111,7 @@
         };
         // Last trainable key (ड़, index 68): reaching it means every key is unlocked.
         const LAST_TRAINABLE_INDEX = (() => { let i = KEY_PROGRESSION.length - 1; while (i > 0 && KEY_PROGRESSION[i].skip) i--; return i; })();
+        const TRAINABLE_KEY_COUNT = KEY_PROGRESSION.filter(it => !it.skip).length; // 60
 
         // Virtual Keyboard Matrix (Remington GAIL physical positions)
         const KB_MATRIX = [

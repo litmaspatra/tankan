@@ -97,7 +97,7 @@
             }
 
             el.metricUnlocked.textContent = KEY_PROGRESSION.filter((it,i)=>i<=highestUnlocked&&!it.skip).length;
-            const activeTotal=KEY_PROGRESSION.filter(it=>!it.skip).length;
+            const activeTotal=TRAINABLE_KEY_COUNT;
             if (document.getElementById('metric-total-keys')) document.getElementById('metric-total-keys').textContent = activeTotal;
             if (document.getElementById('total-keys-header')) document.getElementById('total-keys-header').textContent = activeTotal;
             el.jumpSelect.value = reviewMode ? String(unlockedIndex) : 'auto';
@@ -154,16 +154,10 @@
             el.alphabetContainer.innerHTML = '';
 
             KEY_PROGRESSION.forEach((item, idx) => {
+                if (item.skip) return; // skipped keys stay in the Alt-Codes Lab reference only
                 if (!showAllKeys && idx > highestUnlocked) return;
                 const badge = document.createElement('div');
                 badge.className = 'ak-badge';
-                if (item.skip) {
-                    badge.classList.add('skipped');
-                    badge.title = `${item.h} — ${item.skipReason || 'skipped'}`;
-                    badge.innerHTML = `<span class="ak-char">${item.h}</span><span class="ak-key">${item.alt ? item.alt : item.h}</span>`;
-                    el.alphabetContainer.appendChild(badge);
-                    return;
-                }
                 badge.title = `${item.h} (Key ${item.k.toUpperCase()}) — ${item.d}\nFinger: ${item.finger}`;
 
                 if (idx <= highestUnlocked) {
@@ -853,7 +847,7 @@
             const toggleBtn = document.getElementById('toggle-locked-keys-btn');
             if (toggleBtn) toggleBtn.onclick = () => {
                 showAllKeys = !showAllKeys;
-                toggleBtn.textContent = showAllKeys ? 'Hide Locked Keys' : 'Show All 70 Keys';
+                toggleBtn.textContent = showAllKeys ? 'Hide Locked Keys' : `Show All ${TRAINABLE_KEY_COUNT} Keys`;
                 updateAlphabetStrip();
                 updateProfileTable();
             };
@@ -866,6 +860,7 @@
 
             KEY_PROGRESSION.forEach((item, idx) => {
                 const s = keyStats[item.k] || { hits: 0, errors: 0 };
+                if (item.skip) return;
                 if (!showAllKeys && idx > unlockedIndex && (s.hits || 0) === 0) return;
                 const total = s.hits + s.errors;
                 const acc = total > 0 ? Math.round((s.hits / total) * 100) + '%' : '—';
@@ -896,7 +891,7 @@
             });
 
             const masteredLine=document.getElementById('prof-mastered-line');
-            if(masteredLine)masteredLine.textContent=`${masteredCount} / ${KEY_PROGRESSION.length} keys learned · ${totalTypedCount.toLocaleString()} lifetime keystrokes · ${totalTypedCount>0?Math.round((1-totalErrorsCount/totalTypedCount)*100)+'%':'N/A'} lifetime accuracy`;
+            if(masteredLine)masteredLine.textContent=`${masteredCount} / ${TRAINABLE_KEY_COUNT} keys learned · ${totalTypedCount.toLocaleString()} lifetime keystrokes · ${totalTypedCount>0?Math.round((1-totalErrorsCount/totalTypedCount)*100)+'%':'N/A'} lifetime accuracy`;
             refreshTableScrollHint();
         }
 
