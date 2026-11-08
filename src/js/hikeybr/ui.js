@@ -217,16 +217,6 @@
             saveStorage();
         });
 
-        if (el.settingsSpeedGoal) {
-            el.settingsSpeedGoal.addEventListener('change', (e) => {
-                targetSpeedGoal = parseInt(e.target.value, 10);
-                if (el.speedGoalSelect) el.speedGoalSelect.value = targetSpeedGoal;
-                targetKeyBuffer = [];
-                updateMasteryCard();
-                saveStorage();
-            });
-        }
-
         // Quick Controls
         el.jumpSelect.addEventListener('change', (e) => {
             reviewMode=e.target.value!=='auto';
@@ -344,14 +334,6 @@
             if (soundEnabled) sound.click();
         });
 
-        if (el.soundSelect) {
-            el.soundSelect.addEventListener('change', (e) => {
-                soundEnabled = e.target.value === 'on';
-                updateSoundUI();
-                saveStorage();
-            });
-        }
-
         // Theme Toggle
         const themes = ['dark', 'navy', 'amber', 'light', 'sunshine', 'forest'];
         el.themeBtn.addEventListener('click', () => {
@@ -378,23 +360,33 @@
             });
         }
 
+        // Fullscreen toggle (Fullscreen API - the programmatic equivalent of F11).
+        const fsBtn=document.getElementById('fullscreen-btn');
+        if(fsBtn){
+            const fsNote=document.getElementById('fullscreen-status');
+            const reqFs=document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen;
+            const exitFs=document.exitFullscreen||document.webkitExitFullscreen;
+            const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
+            const fsLabel=()=>{fsBtn.textContent=fsEl()?'Exit Fullscreen':'Enter Fullscreen';};
+            if(!reqFs){
+                fsBtn.disabled=true;
+                if(fsNote)fsNote.textContent='Fullscreen is not supported in this browser. On iPhone, use Safari\'s "Add to Home Screen" for a fullscreen app.';
+            }else{
+                fsBtn.addEventListener('click',()=>{
+                    const p=fsEl()?exitFs.call(document):reqFs.call(document.documentElement);
+                    if(p&&p.catch)p.catch(()=>{});
+                });
+                document.addEventListener('fullscreenchange',fsLabel);
+                document.addEventListener('webkitfullscreenchange',fsLabel);
+                fsLabel();
+            }
+        }
+
         // Practice-page Alt-sequence alias state (shared with the hint catalog).
         let practiceAlias='';
 
-        async function selectDisplayFont(requested) {
-            const font=FONT_REGISTRY[requested];
-            if(!font)return false;
-            await ensureFontLoaded(requested);
-            document.documentElement.dataset.fontReady='1';
-            displayFont=requested;saveStorage();updateDisplay();
-            document.getElementById('font-status').textContent=font.label+' · Remington legacy encoding · every keystroke highlights its own glyph'+(requested==='devlys010'?' · Bundled copy; matches the standard exam DevLys 010.':requested==='devlys040'?' · Matches the standard exam DevLys 040.':'');
-            return true;
-        }
-        document.getElementById('display-font-select').addEventListener('change',e=>selectDisplayFont(e.target.value));
-
         document.getElementById('lesson-style-select').addEventListener('change',e=>{lessonStyle=e.target.value;applyDisplayPreferences();saveStorage();});
         document.getElementById('key-font-select').addEventListener('change',e=>{keyFont=e.target.value;applyDisplayPreferences();saveStorage();});
-        document.getElementById('daily-goal-select').addEventListener('change',e=>{dailyGoalMinutes=Number(e.target.value);saveStorage();updateInsights();});
         const smoothSlider=document.getElementById('smoothness');
         if(smoothSlider)smoothSlider.addEventListener('input',renderSpeedChart);
 

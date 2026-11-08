@@ -208,12 +208,10 @@
             document.documentElement.classList.toggle('cur-off', opts.cursorHighlight === false);
         }
         function applyDisplayPreferences() {
-            document.getElementById('display-font-select').value = displayFont;
             document.documentElement.dataset.lessonStyle = lessonStyle;
             document.documentElement.dataset.keyFont = keyFont;
-            document.getElementById('lesson-style-select').value = lessonStyle;
-            document.getElementById('key-font-select').value = keyFont;
-            document.getElementById('daily-goal-select').value = dailyGoalMinutes;
+            const lss=document.getElementById('lesson-style-select'); if(lss)lss.value=lessonStyle;
+            const kfs=document.getElementById('key-font-select'); if(kfs)kfs.value=keyFont;
             const dglv=document.getElementById('daily-goal-select-lesson');if(dglv)dglv.value=dailyGoalMinutes;
         }
         /* Measurement model v2, independently implemented after studying keybr.
@@ -564,9 +562,13 @@
             });
             // Target line and label drawn last: SVG paints in document order, so
             // drawing them before the bars hid the line behind any bar that tall.
+            // The label gets a solid backing so it stays legible over the bars.
             g+=`<line x1="${padL}" y1="${ty.toFixed(1)}" x2="${W-padR}" y2="${ty.toFixed(1)}" stroke="var(--error)" stroke-dasharray="6 4" stroke-width="1.5"/>`;
-            g+=`<text x="${W-padR-4}" y="${(ty-5).toFixed(1)}" font-size="11" text-anchor="end" fill="var(--error)">target ${targetSpeedGoal} wpm</text>`;
+            const tLabel=`target ${targetSpeedGoal} wpm`, tW=tLabel.length*6.6+12;
+            g+=`<rect class="target-label-bg" x="${(W-padR-tW-2).toFixed(1)}" y="${(ty-19).toFixed(1)}" width="${tW}" height="16" fill="var(--surface-card)" stroke="var(--error)" stroke-width="0.75"/>`;
+            g+=`<text x="${(W-padR-tW/2-2).toFixed(1)}" y="${(ty-7).toFixed(1)}" font-size="11" text-anchor="middle" fill="var(--error)">${tLabel}</text>`;
             box.innerHTML=svgWrap(W,H,g);
+            const nat=box.querySelector('svg'); if(nat){ nat.style.minWidth=W+'px'; }
         }
 
         function renderKeyFreqChart(){
@@ -575,10 +577,13 @@
                 .map(item=>({h:item.h,hits:(keyStats[item.k]&&keyStats[item.k].hits)||0,errors:(keyStats[item.k]&&keyStats[item.k].errors)||0}))
                 .filter(r=>r.hits+r.errors>0);
             if(!rows.length){box.innerHTML='<div class="chart-empty">No keystrokes recorded yet.</div>';return;}
-            const W=720,H=250,padL=46,padR=12,padT=16,padB=42;
+            // Fixed column width per key: the key glyph and its numbers always
+            // sit directly under their own bars; the chart scrolls sideways.
+            const colW=36;
+            const W=Math.max(720,46+12+rows.length*colW),H=250,padL=46,padR=12,padT=16,padB=42;
             const iw=W-padL-padR, ih=H-padT-padB;
             const maxC=ChartMath.niceCeil(Math.max(...rows.map(r=>Math.max(r.hits,r.errors))));
-            const group=iw/rows.length, bw=Math.min(16,group/2-2);
+            const group=colW, bw=Math.min(13,group/2-3);
             let g='';
             for(let t=0;t<=4;t++){
                 const y=padT+ih*t/4, val=Math.round(maxC*(1-t/4));
@@ -590,15 +595,16 @@
                 const cx=padL+(i+.5)*group;
                 const hh=ih*r.hits/maxC, eh=ih*r.errors/maxC;
                 g+=`<rect x="${(cx-bw-1).toFixed(1)}" y="${(padT+ih-hh).toFixed(1)}" width="${bw}" height="${hh.toFixed(1)}" fill="var(--correct)"><title>${r.h}: ${r.hits} hits</title></rect>`;
-                g+=`<rect x="${(cx+1).toFixed(1)}" y="${(padT+ih-eh).toFixed(1)}" width="${bw}" height="${eh.toFixed(1)}" fill="var(--error)"><title>${r.h}: ${r.errors} misses</title></rect>`;
+                
+                g+=`<rect x="${(cx+1).toFixed(1)}" y="${(padT+ih-eh).toFixed(1)}" width="${bw}" height="${eh.toFixed(1)}" fill="var(--error)"><title>${r.h}: ${r.errors} misses (${Math.round(r.errors/(r.hits+r.errors)*100)}% miss ratio)</title></rect>`;
                 g+=`<text x="${cx.toFixed(1)}" y="${(padT+ih+15).toFixed(1)}" font-size="11" text-anchor="middle" style="font-family:'Noto Sans Devanagari'">${r.h}</text>`;
                 const miss=Math.round(r.errors/(r.hits+r.errors)*100);
-                // Just the number (the chart desc already says it is the miss
-                // ratio), staggered onto two rows so adjacent keys never overlap.
-                const my=padT+ih+(i%2?37:27);
-                g+=`<text x="${cx.toFixed(1)}" y="${my.toFixed(1)}" font-size="8" text-anchor="middle" fill="var(--text-faint)">${miss}%</text>`;
+                // Miss ratio directly under its own key, in the same red as the
+                // miss bar, so there is no doubt which key it belongs to.
+                g+=`<text x="${cx.toFixed(1)}" y="${(padT+ih+28).toFixed(1)}" font-size="9" text-anchor="middle" fill="var(--error)">${miss}%</text>`;
             });
             box.innerHTML=svgWrap(W,H,g);
+            const nat=box.querySelector('svg'); if(nat){ nat.style.minWidth=W+'px'; }
         }
 
         function renderProgressOverview(){

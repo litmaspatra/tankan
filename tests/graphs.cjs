@@ -62,7 +62,7 @@ const path = require('node:path');
         streak: document.getElementById('prof-streak-line').textContent,
         speedCircles: document.querySelectorAll('#chart-speed svg circle').length,
         distRects: document.querySelectorAll('#chart-speed-dist svg rect').length,
-        keySpeedBars: [...document.querySelectorAll('#chart-key-speed svg rect')].map(r => r.getAttribute('fill')),
+        keySpeedBars: [...document.querySelectorAll('#chart-key-speed svg rect:not(.target-label-bg)')].map(r => r.getAttribute('fill')),
         keyFreqRects: document.querySelectorAll('#chart-key-freq svg rect').length,
         progressRows: document.querySelectorAll('#chart-progress .pg-row').length,
         progressCells: document.querySelectorAll('#chart-progress .pg-cells i').length,

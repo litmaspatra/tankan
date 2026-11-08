@@ -11,9 +11,9 @@
     <link rel="preload" href="./fonts/DevLys-040-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-021-Italic.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-070-Bold.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261108g">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">    <link rel="stylesheet" href="theme.css?v=20261108g">
-    <link rel="stylesheet" href="src/css/keyboard.css?v=20261108g">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261108h">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">    <link rel="stylesheet" href="theme.css?v=20261108h">
+    <link rel="stylesheet" href="src/css/keyboard.css?v=20261108h">
 </head>
 <body>
 
@@ -286,7 +286,7 @@
 
                 <div class="chart-block">
                     <h3>Key Frequency</h3>
-                    <p class="chart-desc">How often each key was hit (green) vs missed (red), with the miss ratio under each key. Counts are your actual recorded keystrokes.</p>
+                    <p class="chart-desc">Legend: green bars = hits per key, red bars = misses per key. The red % under each key is that key's miss ratio (misses ÷ all presses). Counts are your actual recorded keystrokes.</p>
                     <div id="chart-key-freq"></div>
                 </div>
 
@@ -331,6 +331,19 @@
                     <tbody id="profile-table-body"></tbody>
                 </table></div></div>
             </div>
+            <div class="content-card">
+                <div class="settings-grid">
+                    <div class="settings-row danger-row" style="border-left: 3px solid var(--error);">
+                        <div class="settings-info">
+                            <strong style="color: var(--error);">Reset Progress</strong>
+                            <p>Clear progress and typing stats. Keep your theme, sound and practice preferences.</p>
+                        </div>
+                        <div class="settings-ctrl">
+                            <button class="btn-modal danger" id="reset-settings-btn">Reset Progress</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
 
@@ -343,7 +356,7 @@
                 <div class="card-header">
                     <div>
                         <h2>Settings &amp; Preferences</h2>
-                        <p>Customize themes, typing targets, audio feedback, and learning pace.</p>
+                        <p>Customize the theme, fonts, finger guide and fullscreen. Lesson options (speed target, daily goal, sounds, lesson font) live in the Lesson settings panel on the Practice tab.</p>
                     </div>
                 </div>
 
@@ -361,53 +374,6 @@
                                 <option value="light">Paper (Default)</option>
                                 <option value="sunshine">Marigold</option>
                                 <option value="forest">Forest</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="settings-row">
-                        <div class="settings-info">
-                            <strong>Target Speed to Advance Key</strong>
-                            <p>Minimum lesson speed required before unlocking the next letter. (Synced with Lessons panel slider)</p>
-                        </div>
-                        <div class="settings-ctrl">
-                            <select class="ctrl-select" id="settings-speed-goal">
-                                <option value="10">10 WPM</option>
-                                <option value="15">15 WPM (Beginner)</option>
-                                <option value="20">20 WPM (Intermediate)</option>
-                                <option value="25" selected>25 WPM</option>
-                                <option value="30">30 WPM</option>
-                                <option value="35">35 WPM (Advanced)</option>
-                                <option value="40">40 WPM (Master)</option>
-                                <option value="45">45 WPM</option>
-                                <option value="50">50 WPM (Pro)</option>
-                                <option value="55">55 WPM</option>
-                                <option value="60">60 WPM (Expert)</option>
-                                <option value="65">65 WPM</option>
-                                <option value="70">70 WPM</option>
-                                <option value="75">75 WPM</option>
-                                <option value="80">80 WPM (Champion)</option>
-                                <option value="85">85 WPM</option>
-                                <option value="90">90 WPM</option>
-                                <option value="95">95 WPM</option>
-                                <option value="100">100 WPM (Ultimate)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="settings-row">
-                        <div class="settings-info">
-                            <strong>Hindi lesson font</strong>
-                            <p id="font-status">Every font is a Remington legacy font: each keystroke is its own glyph, so matras and half letters highlight one by one.</p>
-                        </div>
-                        <div class="settings-ctrl">
-                            <select class="ctrl-select" id="display-font-select">
-                                <option value="krutidev">KrutiDev 010 (embedded)</option>
-                                <option value="devlys010">DevLys 010 (embedded)</option>
-                                <option value="devlys040">DevLys 040</option>
-                                <option value="devlys040bold">DevLys 040 Bold</option>
-                                <option value="krutidev021">KrutiDev 021 Italic</option>
-                                <option value="krutidev070">KrutiDev 070 Bold</option>
                             </select>
                         </div>
                     </div>
@@ -443,35 +409,6 @@
 
                     <div class="settings-row">
                         <div class="settings-info">
-                            <strong>Daily practice goal</strong>
-                            <p>Counts active typing time, excluding long pauses. (Synced with Lessons panel)</p>
-                        </div>
-                        <div class="settings-ctrl">
-                            <select class="ctrl-select" id="daily-goal-select">
-                                <option value="10">10 minutes</option>
-                                <option value="15">15 minutes</option>
-                                <option value="30">30 minutes</option>
-                                <option value="45">45 minutes</option>
-                                <option value="60">60 minutes</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="settings-row">
-                        <div class="settings-info">
-                            <strong>Audio Feedback</strong>
-                            <p>Crisp mechanical switch clicks &amp; error cues.</p>
-                        </div>
-                        <div class="settings-ctrl">
-                            <select class="ctrl-select" id="sound-select">
-                                <option value="on">Enabled</option>
-                                <option value="off">Muted</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="settings-row">
-                        <div class="settings-info">
                             <strong>Finger Guide Hint</strong>
                             <p>Display recommended finger for the target key.</p>
                         </div>
@@ -483,6 +420,16 @@
                         </div>
                     </div>
 
+                    <div class="settings-row">
+                        <div class="settings-info">
+                            <strong>Fullscreen</strong>
+                            <p id="fullscreen-status">Fill the whole screen, like pressing F11. Press Esc or the button again to exit.</p>
+                        </div>
+                        <div class="settings-ctrl">
+                            <button class="btn-modal cancel" id="fullscreen-btn">Enter Fullscreen</button>
+                        </div>
+                    </div>
+
                     <div class="settings-row" style="grid-column: 1 / -1; background: var(--surface-card); border-left: 1px solid var(--border);">
                         <div class="settings-info">
                             <strong>How measurements work</strong>
@@ -490,15 +437,6 @@
                         </div>
                     </div>
 
-                    <div class="settings-row danger-row" style="border-top: 1px solid var(--border); border-left: 3px solid var(--error);">
-                        <div class="settings-info">
-                            <strong style="color: var(--error);">Reset Progress</strong>
-                            <p>Clear progress and typing stats. Keep your theme, sound and practice preferences.</p>
-                        </div>
-                        <div class="settings-ctrl">
-                            <button class="btn-modal danger" id="reset-settings-btn">Reset Progress</button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </section>
@@ -529,21 +467,21 @@
     <!-- ═══════════════════════════════════════════════════════════
          APPLICATION JAVASCRIPT
          ═══════════════════════════════════════════════════════════ -->
-    <script src="data/books/nirmala.js?v=20261108g"></script>
-    <script src="data/books/godan.js?v=20261108g"></script>
-    <script src="books.js?v=20261108g"></script>
-    <script src="data/essays.js?v=20261108g"></script>
-    <script src="src/js/hikeybr/progression.js?v=20261108g"></script>
-    <script src="src/js/hikeybr/state.js?v=20261108g"></script>
-    <script src="src/js/hikeybr/audio.js?v=20261108g"></script>
-    <script src="src/js/hikeybr/storage.js?v=20261108g"></script>
-    <script src="src/js/hikeybr/engine.js?v=20261108g"></script>
-    <script src="src/js/hikeybr/keyboard.js?v=20261108g"></script>
-    <script src="src/js/hikeybr/adaptive.js?v=20261108g"></script>
-    <script src="src/js/hikeybr/lessons.js?v=20261108g"></script>
-    <script src="src/js/hikeybr/display.js?v=20261108g"></script>
-    <script src="src/js/hikeybr/input.js?v=20261108g"></script>
-    <script src="src/js/hikeybr/ui.js?v=20261108g"></script>
-    <script src="src/js/hikeybr/init.js?v=20261108g"></script>
+    <script src="data/books/nirmala.js?v=20261108h"></script>
+    <script src="data/books/godan.js?v=20261108h"></script>
+    <script src="books.js?v=20261108h"></script>
+    <script src="data/essays.js?v=20261108h"></script>
+    <script src="src/js/hikeybr/progression.js?v=20261108h"></script>
+    <script src="src/js/hikeybr/state.js?v=20261108h"></script>
+    <script src="src/js/hikeybr/audio.js?v=20261108h"></script>
+    <script src="src/js/hikeybr/storage.js?v=20261108h"></script>
+    <script src="src/js/hikeybr/engine.js?v=20261108h"></script>
+    <script src="src/js/hikeybr/keyboard.js?v=20261108h"></script>
+    <script src="src/js/hikeybr/adaptive.js?v=20261108h"></script>
+    <script src="src/js/hikeybr/lessons.js?v=20261108h"></script>
+    <script src="src/js/hikeybr/display.js?v=20261108h"></script>
+    <script src="src/js/hikeybr/input.js?v=20261108h"></script>
+    <script src="src/js/hikeybr/ui.js?v=20261108h"></script>
+    <script src="src/js/hikeybr/init.js?v=20261108h"></script>
 </body>
 </html>

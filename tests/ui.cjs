@@ -128,14 +128,14 @@ const path = require('node:path');
     // 3c. Only legacy Remington fonts are offered (Unicode fonts dropped: their
     //     matras/half letters could not highlight per keystroke). Per-byte
     //     highlighting reassembles the lesson byte stream in any listed font.
-    const fontOptions = await page.$$eval('#display-font-select option', os => os.map(o => o.value));
+    const fontOptions = await page.$$eval('#opt-font option', os => os.map(o => o.value));
     assert.ok(fontOptions.includes('devlys010'), 'DevLys 010 is offered');
     assert.ok(fontOptions.includes('devlys040'), 'DevLys 040 is offered');
     assert.ok(fontOptions.includes('devlys040bold'), 'DevLys 040 Bold is offered');
     assert.ok(fontOptions.includes('krutidev021') && fontOptions.includes('krutidev070'), 'extra KrutiDev styles are offered');
     for (const removed of ['noto', 'serif', 'mangal']) assert.ok(!fontOptions.includes(removed), removed + ' removed from the picker');
     await page.evaluate(() => {
-        const s = document.getElementById('display-font-select');
+        const s = document.getElementById('opt-font');
         s.value = 'devlys040';
         s.dispatchEvent(new Event('change'));
     });
@@ -147,23 +147,18 @@ const path = require('node:path');
     }));
     assert.equal(parts.correct + parts.current + parts.remaining, await page.evaluate(() => HiKeybr.unicodeToKrutiDev(HiKeybr.currentLessonText)), 'legacy-font spans reassemble the lesson byte stream');
 
-    // 4. Speed controls: Settings dropdown and lesson slider offer and accept the same values.
-    const optionValues = await page.$$eval('#settings-speed-goal option', os => os.map(o => o.value));
-    for (let v = 10; v <= 100; v += 5) assert.ok(optionValues.includes(String(v)), 'dropdown offers ' + v + ' WPM');
-    await page.click('.nav-tab[data-target="settings"]');
-    await page.selectOption('#settings-speed-goal', '45');
-    assert.equal(await page.locator('#speed-goal-select').inputValue(), '45', 'dropdown drives the lesson slider');
+    // 4. Speed control: the lesson-settings slider is the single source of truth.
+    assert.equal(await page.$('#settings-speed-goal'), null, 'duplicated Settings speed dropdown removed');
     await page.evaluate(() => {
         const s = document.getElementById('speed-goal-select');
         s.value = '55';
         s.dispatchEvent(new Event('change'));
     });
-    assert.equal(await page.locator('#settings-speed-goal').inputValue(), '55', 'lesson slider drives the dropdown');
+    assert.equal(await page.locator('#speed-goal-select').inputValue(), '55', 'slider accepts 55');
 
     // 5. Reload persists settings.
     await page.reload();
-    assert.equal(await page.locator('#settings-speed-goal').inputValue(), '55', 'speed goal survives reload');
-    assert.equal(await page.locator('#speed-goal-select').inputValue(), '55', 'slider survives reload');
+    assert.equal(await page.locator('#speed-goal-select').inputValue(), '55', 'speed goal survives reload');
 
     // 6. Strict unlock: an unmeasured earlier key blocks unlocking even when the
     //    current key is ready; measuring it at goal speed unblocks.
