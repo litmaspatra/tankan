@@ -1692,3 +1692,12 @@ html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;t
             .keyboard-frame { padding: 4px 12px; gap: 2px; }
             .typing-canvas { padding: 4px 14px 2px !important; }
         }
+
+        /* Practice header compaction (2026-11-08, per user): the four stat
+           tiles read as ONE box (no individual card borders), and the
+           key-readiness bar sits inside the target-identity row instead of
+           occupying its own row. */
+        #panel-practice .stats-strip { background: var(--surface-card); border: 1px solid var(--border); border-radius: 14px; padding: 10px 16px; }
+        #panel-practice .stat-card { background: transparent; border: none; border-radius: 0; padding: 2px 0; }
+        .target-card-top .progress-track-wrapper { flex: 1 1 180px; }
+        @media(max-width:650px){ .target-card-top .progress-track-wrapper { flex-basis: 100%; order: 3; } .target-card-top .target-metrics { order: 2; } }
