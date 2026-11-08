@@ -1521,11 +1521,10 @@ html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;t
         .progress-track-wrapper { gap: 8px; }
         .progress-track { height: 6px; }
         .confidence-hint { font-size: .62rem; gap: 10px; }
-        .confidence-hint>span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* Both hint spans wrap instead of ellipsizing: they carry instructions
+           (how unlocking works, which conditions are unmet) that must stay readable */
+        .confidence-hint>span { flex: 1 1 auto; min-width: 0; }
         .confidence-hint>span:last-child { text-align: right; }
-        /* The unlock-status span can list several unmet conditions at once:
-           let it wrap to extra lines instead of truncating them away. */
-        .confidence-hint>span#lead-samples-status { white-space: normal; overflow: visible; text-overflow: clip; }
 
         .stats-strip { gap: 6px; }
         .stat-card { padding: 4px 10px; gap: 1px; }
@@ -1540,8 +1539,9 @@ html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;t
         .ak-badge .ak-key { font-size: .46rem; }
         .heat-legend { margin-top: 1px; font-size: .58rem; }
 
-        .practice-substats { margin: 0; font-size: .7rem; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; }
-        .practice-substats .wp-status { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        /* Wrap rather than ellipsize: the word-pool status must stay fully readable */
+        .practice-substats { margin: 0; font-size: .7rem; flex-wrap: wrap; white-space: normal; overflow: visible; }
+        .practice-substats .wp-status { min-width: 0; }
 
         /* Typing canvas: FIXED two-line height - the page can never resize while typing */
         .typing-canvas { min-height: 0 !important; padding: 8px 14px !important; }
@@ -1570,9 +1570,10 @@ html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;t
             text-decoration: none;
         }
 
-        /* Live hint: fixed one-line strip; Alt-code info is folded into it */
-        .live-hint-strip { min-height: 22px; height: 22px; max-height: 22px; margin: 0; overflow: hidden; white-space: nowrap; font-size: .76rem; gap: 8px; }
-        .live-hint-strip>span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        /* Live hint: one line when idle (min-height keeps the layout steady),
+           wraps to a second line instead of truncating long hints */
+        .live-hint-strip { min-height: 22px; height: auto; margin: 0; overflow: visible; white-space: normal; font-size: .76rem; gap: 8px; }
+        .live-hint-strip>span { min-width: 0; }
 
         /* The old Alt helper banner never enters layout flow (its info now
            lives in the hint strip above the keyboard). */
