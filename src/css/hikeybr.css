@@ -1471,6 +1471,20 @@ html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;t
         .chart-desc{font-size:.75rem;color:var(--text-dim);margin:0 0 10px}
         .chart-legend{font-size:.72rem;color:var(--text-dim);margin:8px 0 0;display:flex;flex-wrap:wrap;gap:4px 14px}
         .chart-empty{padding:30px 0;text-align:center;color:var(--text-faint);font-size:.85rem;border:1px dashed var(--border)}
+        /* keybr-style per-key popup (hover on desktop, tap on phone) */
+        #key-popup{position:fixed;z-index:1400;background:var(--surface);border:1px solid var(--border);box-shadow:0 8px 28px rgba(0,0,0,.35);padding:10px 12px;font-size:.78rem;color:var(--text);width:284px;box-sizing:border-box}
+        #key-popup[hidden]{display:none}
+        #key-popup .kp-head{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
+        #key-popup .kp-glyph{font-family:'Noto Sans Devanagari';font-size:1.35rem;font-weight:800;line-height:1}
+        #key-popup .kp-sub{color:var(--text-dim);font-size:.68rem}
+        #key-popup .kp-line{display:flex;justify-content:space-between;gap:12px;padding:1px 0;color:var(--text-dim)}
+        #key-popup .kp-line b{color:var(--text);font-variant-numeric:tabular-nums;font-weight:700}
+        #key-popup .kp-rate.pos b{color:var(--correct)}
+        #key-popup .kp-rate.neg b{color:var(--error)}
+        #key-popup .kp-chart{margin-top:8px;border-top:1px solid var(--border-subtle);padding-top:6px}
+        #key-popup .kp-note{margin-top:4px;font-size:.66rem;color:var(--text-faint)}
+        #chart-key-speed rect.key-hit{cursor:pointer}
+        #profile-table-body tr[data-key]{cursor:pointer}
         .smooth-row{display:flex;align-items:center;gap:10px;font-size:.75rem;color:var(--text-dim);margin-top:8px}
         .smooth-row input{flex:0 0 160px}
         .lg-dot{display:inline-block;width:9px;height:9px;margin-right:4px;vertical-align:-1px}
@@ -1691,6 +1705,17 @@ html.focus-mode #panel-practice>.practice-toolbar>.focus-toggle{position:fixed;t
         .target-card-top .progress-track-wrapper { flex: 1 1 180px; }
         @media(max-width:650px){ .target-card-top .progress-track-wrapper { flex-basis: 100%; order: 3; } .target-card-top .target-metrics { order: 2; } }
 
-        /* Word-pool status shares one row with the recent-lessons mini bars */
-        .practice-substats .substats-bars-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex-basis: 100%; }
+        /* Word-pool status + recent-lessons mini bars flow inline in the
+           Last-lesson / Daily-goal row (2026-11-08, per user) */
+        .practice-substats .substats-bars-row { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; }
         .practice-substats .substats-bars-row .wp-status { flex: 1 1 auto; }
+        /* The unlock-status line is now the only confidence-hint span: keep it
+           left-aligned and full width (the static explainer was removed). */
+        .confidence-hint>span:only-child { text-align: left !important; }
+        /* Tighter stat tiles (2026-11-08, per user): still four individual
+           boxes, just shorter and with less inner padding. */
+        .stat-card { padding: 3px 10px; gap: 0; }
+        .stat-card .s-label { font-size: .55rem; }
+        .stat-card .s-value { font-size: .95rem; }
+        .stat-card .s-unit { font-size: .6rem; }
+        .stat-card .s-sub { font-size: .58rem; margin-top: 0; }
