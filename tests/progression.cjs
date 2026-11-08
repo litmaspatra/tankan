@@ -78,9 +78,17 @@ const path=require('node:path');
  for(const g of ['द्ध','द्य','ड़','G'])assert.ok(fingers[g]&&!/Alt/i.test(fingers[g]),g+' teaches a real keystroke');
  assert.equal(fingers['द्ध'],'Shift + 0');assert.equal(fingers['द्य'],'Shift + \\');
  assert.equal(fingers['G'],'Shift + G','ळ teaches Shift + G');
+ // The ळ level trains with its Rajasthani word list before weakness mode starts.
+ await fresh({unlockedIndex:70,highestUnlocked:70});
+ const la=await page.evaluate(()=>{
+  const words=HiKeybr.currentLessonText.split(/\s+/);
+  const g=words.filter(w=>HiKeybr.unicodeToKrutiDev(w.replace('।','')).includes('G'));
+  return {total:words.length,withLa:g.length,sample:g.slice(0,6)};
+ });
+ assert.ok(la.withLa>=la.total-2,`ळ level lessons focus on ळ words (${la.withLa}/${la.total}): ${la.sample}`);
  // क्र words stay eligible (typed d then z) but rare; the other excluded conjuncts'
  // words keep their regular bytes, so they remain in normal lessons.
- await fresh({unlockedIndex:70,highestUnlocked:70});
+ await fresh({unlockedIndex:70,highestUnlocked:70,keyStats:{G:{targetLessons:3}}});
  const kra=await page.evaluate(()=>{
   const seq=HiKeybr.unicodeToKrutiDev('क्र');let rare=0,other=0;
   for(let i=0;i<40;i++){HiKeybr.regenerateLesson();const words=HiKeybr.currentLessonText.split(/\s+/);rare+=words.filter(w=>HiKeybr.unicodeToKrutiDev(w.replace('।','')).includes(seq)).length;other+=words.length;}
@@ -94,7 +102,7 @@ const path=require('node:path');
  });
  assert.ok(/d/i.test(kraHint)&&!/Hold Alt/i.test(kraHint),'क्र hint teaches dz: '+kraHint);
  // All keys unlocked: lessons stop pinning the final glyph and target the weakest keys.
- await fresh({unlockedIndex:70,highestUnlocked:70,keyStats:{d:{hits:100,errors:5,ttt:2000,tttSamples:50,modelTtt:2000,modelSamples:50}}});
+ await fresh({unlockedIndex:70,highestUnlocked:70,keyStats:{G:{targetLessons:3},d:{hits:100,errors:5,ttt:2000,tttSamples:50,modelTtt:2000,modelSamples:50}}});
  r=await page.evaluate(()=>{
   const words=HiKeybr.currentLessonText.split(/\s+/);
   const withK=words.filter(w=>HiKeybr.unicodeToKrutiDev(w.replace('।','')).includes('d')).length;

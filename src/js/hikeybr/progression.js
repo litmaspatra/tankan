@@ -290,7 +290,12 @@
             
             'चिह्न', 'वह्नि',
             'चाँद', 'हँसी',  'बाँस',
-            'ऊन', 'ऊपर', 'ऊर्जा', 'ऊँचा'
+            'ऊन', 'ऊपर', 'ऊर्जा', 'ऊँचा',
+
+            // ळ words (Kartik's final pick, 2026-11-08) from his Rajasthani +
+            // Marathi lists. All convert to regular bytes, ळ = G (Shift+G).
+            'बाळक', 'पाळी', 'काळजो', 'हळदी', 'बाळू', 'झोळी', 'नळ', 'मंगळ',
+            'होळी', 'वेळ', 'काळ', 'खळो', 'बळद', 'कमळ'
         ];
 
         // Supplemental word data is a reviewed common-word allowlist. The retained original core includes prior FrequencyWords adaptations.

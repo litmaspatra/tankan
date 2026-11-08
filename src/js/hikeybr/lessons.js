@@ -223,7 +223,10 @@
             // glyph. The whole lesson spreads across the weakest unlocked keys
             // instead (Kartik 2026-11-08). Top 5 by smoothed time-to-type, so a
             // lesson repairs several weak spots rather than hammering one.
-            const allUnlocked=!reviewMode&&highestUnlocked>=LAST_TRAINABLE_INDEX;
+            // The final level (ळ) first gets its own focused lessons; weakness
+            // rotation takes over once the final key has been trained.
+            const finalKeyTrained=((keyStats[KEY_PROGRESSION[LAST_TRAINABLE_INDEX].k]||{}).targetLessons||0)>=3;
+            const allUnlocked=!reviewMode&&highestUnlocked>=LAST_TRAINABLE_INDEX&&finalKeyTrained;
             const weakRotation=allUnlocked?unlockedItems.filter(item=>!item.skip&&((keyStats[item.k]||{}).tttSamples||0)>=6)
                 .sort((a,b)=>keyStats[b.k].ttt-keyStats[a.k].ttt).slice(0,5):[];
             let weakTurn=0;
