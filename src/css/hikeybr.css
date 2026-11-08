@@ -160,20 +160,13 @@
             --chip-border: #2b3fbf;
         }
 
-        /* ───────────────────────────────────────────────────────────
-           ANGULAR SHAPE LANGUAGE
-           Zero rounded corners; major surfaces get chamfered
-           (clipped) corners. Deliberately not keybr's soft look.
-           ─────────────────────────────────────────────────────────── */
+        /* Square-corner shape language. The chamfered (clip-path polygon)
+           corners were removed per user request - they read as broken,
+           chopped corners on the key box and nearby panels. */
         *, *::before, *::after { border-radius: 0 !important; }
-        .target-card, #lesson-result, .workspace-bar, .modal-card, #results-modal .modal-content, .card-surface {
-            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-        }
+        .target-card, #lesson-result, .workspace-bar, .modal-card, #results-modal .modal-content, .card-surface,
         .key, .kb-key {
-            clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
-        }
-        .key, .kb-key {
-            clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+            clip-path: none;
         }
         ::selection { background: var(--accent); color: var(--bg); }
 

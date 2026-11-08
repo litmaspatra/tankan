@@ -176,15 +176,12 @@
     border-radius: 0 !important;
 }
 
-/* Major surfaces get the signature angular chamfer */
+/* Chamfered clip-path corners removed per user request (2026-11-08):
+   they read as broken/chopped corners. Square corners remain. */
 .alt-card, .target-card, #lesson-result, .workspace-bar, .modal-card,
-.modal-content, #results-modal .modal-content, .card-surface, .alt-sand-card {
-    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-}
-
-/* Virtual keyboard keys get micro-chamfer */
+.modal-content, #results-modal .modal-content, .card-surface, .alt-sand-card,
 .key, .kb-key, .k-key, .mash-key {
-    clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+    clip-path: none;
 }
 
 /* Small interactive controls get FULL rectangular borders with 3px accent edge (NO chamfer) */
