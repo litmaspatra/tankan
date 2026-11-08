@@ -36,6 +36,21 @@ const path=require('node:path');
  assert.equal(await page.locator('#metric-unlocked').textContent(),'6');
  await setJump('auto');assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),5);
  await setJump('0');await page.reload();assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),5,'reload resumes auto');
+ // Review mode must announce itself and offer a way back: a quiet review
+ // session looks exactly like a stuck unlock (readiness can read 100%).
+ await setJump('2');
+ assert.equal(await page.locator('#review-banner').isVisible(),true,'review banner shows');
+ assert.match(await page.locator('#review-banner-text').textContent(),/unlocking is paused/);
+ await page.locator('#review-resume-btn').click();
+ assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),5,'resume returns to the frontier key');
+ assert.equal(await page.locator('#jump-select').inputValue(),'auto','resume restores auto');
+ assert.equal(await page.locator('#review-banner').isVisible(),false,'banner hides after resume');
+ // Tiny pools mix context words for variety instead of robotic two-word loops.
+ await setJump('2');
+ const variety=await page.evaluate(()=>{const t=HiKeybr.targetKrutiText.trim().split(/\s+/);return {n:t.length,distinct:new Set(t).size,on:t.filter(w=>w.includes('f')).length};});
+ assert.ok(variety.distinct>=8,'tiny review pool gains variety (got '+variety.distinct+')');
+ assert.ok(variety.on>=variety.n/2,'reviewed key still dominates (got '+variety.on+'/'+variety.n+')');
+ await setJump('auto');
  await fresh({unlockedIndex:0,highestUnlocked:3});assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),3,'repair old starter save');
  await setJump('0');assert.ok(await page.evaluate(()=>HiKeybr.targetKrutiText.includes('d')));
  await setJump('auto');

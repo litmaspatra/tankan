@@ -228,6 +228,15 @@
             regenerateLesson();
         });
 
+        if (el.reviewResumeBtn) el.reviewResumeBtn.addEventListener('click', () => {
+            reviewMode = false;
+            unlockedIndex = highestUnlocked;
+            targetKeyBuffer = [];
+            populateJumpSelect();
+            saveStorage();
+            regenerateLesson();
+        });
+
         el.wordsSelect.addEventListener('change', ()=>{saveStorage();regenerateLesson();});
         // ---- Lessons panel (keybr-style) ----
         const $id=id=>document.getElementById(id);

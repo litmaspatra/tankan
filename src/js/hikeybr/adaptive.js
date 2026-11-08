@@ -101,6 +101,13 @@
             if (document.getElementById('metric-total-keys')) document.getElementById('metric-total-keys').textContent = activeTotal;
             if (document.getElementById('total-keys-header')) document.getElementById('total-keys-header').textContent = activeTotal;
             el.jumpSelect.value = reviewMode ? String(unlockedIndex) : 'auto';
+            // Review pauses unlocking - say so loudly. A quiet review session
+            // looks exactly like a stuck unlock (readiness can read 100% on a
+            // mastered key while nothing ever advances).
+            if (el.reviewBanner) {
+                el.reviewBanner.hidden = !reviewMode;
+                if (reviewMode) el.reviewBannerText.textContent = `Reviewing ${currentItem.h} (key ${unlockedIndex + 1}) - key unlocking is paused.`;
+            }
             const weak = reviewKey();
             if (weak && !lessonCompleted) el.leadSamplesStatus.textContent += ` - practice focus: ${weak.h}`;
             if(!unlockState.ready){
@@ -255,7 +262,10 @@
                 const lessonAccuracy=sessionCorrect/Math.max(1,sessionCorrect+sessionErrors)*100;
                 stats.lastAccuracy=lessonAccuracy;
                 if(item.k===KEY_PROGRESSION[unlockedIndex].k)stats.recentLessonAccuracy=lessonAccuracy;
-                if(lessonAccuracy>=95&&(times.length>=10||(KEY_PROGRESSION.indexOf(item)<INITIAL_UNLOCKED_COUNT&&times.length>=3&&(stats.modelSamples||0)+times.length>=10)))stats.accurateBest=Math.min(stats.accurateBest||Infinity,mean);
+                // Bank from cumulative clean timings, not one lesson's worth: tiny
+                // pools or short lessons can keep a single lesson under 10 clean
+                // timings forever, which used to make accurateBest unreachable.
+                if(lessonAccuracy>=95&&times.length>=3&&(stats.modelSamples||0)+times.length>=10)stats.accurateBest=Math.min(stats.accurateBest||Infinity,mean);
                 stats.modelSamples=(stats.modelSamples||0)+times.length;
                 if(item.k===KEY_PROGRESSION[unlockedIndex].k&&(item.conjunct||item.alt))stats.targetSamples=(stats.targetSamples||0)+times.length;
                 stats.ttt=stats.modelTtt;stats.tttSamples=stats.modelSamples;

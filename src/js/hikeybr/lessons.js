@@ -214,6 +214,10 @@
                 return true;
             });
             const focusedPool = realPool.filter(word => targetHits(word) > 0);
+            // Variety filler for tiny target pools: unlocked-pool words without
+            // the target key, drawn rarely so the target still dominates.
+            const contextPool = realPool.filter(word => !targetHits(word));
+            const tinyPool = pool => pool.length > 0 && pool.length < 4 && contextPool.length > 0;
             const weak = reviewKey();
             const reviewSequence = weak ? ((!weak.conjunct&&!weak.alt&&weak.k.length===1)?weak.k:unicodeToKrutiDev(weak.h)) : '';
             let reviewPool = weak ? focusedPool.filter(word => unicodeToKrutiDev(word).includes(reviewSequence)) : [];
@@ -303,13 +307,19 @@
                         chosen=drawReal()||previous;
                     }
                 } else if (reviewWords < reviewQuota) {
-                    chosen = draw(reviewPool)||draw(focusedPool)||drawReal();
+                    // Tiny review pools (one or two words) loop robotically -
+                    // mix in a context word every fourth slot for variety.
+                    if(tinyPool(reviewPool.length?reviewPool:focusedPool)&&w%4===3)chosen=draw(contextPool)||draw(focusedPool)||previous;
+                    else chosen = draw(reviewPool)||draw(focusedPool)||drawReal();
                     if(chosen&&unicodeToKrutiDev(chosen).includes(reviewSequence))reviewWords++;
                 } else if (focusedPool.length) {
-                    // Target-key training: never widen past the focused pool -
-                    // every lesson word keeps containing the current key. The
-                    // deck balances the small pool's repeats instead.
-                    chosen = draw(focusedPool)||previous;
+                    // Target-key training: focused words dominate, so every
+                    // trained word keeps containing the current key. A tiny
+                    // pool (early levels, rare-key review) degenerates into
+                    // robotic two-word alternation, so every fourth slot then
+                    // draws a context word from the unlocked pool instead.
+                    if(tinyPool(focusedPool)&&w%4===3)chosen=draw(contextPool)||draw(focusedPool)||previous;
+                    else chosen = draw(focusedPool)||previous;
                 } else {
                     // No real word can teach this glyph yet (digits, rare Alt codes,
                     // or very early levels). Use only the minimum short glyph drill.
@@ -334,7 +344,7 @@
                 }
             }
             if(opts.punct>0&&unlockedKeySet.has('a')){for(let i=0;i<words.length;i++)if(Math.random()*100<opts.punct&&!words[i].includes('।'))words[i]+='।';}
-            document.getElementById('word-pool-status').textContent=`${focusedPool.length.toLocaleString()} target words / ${eligibleRealWords.length.toLocaleString()} usable at this level / ${encodedWordBank.length.toLocaleString()} total`+(mixedStarters?' · Mixed starter practice: क, ा, ि, र.':allUnlocked?(weakRotation.length?` · All keys unlocked: lessons target your weakest keys (${weakRotation.map(item=>item.h).join(', ')}).`:' · All keys unlocked: full-bank practice.'):focusedPool.length===0?' · New glyph plus unlocked-word practice.':focusedPool.length<wordCount?' · Small target pool: some repetition needed.':'');
+            document.getElementById('word-pool-status').textContent=`${focusedPool.length.toLocaleString()} target words / ${eligibleRealWords.length.toLocaleString()} usable at this level / ${encodedWordBank.length.toLocaleString()} total`+(mixedStarters?' · Mixed starter practice: क, ा, ि, र.':allUnlocked?(weakRotation.length?` · All keys unlocked: lessons target your weakest keys (${weakRotation.map(item=>item.h).join(', ')}).`:' · All keys unlocked: full-bank practice.'):focusedPool.length===0?' · New glyph plus unlocked-word practice.':tinyPool(focusedPool)?' · Tiny target pool: context words mixed in for variety.':focusedPool.length<wordCount?' · Small target pool: some repetition needed.':'');
             return words.join(' ');
         }
 
