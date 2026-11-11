@@ -4,7 +4,7 @@
   "private": true,
   "description": "Adaptive Hindi typing tutor for the Remington (GAIL) layout, in the spirit of keybr.com",
   "scripts": {
-    "test": "node tests/progression.cjs && node tests/ui.cjs && node tests/hikeymash.cjs && node tests/graphs.cjs && node tests/backup.cjs && node tests/themes-zoom.cjs && node tests/official.cjs"
+    "test": "node tests/progression.cjs && node tests/ui.cjs && node tests/hikeymash.cjs && node tests/graphs.cjs && node tests/backup.cjs && node tests/themes-zoom.cjs && node tests/official.cjs && node tests/unlock-banking.cjs"
   },
   "devDependencies": {
     "playwright": "^1.49.0"
