@@ -30,6 +30,16 @@ const path = require('node:path');
     for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 100);
     await page.waitForTimeout(500);
     assert.ok(await keyH() < k0 - 1, 'wheel down over keyboard shrinks it');
+    // Max-size cap (Kartik 2026-11-11): wheel up must never exceed the natural size.
+    for (let i = 0; i < 20; i++) await page.mouse.wheel(0, -100);
+    await page.waitForTimeout(500);
+    const kc = await keyH();
+    assert.ok(Math.abs(kc - k0) < 1.5, 'keyboard is capped at its natural size (' + kc + ' vs ' + k0 + ')');
+    assert.ok((await page.evaluate(() => document.getElementById('keyboard-frame').getBoundingClientRect().width)) <= 885, 'frame width stays within the practice column');
+    // A pre-cap save with kbScale>1 renders at the natural size, not larger.
+    await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('hikeybr_store_v3')); d.opts = Object.assign({}, d.opts, { kbScale: 1.5 }); localStorage.setItem('hikeybr_store_v3', JSON.stringify(d)); });
+    await page.reload(); await page.waitForTimeout(700);
+    assert.ok(Math.abs((await keyH()) - k0) < 1.5, 'old >1 save renders at the natural size');
     await page.waitForTimeout(400);
     await page.reload();
     await page.waitForTimeout(700);

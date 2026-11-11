@@ -361,7 +361,9 @@
                 kb.addEventListener('wheel',e=>{
                     if(e.ctrlKey||!e.deltaY)return;
                     e.preventDefault();
-                    opts.kbScale=Math.round(clamp((opts.kbScale||1)*(1+step(e)),0.5,1.6)*100)/100;
+                    // Cap at the natural size: wider than the practice column is
+                    // unusable (Kartik 2026-11-11). Shrink stays proportional.
+                    opts.kbScale=Math.round(clamp((opts.kbScale||1)*(1+step(e)),0.5,1)*100)/100;
                     applyPracticeTextPrefs();later();
                 },{passive:false});
                 kb.addEventListener('click',e=>{if(e.altKey){opts.kbScale=1;applyPracticeTextPrefs();saveStorage();}});

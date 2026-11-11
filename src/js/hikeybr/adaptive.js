@@ -226,12 +226,14 @@
 
         function applyPracticeTextPrefs() {
             document.documentElement.style.setProperty('--practice-fs', (opts.textSize || 32) + 'px');
-            document.documentElement.style.setProperty('--kb-scale', String(opts.kbScale || 1));
+            // Saves from before the max-size cap can hold kbScale>1: render them at 1.
+            const kbScaleEff=Math.min(1,Math.max(0.5,opts.kbScale||1));
+            document.documentElement.style.setProperty('--kb-scale', String(kbScaleEff));
             document.documentElement.classList.toggle('cur-off', opts.cursorHighlight === false);
             // transform: scale() keeps the frame's original layout box; pull the
             // space below up (shrink) or push it down (grow) to compensate.
             const kbf=document.getElementById('keyboard-frame');
-            if(kbf)kbf.style.marginBottom=Math.round(((opts.kbScale||1)-1)*kbf.offsetHeight)+'px';
+            if(kbf)kbf.style.marginBottom=Math.round((kbScaleEff-1)*kbf.offsetHeight)+'px';
         }
         function applyDisplayPreferences() {
             document.documentElement.dataset.lessonStyle = lessonStyle;
