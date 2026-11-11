@@ -42,6 +42,16 @@ const path=require('node:path');
  await clickTab('official');await page.waitForTimeout(400);
  assert.match(await page.locator('#practice-event').textContent(),/need a few more unlocked keys/,'empty pool explains itself');
  assert.equal(await page.evaluate(()=>document.querySelector('.ls-tab.active').dataset.lstab),'words','falls back to guided lessons');
+ // The explanation must survive the guided path overwriting #word-pool-status,
+ // with counts, or the mode looks silently broken (only a 5s flash).
+ const poolLine=await page.locator('#word-pool-status').textContent();
+ assert.match(poolLine,/Official words need a few more unlocked keys/,'pool status keeps the official explanation after fallback');
+ assert.match(poolLine,/only 1 of 776 fit your 4 unlocked keys/,'pool status carries pool and key counts');
+ assert.match(poolLine,/guided practice shown instead/,'pool status says what is shown instead');
+ assert.match(poolLine,/usable at this level/,'guided pool stats still follow the explanation');
+ // ...and it clears once the user explicitly picks another tab
+ await clickTab('words');await page.waitForTimeout(400);
+ assert.ok(!/Official words/.test(await page.locator('#word-pool-status').textContent()),'explanation clears after explicitly choosing guided lessons');
 
  // 4. Guided lessons untouched after switching back
  await fresh({unlockedIndex:15,highestUnlocked:15});

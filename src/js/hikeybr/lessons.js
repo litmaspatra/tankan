@@ -51,6 +51,11 @@
         }
         let lastLessonParaStart=0;
         let forceTab=null;
+        // When official-word practice refuses (tiny pool) and falls back to a
+        // guided lesson, the guided path overwrites #word-pool-status in the
+        // same pass - so the reason must be carried here and re-shown with the
+        // guided stats, or the mode looks silently broken (only a 5s flash).
+        let officialFallbackNote='',officialFallbackAt=-1;
         function currentTab(){if(forceTab)return forceTab;if(textSource==='words')return 'words';if(textSource==='custom')return 'custom';if(textSource==='official')return 'official';const b=findBook(textSource);return (b&&b.kind==='essay')?'essays':'books';}
         function populateTextSources(){
             const books=window.HIKEYBR_BOOKS||[];
@@ -242,9 +247,13 @@
             const pool=useSlow?slow:officialPool();
             const st=document.getElementById('word-pool-status');
             if(pool.length<4){
-                if(st)st.textContent=`Official words: only ${pool.length} fit your unlocked keys so far - unlock a few more keys first.`;
+                const keyCount=KEY_PROGRESSION.filter((it,idx)=>idx<=highestUnlocked&&!it.skip).length;
+                officialFallbackNote=`Official words need a few more unlocked keys: only ${pool.length} of ${OFFICIAL_WORDS.length.toLocaleString()} fit your ${keyCount} unlocked keys so far (4+ needed) - guided practice shown instead.`;
+                officialFallbackAt=highestUnlocked;
+                if(st)st.textContent=officialFallbackNote;
                 return '';
             }
+            officialFallbackNote='';officialFallbackAt=-1;
             let cards=[...pool].sort(()=>Math.random()-.5),i=0,prev='';
             const out=[];
             while(out.length<count){
@@ -263,7 +272,7 @@
                 const t=officialLessonText(parseInt(el.wordsSelect.value,10)||25);
                 if(t)return t;
                 textSource='words';syncSettingsUI();
-                flashPracticeEvent('Official words need a few more unlocked keys - too few fit your keys so far.');
+                flashPracticeEvent(officialFallbackNote||'Official words need a few more unlocked keys - too few fit your keys so far.');
             }
             if(textSource!=='words'){const book=findBook(textSource);if(book){const t=bookLessonText(book,parseInt(el.wordsSelect.value,10)||25);if(t)return t;}textSource='words';syncSettingsUI();}
             const {unlockedItems, unlockedKeySet} = unlockedKeyContext();
@@ -426,7 +435,8 @@
                 }
             }
             if(opts.punct>0&&unlockedKeySet.has('a')){for(let i=0;i<words.length;i++)if(Math.random()*100<opts.punct&&!words[i].includes('।'))words[i]+='।';}
-            document.getElementById('word-pool-status').textContent=`${focusedPool.length.toLocaleString()} target words / ${eligibleRealWords.length.toLocaleString()} usable at this level / ${encodedWordBank.length.toLocaleString()} total`+(mixedStarters?' · Mixed starter practice: क, ा, ि, र.':allUnlocked?(weakRotation.length?` · All keys unlocked: lessons target your weakest keys (${weakRotation.map(item=>item.h).join(', ')}).`:' · All keys unlocked: full-bank practice.'):focusedPool.length===0?' · New glyph plus unlocked-word practice.':tinyPool(focusedPool)?' · Tiny target pool: context words mixed in for variety.':focusedPool.length<wordCount?' · Small target pool: some repetition needed.':'');
+            const officialPrefix=(officialFallbackNote&&officialFallbackAt===highestUnlocked)?officialFallbackNote+' · ':'';
+            document.getElementById('word-pool-status').textContent=officialPrefix+`${focusedPool.length.toLocaleString()} target words / ${eligibleRealWords.length.toLocaleString()} usable at this level / ${encodedWordBank.length.toLocaleString()} total`+(mixedStarters?' · Mixed starter practice: क, ा, ि, र.':allUnlocked?(weakRotation.length?` · All keys unlocked: lessons target your weakest keys (${weakRotation.map(item=>item.h).join(', ')}).`:' · All keys unlocked: full-bank practice.'):focusedPool.length===0?' · New glyph plus unlocked-word practice.':tinyPool(focusedPool)?' · Tiny target pool: context words mixed in for variety.':focusedPool.length<wordCount?' · Small target pool: some repetition needed.':'');
             lastPracticeFocus=(reviewWords>0&&weak)?weak.h:null;
             return words.join(' ');
         }

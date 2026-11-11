@@ -254,6 +254,7 @@
             else if(tab==='essays'){const le=findBook(opts.lastEssay);textSource=(le&&le.kind==='essay')?opts.lastEssay:((books.find(b=>b.kind==='essay')||{}).id)||'words';}
             else if(tab==='official')textSource='official';
             else textSource=opts.customText.trim()?'custom':'words';
+            if(tab!=='official'){officialFallbackNote='';officialFallbackAt=-1;}
             forceTab=(tab==='custom'&&!opts.customText.trim())?'custom':null;
             saveStorage();syncSettingsUI();regenerateLesson();
             if(forceTab)$id('custom-text').focus({preventScroll:true});else refocus();
