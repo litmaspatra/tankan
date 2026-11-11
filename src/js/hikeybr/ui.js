@@ -79,18 +79,22 @@
                 return;
             }
 
+            // Layout normalization by physical code. Some input sources (phone
+            // soft keyboards, IME composition, automation) deliver the shifted
+            // symbol in e.key with shiftKey=false - trust e.key when it already
+            // IS the shifted symbol, or those sources can never type ~ { } + etc.
             let pressed = e.key;
             if (e.code === 'Space') pressed = ' ';
-            else if (e.code === 'Semicolon') pressed = e.shiftKey ? ':' : ';';
-            else if (e.code === 'Quote') pressed = e.shiftKey ? '"' : "'";
-            else if (e.code === 'Comma') pressed = e.shiftKey ? '<' : ',';
-            else if (e.code === 'Period') pressed = e.shiftKey ? '>' : '.';
-            else if (e.code === 'Slash') pressed = e.shiftKey ? '?' : '/';
-            else if (e.code === 'BracketLeft') pressed = e.shiftKey ? '{' : '[';
-            else if (e.code === 'BracketRight') pressed = e.shiftKey ? '}' : ']';
-            else if (e.code === 'Backquote') pressed = e.shiftKey ? '~' : '`';
-            else if (e.code === 'Equal') pressed = e.shiftKey ? '+' : '=';
-            else if (e.code === 'Minus') pressed = e.shiftKey ? '_' : '-';
+            else if (e.code === 'Semicolon') pressed = (e.shiftKey||e.key===':') ? ':' : ';';
+            else if (e.code === 'Quote') pressed = (e.shiftKey||e.key==='"') ? '"' : "'";
+            else if (e.code === 'Comma') pressed = (e.shiftKey||e.key==='<') ? '<' : ',';
+            else if (e.code === 'Period') pressed = (e.shiftKey||e.key==='>') ? '>' : '.';
+            else if (e.code === 'Slash') pressed = (e.shiftKey||e.key==='?') ? '?' : '/';
+            else if (e.code === 'BracketLeft') pressed = (e.shiftKey||e.key==='{') ? '{' : '[';
+            else if (e.code === 'BracketRight') pressed = (e.shiftKey||e.key==='}') ? '}' : ']';
+            else if (e.code === 'Backquote') pressed = (e.shiftKey||e.key==='~') ? '~' : '`';
+            else if (e.code === 'Equal') pressed = (e.shiftKey||e.key==='+') ? '+' : '=';
+            else if (e.code === 'Minus') pressed = (e.shiftKey||e.key==='_') ? '_' : '-';
 
             const expectedByte=targetKrutiText[cursorIndex];
             const alias=ALT_CODES_CATALOG.find(x=>unicodeToKrutiDev(x.glyph)===expectedByte&&x.gail.length>1);
