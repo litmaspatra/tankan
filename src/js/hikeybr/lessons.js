@@ -100,7 +100,7 @@
             const of=$('opt-font');
             if(of&&!of.options.length){Object.entries(FONT_REGISTRY).forEach(([k,f])=>of.appendChild(new Option(f.label,k)));}
             if(of)of.value=displayFont;
-            const ots=$('opt-text-size');if(ots){ots.value=opts.textSize||32;$('opt-text-size-val').textContent=(opts.textSize||32)+'px';}
+            const ots=$('opt-text-size');if(ots){ots.value=Math.round(opts.textSize||32);$('opt-text-size-val').textContent=Math.round(opts.textSize||32)+'px';}
             applyPracticeTextPrefs();
             updateTextSourceNote();updateBookPanel();
         }

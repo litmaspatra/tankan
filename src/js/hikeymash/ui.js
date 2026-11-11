@@ -133,7 +133,7 @@
             el.keyboardToggleBtn.classList.toggle('active', isKeyboardVisible);
         });
 
-        const themes = ['light', 'sunshine', 'forest', 'dark', 'navy', 'amber'];
+        const themes = ['light', 'sunshine', 'forest', 'dark', 'navy', 'amber', 'epaper', 'blackwhite'];
         el.themeBtn.addEventListener('click', () => {
             const nextIdx = (themes.indexOf(currentTheme) + 1) % themes.length;
             currentTheme = themes[nextIdx];

@@ -1755,3 +1755,71 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
         .stat-card .s-value { font-size: .95rem; }
         .stat-card .s-unit { font-size: .6rem; }
         .stat-card .s-sub { font-size: .58rem; margin-top: 0; }
+
+/* ── Added 2026-11-11: E-paper and Black & White themes (sit alongside the six above) ── */
+/* E-paper: soft grey-white paper, ink text, no colour accent (error is muted red) */
+:root[data-theme="epaper"] {
+    --bg: #e4e3dd;
+    --surface: #ecebe5;
+    --surface-hover: #d9d8d1;
+    --surface-card: #e8e7e1;
+    --border: #8f8e87;
+    --border-subtle: #c4c3bb;
+    --text: #1d1d1b;
+    --text-dim: #4f4f4a;
+    --text-faint: #55554f;
+    --accent: #1d1d1b;
+    --accent-glow: rgba(29, 29, 27, 0.35);
+    --accent-soft: rgba(29, 29, 27, 0.14);
+    --correct: #1d1d1b;
+    --correct-glow: rgba(29, 29, 27, 0.25);
+    --error: #a32a2a;
+    --error-bg: rgba(163, 42, 42, 0.22);
+    --key-bg: #eeede8;
+    --key-border: #8f8e87;
+    --key-bottom: #76756e;
+    --key-active: #1d1d1b;
+    --key-unlocked: #d2d1c9;
+    --key-unlocked-border: #55554f;
+    --chip-bg: #d2d1c9;
+    --chip-border: #1d1d1b;
+}
+:root[data-theme="epaper"] .btn-modal {
+    background: var(--surface-hover) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+/* Black & White: true black, white text, neutral grey controls; mistakes are a white block */
+:root[data-theme="blackwhite"] {
+    --bg: #000000;
+    --surface: #0b0b0b;
+    --surface-hover: #1a1a1a;
+    --surface-card: #050505;
+    --border: #4a4a4a;
+    --border-subtle: #262626;
+    --text: #ffffff;
+    --text-dim: #a6a6a6;
+    --text-faint: #8f8f8f;
+    --accent: #ffffff;
+    --accent-glow: rgba(255, 255, 255, 0.35);
+    --accent-soft: rgba(255, 255, 255, 0.14);
+    --correct: #ffffff;
+    --correct-glow: rgba(255, 255, 255, 0.25);
+    --error: #ffffff;
+    --error-bg: rgba(255, 255, 255, 0.5);
+    --key-bg: #080808;
+    --key-border: #4a4a4a;
+    --key-bottom: #2a2a2a;
+    --key-active: #ffffff;
+    --key-unlocked: #262626;
+    --key-unlocked-border: #9a9a9a;
+    --chip-bg: #262626;
+    --chip-border: #ffffff;
+}
+:root[data-theme="blackwhite"] .btn-modal {
+    background: var(--surface-hover) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+

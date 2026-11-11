@@ -332,6 +332,35 @@
             displayFont=requested;if(document.getElementById('display-font-select'))document.getElementById('display-font-select').value=displayFont;saveStorage();applyDisplayPreferences();regenerateLesson();
         };
         $id('opt-text-size').oninput=e=>{opts.textSize=parseInt(e.target.value,10)||32;$id('opt-text-size-val').textContent=opts.textSize+'px';applyPracticeTextPrefs();saveStorage();};
+        /* Wheel zoom like keybr: the wheel over the typing text (and over the on-screen
+           keyboard) scales it by ~5% per notch; Alt+click resets. Ctrl+wheel (browser zoom)
+           and the wheel anywhere else are left alone, so ordinary page scroll still works. */
+        (function(){
+            let saveT=null;
+            const later=()=>{clearTimeout(saveT);saveT=setTimeout(saveStorage,250);};
+            const step=e=>-Math.sign(e.deltaY)*0.05*Math.min(1,Math.max(0.2,Math.abs(e.deltaY)/100));
+            const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+            const syncSize=()=>{const s=$id('opt-text-size'),l=$id('opt-text-size-val');if(s)s.value=Math.round(opts.textSize);if(l)l.textContent=Math.round(opts.textSize)+'px';};
+            const canvas=$id('typing-canvas'),kb=$id('keyboard-frame');
+            if(canvas){
+                canvas.addEventListener('wheel',e=>{
+                    if(e.ctrlKey||!e.deltaY)return;
+                    e.preventDefault();
+                    opts.textSize=Math.round(clamp((opts.textSize||32)*(1+step(e)),18,64)*10)/10;
+                    applyPracticeTextPrefs();syncSize();later();
+                },{passive:false});
+                canvas.addEventListener('click',e=>{if(e.altKey){opts.textSize=32;applyPracticeTextPrefs();syncSize();saveStorage();}});
+            }
+            if(kb){
+                kb.addEventListener('wheel',e=>{
+                    if(e.ctrlKey||!e.deltaY)return;
+                    e.preventDefault();
+                    opts.kbScale=Math.round(clamp((opts.kbScale||1)*(1+step(e)),0.5,1.6)*100)/100;
+                    applyPracticeTextPrefs();later();
+                },{passive:false});
+                kb.addEventListener('click',e=>{if(e.altKey){opts.kbScale=1;applyPracticeTextPrefs();saveStorage();}});
+            }
+        })();
         $id('custom-text').onchange=e=>{opts.customText=e.target.value;Object.keys(bookWordCache).forEach(k=>{if(k.startsWith('custom'))delete bookWordCache[k];});
             textSource=opts.customText.trim()?'custom':'words';forceTab=opts.customText.trim()?null:'custom';applyOpts(true);};
         el.speedGoalSelect.addEventListener('input',e=>{const v=parseInt(e.target.value,10);const l=$id('speed-goal-val');if(l)l.textContent=v.toFixed(1)+' wpm';});
@@ -348,7 +377,7 @@
         });
 
         // Theme Toggle
-        const themes = ['dark', 'navy', 'amber', 'light', 'sunshine', 'forest'];
+        const themes = ['dark', 'navy', 'amber', 'light', 'sunshine', 'forest', 'epaper', 'blackwhite'];
         el.themeBtn.addEventListener('click', () => {
             const nextIdx = (themes.indexOf(currentTheme) + 1) % themes.length;
             currentTheme = themes[nextIdx];

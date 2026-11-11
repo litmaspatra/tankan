@@ -219,6 +219,7 @@
 
         function applyPracticeTextPrefs() {
             document.documentElement.style.setProperty('--practice-fs', (opts.textSize || 32) + 'px');
+            document.documentElement.style.setProperty('--kb-scale', String(opts.kbScale || 1));
             document.documentElement.classList.toggle('cur-off', opts.cursorHighlight === false);
         }
         function applyDisplayPreferences() {

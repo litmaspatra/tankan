@@ -11,9 +11,9 @@
     <link rel="preload" href="./fonts/DevLys-040-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-021-Italic.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-070-Bold.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261108v">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">    <link rel="stylesheet" href="theme.css?v=20261108v">
-    <link rel="stylesheet" href="src/css/keyboard.css?v=20261108v">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261111a">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">    <link rel="stylesheet" href="theme.css?v=20261111a">
+    <link rel="stylesheet" href="src/css/keyboard.css?v=20261111a">
 </head>
 <body>
 
@@ -114,7 +114,7 @@
 
                     <h4>Text appearance</h4>
                     <div class="ls-row"><label for="opt-font">Font</label><select class="ctrl-select" id="opt-font"></select></div>
-                    <div class="ls-row"><label for="opt-text-size">Paragraph text size</label><input type="range" id="opt-text-size" min="24" max="44" step="1" value="32"><span class="ls-val" id="opt-text-size-val">32px</span></div>
+                    <div class="ls-row"><label for="opt-text-size">Paragraph text size</label><input type="range" id="opt-text-size" min="18" max="64" step="1" value="32"><span class="ls-val" id="opt-text-size-val">32px</span></div>
                     <div class="ls-row"><label>Play sounds</label><span class="ls-radios" id="opt-sounds"><label><input type="radio" name="snd" value="none"> No sounds</label><label><input type="radio" name="snd" value="error"> Error sounds only</label><label><input type="radio" name="snd" value="key"> Key sounds only</label><label><input type="radio" name="snd" value="all"> All sounds</label></span></div>
                     <div class="ls-row"><label for="opt-volume">Volume</label><input type="range" id="opt-volume" min="0" max="100" step="5" value="70"><span class="ls-val" id="opt-volume-val">70%</span></div>
                     <div class="ls-row"><label for="opt-theme">Sound theme</label><select class="ctrl-select" id="opt-theme"><option value="mechanical">Mechanical keyboard</option><option value="typewriter">Typewriter</option><option value="soft">Soft</option><option value="click">Click</option><option value="retro">Retro beep</option><option value="thock">Thock</option></select></div>
@@ -367,7 +367,7 @@
                     <div class="settings-row">
                         <div class="settings-info">
                             <strong>Color Theme</strong>
-                            <p>Six distinct angular palettes: Ink, Peacock, Letterpress, Paper, Marigold, Forest.</p>
+                            <p>Eight palettes: Ink, Peacock, Letterpress, Paper, Marigold, Forest, E-paper, Black &amp; White.</p>
                         </div>
                         <div class="settings-ctrl">
                             <select class="ctrl-select" id="theme-select">
@@ -377,6 +377,8 @@
                                 <option value="light">Paper (Default)</option>
                                 <option value="sunshine">Marigold</option>
                                 <option value="forest">Forest</option>
+                                <option value="epaper">E-paper</option>
+                                <option value="blackwhite">Black &amp; White</option>
                             </select>
                         </div>
                     </div>
@@ -511,22 +513,22 @@
     <!-- ═══════════════════════════════════════════════════════════
          APPLICATION JAVASCRIPT
          ═══════════════════════════════════════════════════════════ -->
-    <script src="data/books/nirmala.js?v=20261108v"></script>
-    <script src="data/books/godan.js?v=20261108v"></script>
-    <script src="books.js?v=20261108v"></script>
-    <script src="data/essays.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/progression.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/state.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/audio.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/storage.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/engine.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/keyboard.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/adaptive.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/lessons.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/display.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/input.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/ui.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/backup.js?v=20261108v"></script>
-    <script src="src/js/hikeybr/init.js?v=20261108v"></script>
+    <script src="data/books/nirmala.js?v=20261111a"></script>
+    <script src="data/books/godan.js?v=20261111a"></script>
+    <script src="books.js?v=20261111a"></script>
+    <script src="data/essays.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/progression.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/state.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/audio.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/storage.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/engine.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/keyboard.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/adaptive.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/lessons.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/display.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/input.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/ui.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/backup.js?v=20261111a"></script>
+    <script src="src/js/hikeybr/init.js?v=20261111a"></script>
 </body>
 </html>
