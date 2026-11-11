@@ -8,6 +8,7 @@
         let highestUnlocked=unlockedIndex, pausedAt=null, pausedTotal=0, lessonEndedAt=null, hiddenWords=[],lastHiddenWord=null;
         let keyStats = {}; // { key: { hits: 0, errors: 0, ttt: 0, tttSamples: 0 } }
         let wordStats = {}; // { displayWord: { n, ms, last } } - per-word clean timings for the slow-words drill
+        let lastPracticeFocus = null; // weakest key actually present in the current lesson's words, else null
         let pendingUnlockIndex = null;
         let lessonCompleted = false;
         let targetKeyBuffer = []; // Rolling sliding window of recent hits on target key

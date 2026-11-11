@@ -131,7 +131,10 @@
         function updateLessonPreview(){
             const keys=document.getElementById('lp-keys');if(!keys)return;
             keys.replaceChildren();
-            const free=textSource!=='words';
+            // Books/essays/custom accept any text, so every key is genuinely in
+            // play there. Official-word mode filters words to unlocked keys, so
+            // the strip must show the real unlock state instead.
+            const free=textSource!=='words'&&textSource!=='official';
             KEY_PROGRESSION.forEach((item,idx)=>{
                 if(item.skip)return; // preview matches the strip: trainable keys only
                 const c=document.createElement('span');
@@ -140,7 +143,13 @@
             });
             const cur=document.getElementById('lp-current');
             const item=KEY_PROGRESSION[unlockedIndex];
-            cur.textContent=free?'All keys are unlocked (practice text, no unlocking).':'Current key: '+item.h+' ('+(item.alt?'Alt+'+item.alt:(item.conjunct?(item.finger||item.h):item.k.toUpperCase()))+')';
+            if(free)cur.textContent='All keys are unlocked (practice text, no unlocking).';
+            else if(textSource==='official'){
+                const total=KEY_PROGRESSION.filter(it=>!it.skip).length;
+                const got=KEY_PROGRESSION.filter((it,idx)=>idx<=highestUnlocked&&!it.skip).length;
+                cur.textContent=got+' of '+total+' keys unlocked · key unlocking is paused while practising official words.';
+            }
+            else cur.textContent='Current key: '+item.h+' ('+(item.alt?'Alt+'+item.alt:(item.conjunct?(item.finger||item.h):item.k.toUpperCase()))+')';
             const smp=document.getElementById('lp-sample');
             smp.textContent=(currentLessonText||'').split(' ').slice(0,8).join(' ')+' …';
         }
@@ -249,6 +258,7 @@
         }
 
         function generateLessonText() {
+            lastPracticeFocus=null; // only the guided path below can set this
             if(textSource==='official'){
                 const t=officialLessonText(parseInt(el.wordsSelect.value,10)||25);
                 if(t)return t;
@@ -417,6 +427,7 @@
             }
             if(opts.punct>0&&unlockedKeySet.has('a')){for(let i=0;i<words.length;i++)if(Math.random()*100<opts.punct&&!words[i].includes('।'))words[i]+='।';}
             document.getElementById('word-pool-status').textContent=`${focusedPool.length.toLocaleString()} target words / ${eligibleRealWords.length.toLocaleString()} usable at this level / ${encodedWordBank.length.toLocaleString()} total`+(mixedStarters?' · Mixed starter practice: क, ा, ि, र.':allUnlocked?(weakRotation.length?` · All keys unlocked: lessons target your weakest keys (${weakRotation.map(item=>item.h).join(', ')}).`:' · All keys unlocked: full-bank practice.'):focusedPool.length===0?' · New glyph plus unlocked-word practice.':tinyPool(focusedPool)?' · Tiny target pool: context words mixed in for variety.':focusedPool.length<wordCount?' · Small target pool: some repetition needed.':'');
+            lastPracticeFocus=(reviewWords>0&&weak)?weak.h:null;
             return words.join(' ');
         }
 

@@ -22,6 +22,12 @@ const path=require('node:path');
  assert.ok(new Set(words).size>=10,'official lesson has variety (got '+new Set(words).size+')');
  assert.match(await page.locator('#text-source-note').textContent(),/unlocking is paused/);
  assert.match(await page.locator('#official-info').textContent(),/89 of 776/);
+ // Lesson Preview shows the real unlock state, not the book-mode "all keys" claim
+ const lp=await page.evaluate(()=>({on:document.querySelectorAll('#lp-keys .lp-key.on').length,all:document.querySelectorAll('#lp-keys .lp-key').length,cur:document.getElementById('lp-current').textContent}));
+ assert.equal(lp.on,16,'preview marks exactly the 16 unlocked trainable keys');
+ assert.match(lp.cur,/16 of \d+ keys unlocked/,'preview caption states the real unlock count');
+ assert.match(lp.cur,/paused/,'preview caption explains unlocking is paused');
+ assert.ok(!/All keys are unlocked/.test(lp.cur),'no all-keys-unlocked claim in official mode');
 
  // 2. Words use only unlocked keys: every byte must be physically typeable at hu=15
  const typed=await page.evaluate(()=>{

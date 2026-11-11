@@ -108,13 +108,16 @@
                 el.reviewBanner.hidden = !reviewMode;
                 if (reviewMode) el.reviewBannerText.textContent = `Reviewing ${currentItem.h} (key ${unlockedIndex + 1}) - key unlocking is paused.`;
             }
-            const weak = reviewKey();
-            if (weak && !lessonCompleted) el.leadSamplesStatus.textContent += ` - practice focus: ${weak.h}`;
+            // Name a focus key only when the current lesson actually contains
+            // it: a weakest key with no dual-key words can't appear, and
+            // labelling it "practice focus" while every word targets the
+            // current key reads like a stuck unlock (Kartik 2026-11-11).
+            if (lastPracticeFocus && !lessonCompleted) el.leadSamplesStatus.textContent += ` - practice focus: ${lastPracticeFocus}`;
             if(!unlockState.ready){
                 const current=keyStats[currentItem.k],unmet=[];
                 if((current.recentLessonAccuracy||current.lastAccuracy||0)<95)unmet.push('need 95% lesson accuracy');
                 if((current.modelSamples||0)<10)unmet.push('need '+(10-(current.modelSamples||0))+' more clean timings');
-                if((current.accurateBest||Infinity)>12000/targetSpeedGoal)unmet.push(currentItem.h+' key best '+(unlockState.measuredBest?(12000/unlockState.measuredBest).toFixed(1):'0.0')+' / '+targetSpeedGoal+' WPM goal');
+                if((current.accurateBest||Infinity)>12000/targetSpeedGoal)unmet.push(currentItem.h+" key's own best "+(unlockState.measuredBest?(12000/unlockState.measuredBest).toFixed(1):'0.0')+' / '+targetSpeedGoal+' WPM goal (not lesson WPM)');
                 if(!unlockState.starterReady)unmet.push('calibrating starter keys');
                 if(!unlockState.strictOk)unmet.push('earlier keys must also reach the target speed');
                 if(unmet.length)el.leadSamplesStatus.textContent+=' · '+unmet.join(' · ');
