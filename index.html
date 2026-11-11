@@ -11,9 +11,9 @@
     <link rel="preload" href="./fonts/DevLys-040-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-021-Italic.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-070-Bold.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261111b">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261111c">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/keyboard.css?v=20261111b">
+    <link rel="stylesheet" href="src/css/keyboard.css?v=20261111c">
 </head>
 <body>
 
@@ -70,6 +70,7 @@
                     <button type="button" class="ls-tab" data-lstab="words" role="tab">Guided lessons</button>
                     <button type="button" class="ls-tab" data-lstab="books" role="tab">Books</button>
                     <button type="button" class="ls-tab" data-lstab="essays" role="tab">Essays (निबंध)</button>
+                    <button type="button" class="ls-tab" data-lstab="official" role="tab">Official words (कार्यालयी)</button>
                     <button type="button" class="ls-tab" data-lstab="custom" role="tab">Custom text</button>
                 </div>
                 <div class="ls-body">
@@ -92,6 +93,10 @@
                         <div class="ls-row"><label for="para-range">Paragraph</label><input type="range" id="para-range" min="1" max="1" step="1" value="1"><span class="ls-val"><button type="button" class="ls-step" id="para-prev" aria-label="Previous paragraph">◀</button><button type="button" class="ls-step" id="para-next" aria-label="Next paragraph">▶</button> <span id="para-val">#1</span></span></div>
                         <div class="para-list" id="para-list"></div>
                         <label class="ls-check"><input type="checkbox" id="opt-removepunct"> Remove punctuation characters</label>
+                    </div>
+                    <div class="ls-pane" data-pane="official">
+                        <p class="ls-note" id="official-info">Formal words from government and office writing, filtered to the keys you have unlocked.</p>
+                        <label class="ls-check"><input type="checkbox" id="opt-slow-words"> Practice only my slow words (<span id="slow-words-count">0</span> recorded)</label>
                     </div>
                     <div class="ls-pane" data-pane="custom">
                         <textarea id="custom-text" rows="4" placeholder="यहाँ अपना हिंदी पाठ चिपकाएँ (Paste your own Hindi text here). Words that cannot be typed on the Remington layout are skipped."></textarea>
@@ -190,7 +195,7 @@
                 </div>
                 <div class="stat-card" id="stat-card-book">
                     <span class="s-label" id="metric-book-label">Book Progress</span>
-                    <div class="s-value"><span id="metric-book-para">&#8211;</span><span class="s-unit">/ <span id="metric-book-total">&#8211;</span> paras</span></div>
+                    <div class="s-value"><span id="metric-book-para">&#8211;</span><span class="s-unit">/ <span id="metric-book-total">&#8211;</span> <span id="metric-book-unit">paras</span></span></div>
                     <span class="s-sub" id="metric-book-title"></span>
                 </div>
             </div>
@@ -513,22 +518,22 @@
     <!-- ═══════════════════════════════════════════════════════════
          APPLICATION JAVASCRIPT
          ═══════════════════════════════════════════════════════════ -->
-    <script src="data/books/nirmala.js?v=20261111b"></script>
-    <script src="data/books/godan.js?v=20261111b"></script>
-    <script src="books.js?v=20261111b"></script>
-    <script src="data/essays.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/progression.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/state.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/audio.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/storage.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/engine.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/keyboard.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/adaptive.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/lessons.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/display.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/input.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/ui.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/backup.js?v=20261111b"></script>
-    <script src="src/js/hikeybr/init.js?v=20261111b"></script>
+    <script src="data/books/nirmala.js?v=20261111c"></script>
+    <script src="data/books/godan.js?v=20261111c"></script>
+    <script src="books.js?v=20261111c"></script>
+    <script src="data/essays.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/progression.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/state.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/audio.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/storage.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/engine.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/keyboard.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/adaptive.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/lessons.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/display.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/input.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/ui.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/backup.js?v=20261111c"></script>
+    <script src="src/js/hikeybr/init.js?v=20261111c"></script>
 </body>
 </html>

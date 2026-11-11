@@ -114,7 +114,7 @@
                 const current=keyStats[currentItem.k],unmet=[];
                 if((current.recentLessonAccuracy||current.lastAccuracy||0)<95)unmet.push('need 95% lesson accuracy');
                 if((current.modelSamples||0)<10)unmet.push('need '+(10-(current.modelSamples||0))+' more clean timings');
-                if((current.accurateBest||Infinity)>12000/targetSpeedGoal)unmet.push('best '+(unlockState.measuredBest?(12000/unlockState.measuredBest).toFixed(1):'0.0')+' / '+targetSpeedGoal+' WPM goal');
+                if((current.accurateBest||Infinity)>12000/targetSpeedGoal)unmet.push(currentItem.h+' key best '+(unlockState.measuredBest?(12000/unlockState.measuredBest).toFixed(1):'0.0')+' / '+targetSpeedGoal+' WPM goal');
                 if(!unlockState.starterReady)unmet.push('calibrating starter keys');
                 if(!unlockState.strictOk)unmet.push('earlier keys must also reach the target speed');
                 if(unmet.length)el.leadSamplesStatus.textContent+=' · '+unmet.join(' · ');
@@ -221,6 +221,10 @@
             document.documentElement.style.setProperty('--practice-fs', (opts.textSize || 32) + 'px');
             document.documentElement.style.setProperty('--kb-scale', String(opts.kbScale || 1));
             document.documentElement.classList.toggle('cur-off', opts.cursorHighlight === false);
+            // transform: scale() keeps the frame's original layout box; pull the
+            // space below up (shrink) or push it down (grow) to compensate.
+            const kbf=document.getElementById('keyboard-frame');
+            if(kbf)kbf.style.marginBottom=Math.round(((opts.kbScale||1)-1)*kbf.offsetHeight)+'px';
         }
         function applyDisplayPreferences() {
             document.documentElement.dataset.lessonStyle = lessonStyle;
@@ -283,6 +287,23 @@
         }
         function recordCompletedLesson() {
             commitKeyMeasurements();
+            // Per-word clean timings for the official-mode slow-words drill:
+            // group accepted input units by spaces, aligned with display words.
+            try{
+                const displayWords=currentLessonText.trim().split(/\s+/);
+                const groups=[[]];
+                for(const e of measurementEvents){if(e.key===' ')groups.push([]);else groups[groups.length-1].push(e);}
+                if(groups.length===displayWords.length){
+                    groups.forEach((g,i)=>{
+                        if(!g.length||g.some(e=>e.typo||e.ms<=0||e.ms>12000))return;
+                        const w=displayWords[i].replace(/।+$/,'');if(!w)return;
+                        const ws=wordStats[w]||(wordStats[w]={n:0,ms:0,last:0});
+                        ws.n++;ws.ms+=g.reduce((s,e)=>s+e.ms,0);ws.last=Date.now();
+                    });
+                    const keys=Object.keys(wordStats);
+                    if(keys.length>800)keys.sort((a,b)=>(wordStats[a].n-wordStats[b].n)||(wordStats[a].last-wordStats[b].last)).slice(0,keys.length-800).forEach(k=>delete wordStats[k]);
+                }
+            }catch(_){/* word stats are best-effort; never block a lesson */}
             const elapsedMs=sessionStartTime?Math.max(1,lessonElapsed()):0;
             const elapsed=Math.max(.001,elapsedMs/60000);
             const acc=sessionCorrect/Math.max(1,sessionCorrect+sessionErrors)*100;

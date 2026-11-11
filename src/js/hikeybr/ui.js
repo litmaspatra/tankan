@@ -248,12 +248,14 @@
             if(tab==='words')textSource='words';
             else if(tab==='books'){const lb=findBook(opts.lastBook);textSource=(lb&&lb.kind!=='essay')?opts.lastBook:((books.find(b=>b.kind!=='essay')||{}).id)||'words';}
             else if(tab==='essays'){const le=findBook(opts.lastEssay);textSource=(le&&le.kind==='essay')?opts.lastEssay:((books.find(b=>b.kind==='essay')||{}).id)||'words';}
+            else if(tab==='official')textSource='official';
             else textSource=opts.customText.trim()?'custom':'words';
             forceTab=(tab==='custom'&&!opts.customText.trim())?'custom':null;
             saveStorage();syncSettingsUI();regenerateLesson();
             if(forceTab)$id('custom-text').focus({preventScroll:true});else refocus();
         }));
         $id('book-select').addEventListener('change',e=>{opts.lastBook=e.target.value;textSource=e.target.value;applyOpts(true);refocus();});
+        $id('opt-slow-words').addEventListener('change',e=>{opts.slowWords=e.target.checked;applyOpts(true);refocus();});
         $id('essay-select').addEventListener('change',e=>{opts.lastEssay=e.target.value;textSource=e.target.value;applyOpts(true);refocus();});
         $id('para-range').addEventListener('change',e=>{const b=findBook(textSource);if(!b)return;bookPos[b.id]=parseInt(e.target.value,10)-1;applyOpts(true);refocus();});
         $id('para-range').addEventListener('input',e=>{$id('para-val').textContent='#'+e.target.value;});
@@ -455,6 +457,7 @@
             totalErrorsCount = 0;
             targetKeyBuffer = [];
             keyStats = {};
+            wordStats = {};
             recentLessonWords=[];
             lessonHistory = []; keyLearning = {}; dailyPractice = {day:'',seconds:0}; accuracyStreak=0;
             altCodeBuffer = '';

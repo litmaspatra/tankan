@@ -14,7 +14,11 @@
    ═══════════════════════════════════════════════════════════ */
 
 #keyboard-frame {
-    zoom: var(--kb-scale, 1);
+    /* Proportional wheel scaling: transform keeps width and height in step
+       (zoom flattened the keyboard because the flex frame refilled its
+       container width). Layout compensation happens in JS (margin-bottom). */
+    transform: scale(var(--kb-scale, 1));
+    transform-origin: top center;
     background: var(--surface);
     border: none;
     border-radius: 12px !important;

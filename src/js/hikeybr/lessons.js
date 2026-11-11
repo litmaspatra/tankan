@@ -51,7 +51,7 @@
         }
         let lastLessonParaStart=0;
         let forceTab=null;
-        function currentTab(){if(forceTab)return forceTab;if(textSource==='words')return 'words';if(textSource==='custom')return 'custom';const b=findBook(textSource);return (b&&b.kind==='essay')?'essays':'books';}
+        function currentTab(){if(forceTab)return forceTab;if(textSource==='words')return 'words';if(textSource==='custom')return 'custom';if(textSource==='official')return 'official';const b=findBook(textSource);return (b&&b.kind==='essay')?'essays':'books';}
         function populateTextSources(){
             const books=window.HIKEYBR_BOOKS||[];
             const sel=document.getElementById('book-select');
@@ -93,6 +93,8 @@
             $('opt-removepunct').checked=$('opt-removepunct2').checked=!!opts.removePunct;
             $('opt-stop').checked=!!opts.stopOnError;$('opt-skip').checked=!!opts.spaceSkips;
             $('opt-cursor').checked=opts.cursorHighlight!==false;
+            const osw=$('opt-slow-words');if(osw){osw.checked=!!opts.slowWords;const sc=$('slow-words-count');if(sc)sc.textContent=slowOfficialPool().length;}
+            const oi=$('official-info');if(oi)oi.textContent=`Formal words from government and office writing. ${officialPool().length} of ${OFFICIAL_WORDS.length.toLocaleString()} words fit the keys you have unlocked so far.`;
             document.querySelectorAll('input[name=snd]').forEach(r=>r.checked=r.value===opts.soundMode);
             $('opt-volume').value=opts.volume;$('opt-volume-val').textContent=opts.volume+'%';
             $('opt-theme').value=opts.soundTheme;
@@ -146,8 +148,18 @@
         // "Keys Unlocked" stat. Guided stats stay untouched in words mode.
         function updateBookStatCard(paraPos,paraSpan){
             const paraEl=document.getElementById('metric-book-para');if(!paraEl)return;
+            const unitEl=document.getElementById('metric-book-unit');
+            if(textSource==='official'){
+                document.getElementById('metric-book-label').textContent='Official Word Practice';
+                paraEl.textContent=officialPool().length.toLocaleString();
+                document.getElementById('metric-book-total').textContent=OFFICIAL_WORDS.length.toLocaleString();
+                if(unitEl)unitEl.textContent='words';
+                document.getElementById('metric-book-title').textContent=opts.slowWords?'practising your slow words':'fit your unlocked keys so far';
+                return;
+            }
             const b=textSource==='words'?null:findBook(textSource);
             if(!b)return;
+            if(unitEl)unitEl.textContent='paras';
             const paras=bookParagraphs(b),total=paras.length;
             let pos=(typeof paraPos==='number')?paraPos:(Number.isInteger(bookPos[b.id])?bookPos[b.id]:0);
             if(total)pos=((pos%total)+total)%total;
@@ -158,18 +170,17 @@
         }
         function updateTextSourceNote(){
             const note=document.getElementById('text-source-note');if(!note)return;
-            const b=textSource==='words'?null:findBook(textSource);
-            document.documentElement.classList.toggle('book-mode',!!b);
-            note.textContent=b?(b.id==='custom'?'Custom text: lessons follow your text in order. Key unlocking is paused.':(b.died?`${b.title} by ${b.author} (d. ${b.died}, public domain). Practice mode: lessons follow the text in order, key unlocking is paused. Source: ${b.source}`:`${b.title} - original essay written for Tankan. Practice mode: lessons follow the text in order, key unlocking is paused.`)):'Guided lessons: every lesson is built from the keys you have unlocked.';
+            const official=textSource==='official';
+            const b=(textSource==='words'||official)?null:findBook(textSource);
+            document.documentElement.classList.toggle('book-mode',!!b||official);
+            note.textContent=official?'Official word practice: formal words from government and office writing that use only the keys you have unlocked. Key unlocking is paused.':(b?(b.id==='custom'?'Custom text: lessons follow your text in order. Key unlocking is paused.':(b.died?`${b.title} by ${b.author} (d. ${b.died}, public domain). Practice mode: lessons follow the text in order, key unlocking is paused. Source: ${b.source}`:`${b.title} - original essay written for Tankan. Practice mode: lessons follow the text in order, key unlocking is paused.`)):'Guided lessons: every lesson is built from the keys you have unlocked.');
             updateBookStatCard();
         }
-        function generateLessonText() {
-            if(textSource!=='words'){const book=findBook(textSource);if(book){const t=bookLessonText(book,parseInt(el.wordsSelect.value,10)||25);if(t)return t;}textSource='words';syncSettingsUI();}
+        // Keystroke-based eligibility context for the current unlock frontier
+        // (BUG 4 FIX). Shared by guided lessons and the official-word pool so
+        // both always agree on what the user can type.
+        function unlockedKeyContext(){
             const unlockedItems = KEY_PROGRESSION.slice(0, highestUnlocked + 1);
-            const activeItem = KEY_PROGRESSION[unlockedIndex];
-            const wordCount = Math.max(1,Math.ceil((parseInt(el.wordsSelect.value, 10) || 25)/Math.max(1,opts.repeat)));
-
-            // BUG 4 FIX: Keystroke-based eligibility check
             const SHIFT_BASE = { '~':'`', '!':'1', '@':'2', '#':'3', '$':'4', '%':'5', '^':'6', '&':'7', '*':'8', '(':'9', ')':'0', '_':'-', '+':'=', '{':'[', '}':']', '|':'\\', ':':';', '"':"'", '<':',', '>':'.', '?':'/' };
             const unlockedKeySet = new Set(unlockedItems.map(x => x.k));
             const unlockedBytes = new Set();
@@ -181,7 +192,9 @@
                 }
             });
             const physKey = c => unlockedKeySet.has(c) ? c : (unlockedKeySet.has(c.toLowerCase()) ? c.toLowerCase() : SHIFT_BASE[c]);
-
+            return {unlockedItems, unlockedKeySet, unlockedBytes, physKey};
+        }
+        function eligibleWords(){
             if(!encodedWordBank){
                 const all=[...new Set([...HINDI_WORD_BANK,...FREQUENCY_WORDS,...OFFICIAL_WORDS])].filter(w=>isSuitableWord(w)&&!hiddenWords.includes(w));
                 encodedWordBank=all.map(word=>({word,seq:unicodeToKrutiDev(word)})).filter(item=>{
@@ -189,11 +202,65 @@
                 });
             }
             if(!eligibleWordCache.has(highestUnlocked)){
+                const {unlockedKeySet,unlockedBytes,physKey}=unlockedKeyContext();
                 eligibleWordCache.set(highestUnlocked,encodedWordBank.filter(({seq})=>[...seq].every(c=>{
                     const pk=physKey(c);return unlockedBytes.has(c)||(pk!==undefined&&unlockedKeySet.has(pk));
                 })).map(item=>item.word));
             }
-            const eligibleRealWords=eligibleWordCache.get(highestUnlocked);
+            return eligibleWordCache.get(highestUnlocked);
+        }
+
+        // Official-word practice (कार्यालयी शब्द): formal vocabulary filtered to
+        // the keys the user has unlocked. Never pads with locked-key words.
+        const officialSetCache=new Map();
+        function officialPool(){
+            if(!officialSetCache.has(highestUnlocked)){
+                const eligible=new Set(eligibleWords());
+                officialSetCache.set(highestUnlocked,OFFICIAL_WORDS.filter(w=>eligible.has(w)));
+            }
+            return officialSetCache.get(highestUnlocked);
+        }
+        // The user's slowest official words: clean per-word timings (>=2 samples),
+        // slowest average milliseconds per keystroke first, capped at 40.
+        function slowOfficialPool(){
+            const pace=w=>{const s=wordStats[w];const len=Math.max(1,unicodeToKrutiDev(w).length);return s.ms/s.n/len;};
+            return officialPool().filter(w=>{const s=wordStats[w];return s&&s.n>=2;})
+                .sort((a,b)=>pace(b)-pace(a)).slice(0,40);
+        }
+        function officialLessonText(count){
+            const slow=opts.slowWords?slowOfficialPool():[];
+            const useSlow=slow.length>=4;
+            const pool=useSlow?slow:officialPool();
+            const st=document.getElementById('word-pool-status');
+            if(pool.length<4){
+                if(st)st.textContent=`Official words: only ${pool.length} fit your unlocked keys so far - unlock a few more keys first.`;
+                return '';
+            }
+            let cards=[...pool].sort(()=>Math.random()-.5),i=0,prev='';
+            const out=[];
+            while(out.length<count){
+                if(i>=cards.length){cards=[...pool].sort(()=>Math.random()-.5);i=0;}
+                if(cards[i]===prev){if(i+1<cards.length){const t=cards[i];cards[i]=cards[i+1];cards[i+1]=t;}else{cards=[...pool].sort(()=>Math.random()-.5);i=0;}}
+                prev=cards[i];out.push(cards[i]);i++;
+            }
+            const keyCount=KEY_PROGRESSION.filter((it,idx)=>idx<=highestUnlocked&&!it.skip).length;
+            if(st)st.textContent=(useSlow?`My slow words - slowest ${pool.length} first`:(opts.slowWords?`Only ${slow.length} slow official words recorded so far - using the full pool`:`${pool.length} official words`))+` · fit your ${keyCount} unlocked keys`;
+            return out.join(' ');
+        }
+
+        function generateLessonText() {
+            if(textSource==='official'){
+                const t=officialLessonText(parseInt(el.wordsSelect.value,10)||25);
+                if(t)return t;
+                textSource='words';syncSettingsUI();
+                flashPracticeEvent('Official words need a few more unlocked keys - too few fit your keys so far.');
+            }
+            if(textSource!=='words'){const book=findBook(textSource);if(book){const t=bookLessonText(book,parseInt(el.wordsSelect.value,10)||25);if(t)return t;}textSource='words';syncSettingsUI();}
+            const {unlockedItems, unlockedKeySet} = unlockedKeyContext();
+            const activeItem = KEY_PROGRESSION[unlockedIndex];
+            const wordCount = Math.max(1,Math.ceil((parseInt(el.wordsSelect.value, 10) || 25)/Math.max(1,opts.repeat)));
+
+            const eligibleRealWords=eligibleWords();
 
             const words = [];
 

@@ -42,7 +42,7 @@
                 targetSpeedGoal, textSource, bookPos, opts, wordsPerLesson:el.wordsSelect&&el.wordsSelect.value,
                 totalTypedCount,
                 totalErrorsCount,
-                keyStats, lessonHistory, keyLearning, dailyPractice, accuracyStreak, dailyGoalMinutes, lessonStyle, keyFont, displayFont, measurementVersion:2,
+                keyStats, wordStats, lessonHistory, keyLearning, dailyPractice, accuracyStreak, dailyGoalMinutes, lessonStyle, keyFont, displayFont, measurementVersion:2,
                 dailyStats, totalLessons, totalPracticeSeconds, bestLessonWpm, bestLessonAcc, bestStreak, bestScore,
                 theme: currentTheme,
                 soundEnabled,
@@ -72,7 +72,7 @@
                 bookPos=(data.bookPos&&typeof data.bookPos==='object')?data.bookPos:{};
                 if(data.opts&&typeof data.opts==='object')opts=Object.assign({},DEFAULT_OPTS,data.opts);
                 delete opts.practiceLines; // Remove the retired paragraph-lines setting from existing saves.
-                textSource=(typeof data.textSource==='string'&&(data.textSource==='words'||(data.textSource==='custom'&&opts.customText.trim())||findBook(data.textSource)))?data.textSource:'words';
+                textSource=(typeof data.textSource==='string'&&(data.textSource==='words'||data.textSource==='official'||(data.textSource==='custom'&&opts.customText.trim())||findBook(data.textSource)))?data.textSource:'words';
                 if(el.wordsSelect&&data.wordsPerLesson&&[...el.wordsSelect.options].some(o=>o.value===String(data.wordsPerLesson)))el.wordsSelect.value=String(data.wordsPerLesson);
                 if (typeof data.targetSpeedGoal === 'number') {
                     targetSpeedGoal = data.targetSpeedGoal;
@@ -88,6 +88,7 @@
                         }
                     }
                 }
+                if (data.wordStats && typeof data.wordStats === 'object') wordStats = data.wordStats;
                 lessonHistory = Array.isArray(data.lessonHistory) ? data.lessonHistory.slice(-400) : [];
                 dailyStats=(data.dailyStats&&typeof data.dailyStats==='object')?data.dailyStats:{};
                 totalLessons=typeof data.totalLessons==='number'?data.totalLessons:0;
