@@ -57,7 +57,9 @@
         '<li>On tankan.in open the <strong>Settings</strong> tab and scroll to <strong>Bring your progress from the old site</strong>. Tap that button.</li>' +
         '<li>A small window opens for a moment and closes by itself. If your browser blocks pop-ups, allow them for tankan.in and tap the button again.</li>' +
         '<li>If tankan.in already has some progress, it asks before replacing it. Confirm, and the page reloads with your progress.</li>' +
-        '<li>Open the <strong>Profile</strong> tab on tankan.in and use <strong>Sign in with Google</strong>. Your progress is then saved to your account and follows you to any device.</li>' +
+        '<li>Check the progress arrived (your keys and stats show on tankan.in), then open the <strong>Profile</strong> tab and tap <strong>Sign in with Google</strong>. Signing in alone does not save anything yet.</li>' +
+        '<li>Under the Account card, tankan.in asks <em>Save this device\'s progress to your account?</em> Tap <strong>Save to my account</strong> (<em>Not now</em> keeps it on this device only) and wait for <strong>Saved to your account.</strong></li>' +
+        '<li>If your account already has saved progress, it asks which copy to keep. Nothing is replaced until you choose: <em>Keep this device\'s progress</em> updates the account, <em>Use the account copy</em> replaces this device.</li>' +
         '</ol>' +
         '<div class="moved-note">Nothing is deleted from this old site, so you can try again if a step fails. No pop-up or no luck? Open Settings here, tap <em>Download Backup File</em>, then on tankan.in use <em>Choose Backup File</em> and <em>Import</em>.</div>' +
         '<div class="moved-actions"><a class="moved-go" href="' + NEW_URL + '" target="_blank" rel="noopener">Open tankan.in</a><button type="button" id="moved-close">Close</button></div>' +
