@@ -217,7 +217,70 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     assert.ok(bDoc.includes('B-progress') && !bDoc.includes('A-progress'), 'B doc untouched until B chooses');
     await page.context().close();
 
+    // 9. Hide flush: an owed push starts immediately when the page hides,
+    //    not after the debounce (close-tab loss window).
+    page = await newPage();
+    await page.addInitScript(() => { window.TANKAN_SYNC_DEBOUNCE_MS = 60000; });
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'flush' })); });
+    await openSettings(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
+    await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        window.__writes = 0;
+        const s = window.TANKAN_SYNC_TEST_STORE;
+        const orig = s.write.bind(s);
+        s.write = async p => { window.__writes++; return orig(p); };
+        window.dispatchEvent(new Event('tankan-progress-changed'));
+    });
+    await page.waitForTimeout(400);
+    assert.strictEqual(await page.evaluate(() => window.__writes), 0, 'debounced push has not fired yet');
+    await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+    await page.waitForTimeout(400);
+    assert.strictEqual(await page.evaluate(() => window.__writes), 1, 'pagehide starts the owed push immediately');
+    await page.context().close();
+
+    // 10. Offline failure stays owed and flushes on reconnect.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'retry' })); });
+    await openSettings(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
+    await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
+    await page.evaluate(() => { window.__syncFail = true; });
+    await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 5, marker: 'retry' })); window.dispatchEvent(new Event('tankan-progress-changed')); });
+    await page.waitForTimeout(600);
+    assert.match(await page.locator('#sync-status').textContent(), /Could not reach your account/, 'failed save is honest');
+    await page.evaluate(() => { window.__syncFail = false; window.dispatchEvent(new Event('online')); });
+    await page.waitForTimeout(600);
+    const doc10 = JSON.parse(await readCloud(page));
+    assert.ok(doc10.data.hikeybr_store_v3.includes('"unlockedIndex":5'), 'reconnect flush saves the owed change');
+    assert.match(await page.locator('#sync-status').textContent(), /Saved to your account/, 'status recovers after the retry');
+    await page.context().close();
+
+    // 11. Identical sign-in warms the write stream with exactly one identical write.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        const data = { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 4, marker: 'warm' }) };
+        localStorage.setItem('hikeybr_store_v3', data.hikeybr_store_v3);
+        localStorage.setItem('__syncDocs', JSON.stringify({
+            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data }), savedAt: { seconds: 1794000000 } }
+        }));
+    });
+    await openSettings(page);
+    await page.evaluate(() => {
+        window.__writes = 0;
+        const s = window.TANKAN_SYNC_TEST_STORE;
+        const orig = s.write.bind(s);
+        s.write = async p => { window.__writes++; return orig(p); };
+    });
+    await page.click('#google-signin-btn'); await page.waitForTimeout(700);
+    assert.strictEqual(await page.evaluate(() => window.__writes), 1, 'identical sign-in fires exactly one warm-up write');
+    assert.match(await page.locator('#sync-status').textContent(), /Saved to your account/, 'warm-up keeps the saved status');
+    await page.context().close();
+
     await browser.close();
     server.close();
-    console.log('PASS tests/sync.cjs (8 scenarios)');
+    console.log('PASS tests/sync.cjs (11 scenarios)');
 })().catch(e => { console.error('FAIL tests/sync.cjs:', e.message); server.close(); process.exit(1); });

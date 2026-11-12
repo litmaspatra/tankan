@@ -67,22 +67,43 @@
         } catch (_) { return null; }
     };
 
+    let pushPending = false;   // a change is owed to the account but not yet acked
+
     const push = async () => {
         if (!bound || applying || !store) return;
+        pushPending = false;
         setStatus('Saving to your account…');
         try {
             await store.write(window.TANKAN_BACKUP.buildPayload());
             setStatus('Saved to your account.');
         } catch (e) {
+            pushPending = true; // retried on reconnect and on the next change
             setStatus('Could not reach your account - progress is safe on this device and will be saved when you are back online.');
         }
     };
 
     const schedulePush = () => {
         if (!bound) return;
+        pushPending = true;
         clearTimeout(pushTimer);
         pushTimer = setTimeout(push, DEBOUNCE_MS);
     };
+
+    // The first write in a session pays Firestore stream setup (measured live:
+    // ~4-35s cold vs <1s warm), so the 5s debounce plus a tab close can lose a
+    // change. When the page is hidden, start an owed push immediately instead
+    // of waiting out the debounce. Not an unload guarantee - the write simply
+    // starts while the page is still alive.
+    const flushPush = () => {
+        if (!pushPending || !bound || applying || !store) return;
+        clearTimeout(pushTimer);
+        push();
+    };
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flushPush();
+    });
+    window.addEventListener('pagehide', flushPush);
+    window.addEventListener('online', () => { if (pushPending) flushPush(); });
 
     // Capture the pre-sync snapshot BEFORE the apply wipes all hikeybr_ keys,
     // then write it back (the wipe would otherwise erase the snapshot too).
@@ -127,6 +148,10 @@
             } else if (JSON.stringify(cloudObj.data) === JSON.stringify(collect())) {
                 bound = true;
                 setStatus('Saved to your account.');
+                // Warm the write stream with an identical-content write so the
+                // first real change saves in ~1s instead of paying cold stream
+                // setup (tens of seconds) the user may close the tab during.
+                push();
             } else {
                 bound = false;
                 conflictText.textContent = 'This device and your account have different progress. Choose which one to keep - the other copy is replaced only when you say so.';
@@ -171,6 +196,7 @@
     if (!authReady) return;
     authReady.then(client => client.onAuth(user => {
         clearTimeout(pushTimer);
+        pushPending = false;
         // Any auth transition drops the previous account's binding and store
         // synchronously: a racing debounced push must never carry one
         // account's progress into another account's document.
