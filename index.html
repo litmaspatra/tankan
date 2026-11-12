@@ -11,9 +11,9 @@
     <link rel="preload" href="./fonts/DevLys-040-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-021-Italic.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-070-Bold.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261112f">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261112g">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/keyboard.css?v=20261112f">
+    <link rel="stylesheet" href="src/css/keyboard.css?v=20261112g">
 </head>
 <body>
 
@@ -43,6 +43,10 @@
         </nav>
 
         <div class="header-actions">
+            <button class="avatar-corner" id="avatar-corner" title="Profile photo - change in Settings" hidden>
+                <img id="avatar-img" alt="Profile photo" referrerpolicy="no-referrer" hidden>
+                <span id="avatar-initial"></span>
+            </button>
             <button class="btn-icon active" id="sound-toggle-btn" title="Toggle Sound Feedback">
                 <span id="sound-icon">🔊</span>
             </button>
@@ -451,7 +455,20 @@
                                 <button class="btn-modal cancel" id="google-signin-btn">Sign in with Google</button>
                             </div>
                             <div id="account-signed-in" hidden>
-                                <p id="account-name" style="margin:0 0 6px;"></p>
+                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                                    <span class="avatar-corner avatar-preview" id="avatar-preview">
+                                        <img id="avatar-preview-img" alt="Profile photo" referrerpolicy="no-referrer" hidden>
+                                        <span id="avatar-preview-initial"></span>
+                                    </span>
+                                    <p id="account-name" style="margin:0;"></p>
+                                </div>
+                                <div style="margin-bottom:8px;">
+                                    <button class="btn-modal cancel" id="avatar-use-google">Use my Google photo</button>
+                                    <button class="btn-modal cancel" id="avatar-upload-btn" style="margin-left:6px;">Upload a photo</button>
+                                    <button class="btn-modal cancel" id="avatar-remove" style="margin-left:6px;" hidden>Remove custom photo</button>
+                                    <input type="file" id="avatar-file" accept="image/*" hidden>
+                                </div>
+                                <p id="avatar-status" style="margin:0 0 6px; font-size:0.8rem;"></p>
                                 <button class="btn-modal cancel" id="google-signout-btn">Sign out</button>
                             </div>
                             <p id="account-status" style="margin:6px 0 0; font-size:0.8rem;"></p>
@@ -548,24 +565,25 @@
     <!-- ═══════════════════════════════════════════════════════════
          APPLICATION JAVASCRIPT
          ═══════════════════════════════════════════════════════════ -->
-    <script src="data/books/nirmala.js?v=20261112f"></script>
-    <script src="data/books/godan.js?v=20261112f"></script>
-    <script src="books.js?v=20261112f"></script>
-    <script src="data/essays.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/progression.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/state.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/audio.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/storage.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/engine.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/keyboard.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/adaptive.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/lessons.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/display.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/input.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/ui.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/backup.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/auth.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/sync.js?v=20261112f"></script>
-    <script src="src/js/hikeybr/init.js?v=20261112f"></script>
+    <script src="data/books/nirmala.js?v=20261112g"></script>
+    <script src="data/books/godan.js?v=20261112g"></script>
+    <script src="books.js?v=20261112g"></script>
+    <script src="data/essays.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/progression.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/state.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/audio.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/storage.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/engine.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/keyboard.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/adaptive.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/lessons.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/display.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/input.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/ui.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/backup.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/auth.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/sync.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/avatar.js?v=20261112g"></script>
+    <script src="src/js/hikeybr/init.js?v=20261112g"></script>
 </body>
 </html>
