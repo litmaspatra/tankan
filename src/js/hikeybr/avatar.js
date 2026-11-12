@@ -40,8 +40,11 @@
         try { return JSON.parse(localStorage.getItem(keyFor(uid)) || 'null'); }
         catch { return null; }
     };
-    const setCustom = (uid, avatar) => localStorage.setItem(keyFor(uid), JSON.stringify(avatar));
-    const clearCustom = uid => localStorage.removeItem(keyFor(uid));
+    // sync.js pushes on this event; avatar changes must not wait for a
+    // lesson to reach the cloud copy.
+    const notifySync = () => window.dispatchEvent(new Event('tankan-progress-changed'));
+    const setCustom = (uid, avatar) => { localStorage.setItem(keyFor(uid), JSON.stringify(avatar)); notifySync(); };
+    const clearCustom = uid => { localStorage.removeItem(keyFor(uid)); notifySync(); };
 
     // Move every signed-in account's avatar key that is NOT this uid out of
     // the sync sweep's reach, then bring this uid's vaulted choice back.
