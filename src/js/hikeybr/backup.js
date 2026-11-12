@@ -171,17 +171,21 @@
             cancelBtn.addEventListener('click', closeModal);
             modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
+            // Wipe only tankan keys, then write the validated backup.
+            const applyBackupData = obj => {
+                const ours = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (PREFIXES.some(p => k.startsWith(p))) ours.push(k);
+                }
+                ours.forEach(k => localStorage.removeItem(k));
+                Object.entries(obj.data).forEach(([k, v]) => localStorage.setItem(k, v));
+            };
+
             confirmBtn.addEventListener('click', () => {
                 if (!pendingBackup) { closeModal(); return; }
                 try {
-                    // Wipe only tankan keys, then write the validated backup.
-                    const ours = [];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const k = localStorage.key(i);
-                        if (PREFIXES.some(p => k.startsWith(p))) ours.push(k);
-                    }
-                    ours.forEach(k => localStorage.removeItem(k));
-                    Object.entries(pendingBackup.data).forEach(([k, v]) => localStorage.setItem(k, v));
+                    applyBackupData(pendingBackup);
                     modal.classList.remove('open');
                     location.reload();
                 } catch (_) {
@@ -190,4 +194,75 @@
                     setStatus(importStatus, 'This device refused the import (storage full or blocked). Nothing was changed.', false);
                 }
             });
+
+            // ---- Bring your progress from the old site (github.io) ----
+            // One click: open the old site's transfer page as a popup, prove the
+            // request with a one-time nonce + origin/source checks, receive the
+            // backup payload, and import it. The old site is never changed.
+            const OLD_ORIGIN = 'https://litmaspatra.github.io';
+            const bridgeBtn = $('bridge-fetch-btn'), bridgeStatus = $('bridge-status');
+            if (bridgeBtn && bridgeStatus) {
+                if (location.hostname === 'litmaspatra.github.io') {
+                    bridgeBtn.hidden = true; // already on the old site - nothing to bring
+                } else {
+                    bridgeBtn.addEventListener('click', () => {
+                        setStatus(bridgeStatus, '', true);
+                        const nonce = Array.from(crypto.getRandomValues(new Uint8Array(24)), b => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'[b & 63]).join('');
+                        const popup = window.open(OLD_ORIGIN + '/tankan/transfer.html?n=' + nonce, 'tankan-transfer', 'width=560,height=680');
+                        if (!popup) {
+                            setStatus(bridgeStatus, 'Your browser blocked the pop-up. Allow pop-ups for this site and try again - or use Export on the old site and Import here.', false);
+                            return;
+                        }
+                        setStatus(bridgeStatus, 'Talking to the old site...', true);
+                        let timer = null;
+                        const cleanup = () => {
+                            window.removeEventListener('message', onMsg);
+                            if (timer) { clearTimeout(timer); timer = null; }
+                            try { if (!popup.closed) popup.close(); } catch (_) {}
+                        };
+                        const onMsg = e => {
+                            if (e.source !== popup || e.origin !== OLD_ORIGIN) return;
+                            const d = e.data || {};
+                            if (d.n !== nonce) return;
+                            if (d.kind === 'tankan-transfer-ready') {
+                                popup.postMessage({ kind: 'tankan-transfer-send', n: nonce }, OLD_ORIGIN);
+                            } else if (d.kind === 'tankan-transfer-empty') {
+                                cleanup();
+                                setStatus(bridgeStatus, 'No saved progress was found on the old site in this browser.', false);
+                            } else if (d.kind === 'tankan-transfer-payload') {
+                                const err = validate(d.payload);
+                                if (err) {
+                                    cleanup();
+                                    setStatus(bridgeStatus, 'The old site sent something unreadable. Nothing was changed.', false);
+                                    return;
+                                }
+                                cleanup();
+                                let hasExisting = false;
+                                for (let i = 0; i < localStorage.length; i++) {
+                                    const k = localStorage.key(i);
+                                    if (PREFIXES.some(p => k.startsWith(p))) { hasExisting = true; break; }
+                                }
+                                if (hasExisting) {
+                                    // Replacing real progress always asks first.
+                                    startImport(JSON.stringify(d.payload));
+                                    setStatus(bridgeStatus, 'Progress received - confirm the replacement to finish.', true);
+                                } else {
+                                    try {
+                                        applyBackupData(d.payload);
+                                        setStatus(bridgeStatus, 'Progress brought over from the old site - reloading...', true);
+                                        setTimeout(() => location.reload(), 900);
+                                    } catch (_) {
+                                        setStatus(bridgeStatus, 'This device refused the import (storage full or blocked). Nothing was changed.', false);
+                                    }
+                                }
+                            }
+                        };
+                        window.addEventListener('message', onMsg);
+                        timer = setTimeout(() => {
+                            cleanup();
+                            setStatus(bridgeStatus, 'No answer from the old site. If the pop-up did not open, allow pop-ups and try again - or use Export on the old site and Import here.', false);
+                        }, 25000);
+                    });
+                }
+            }
         })();

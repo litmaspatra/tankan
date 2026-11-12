@@ -158,15 +158,20 @@
                 el.sumAvgWpm.textContent = avgWpm.toFixed(2) + ' WPM';
                 el.sumAvgAcc.textContent = Math.round(avgAcc) + '%';
 
+                // History is importable data (backup files restore hikeymash_
+                // keys verbatim), so escape text fields and coerce numbers:
+                // a crafted record must never inject markup here.
+                const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                const num = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
                 el.historyTableBody.innerHTML = '';
                 records.slice(0, 15).forEach(r => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${r.date}</td>
-                        <td><strong>${r.title}</strong></td>
-                        <td style="color:var(--km-accent); font-weight:700;">${r.wpm}</td>
-                        <td>${r.acc}%</td>
-                        <td>${r.time}s</td>
+                        <td>${esc(r && r.date)}</td>
+                        <td><strong>${esc(r && r.title)}</strong></td>
+                        <td style="color:var(--km-accent); font-weight:700;">${num(r && r.wpm)}</td>
+                        <td>${num(r && r.acc)}%</td>
+                        <td>${num(r && r.time)}s</td>
                     `;
                     el.historyTableBody.appendChild(tr);
                 });

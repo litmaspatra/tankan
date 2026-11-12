@@ -54,6 +54,22 @@ const path = require('node:path');
     assert.ok(await page.evaluate(() => !document.body.classList.contains('showing-results')), 'results cleared');
     assert.notEqual(await page.evaluate(() => getComputedStyle(document.getElementById('typing-canvas')).display), 'none', 'typing area back after next');
 
+    // 5b. Stored-XSS regression: a crafted history record (reachable through a
+    //    malicious backup import, which restores hikeymash_ keys verbatim) must
+    //    render as inert text in the history table, never as markup.
+    await page.evaluate(() => localStorage.setItem('hikeymash_history_v1', JSON.stringify([
+        { date: '<img src=x onerror=window.__xss=1>', title: '<svg onload=window.__xss=1>परीक्षण</svg><script>window.__xss=1</script>', wpm: '"><img src=x onerror=window.__xss=1>', acc: '85', time: '10' }
+    ])));
+    await page.evaluate(() => window.__HIKEYMASH__.loadSnippet({ id: 't3', title: 'टेस्ट', author: 'परीक्षक', category: 'prose', genre: 'परीक्षण', text: 'राम' }));
+    const t3 = await page.evaluate(() => window.__HIKEYMASH__.getState().targetKruti);
+    await page.click('#typing-canvas');
+    for (const ch of t3) { if (ch === ' ') await page.keyboard.press('Space'); else await page.keyboard.press(ch); }
+    assert.ok(await page.evaluate(() => document.getElementById('results-modal').classList.contains('open')), 'results show with crafted history present');
+    assert.equal(await page.evaluate(() => window.__xss || 0), 0, 'no injected handler executed');
+    assert.equal(await page.$eval('#history-table-body', el => el.querySelectorAll('img,svg,script').length), 0, 'no markup injected into the history table');
+    assert.ok((await page.locator('#history-table-body').textContent()).includes('<svg onload'), 'payload survives as visible text');
+    await page.click('#modal-next-btn');
+
     // 6. Half-letter conjuncts convert to true KrutiDev half-form bytes.
     assert.equal(await page.evaluate(() => window.__HIKEYMASH__.unicodeToKrutiDev('कृष्णा')), 'd`".kk', 'कृष्णा uses the half-ष byte, not full ष + halant');
     assert.equal(await page.evaluate(() => window.__HIKEYMASH__.unicodeToKrutiDev('लक्ष्मी')), 'y{eh', 'लक्ष्मी uses the half-क्ष byte');

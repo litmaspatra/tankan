@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tankan - Move your progress</title>
+    <style>
+        body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#f5f1e6;color:#26241c;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center}
+        .card{max-width:26rem;margin:1rem;padding:1.5rem;background:#fffdf7;border:1px solid #ddd5c0;border-radius:12px}
+        h1{font-size:1.05rem;margin:0 0 .6rem}
+        p{font-size:.9rem;line-height:1.5;margin:.4rem 0}
+        #transfer-status{font-weight:600}
+        .ok{color:#2e7d32}.err{color:#c62828}
+        a{color:#2c5fb0}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Tankan - Move your progress</h1>
+        <p id="transfer-status">Checking...</p>
+        <p id="transfer-manual" hidden>This page only works when tankan.in opens it for you. Go to
+            <a href="https://tankan.in">tankan.in</a>, open Settings, and use
+            <strong>Bring your progress from the old site</strong>.</p>
+        <p id="transfer-done-note" hidden>You can close this tab if it does not close by itself.</p>
+        <p><small>Nothing is uploaded anywhere: your progress goes straight from this browser tab to your tankan.in tab.</small></p>
+    </div>
+    <script src="transfer.js?v=20261112a"></script>
+</body>
+</html>
