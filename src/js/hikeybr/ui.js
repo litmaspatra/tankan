@@ -180,6 +180,7 @@
                 const data=JSON.parse(r.result);
                 if(!data||typeof data!=='object'||Array.isArray(data))throw 0;
                 localStorage.setItem('hikeybr_store_v3',JSON.stringify(data));
+                window.dispatchEvent(new Event('tankan-progress-changed'));
                 location.reload();
             }catch(_){alert('That file is not a valid Tankan progress export.');}};
             r.readAsText(f);

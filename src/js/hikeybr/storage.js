@@ -51,6 +51,7 @@
             try {
                 localStorage.setItem('hikeybr_store_v3', JSON.stringify(payload));
                 showStorageWarning(null);
+                window.dispatchEvent(new Event('tankan-progress-changed'));
             } catch (e) {
                 showStorageWarning(payload);
             }

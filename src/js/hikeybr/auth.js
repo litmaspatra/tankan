@@ -59,6 +59,9 @@
         };
     })();
 
+    // sync.js attaches its own listener through this handle.
+    window.__tankanAuthClient = clientPromise;
+
     clientPromise.then(client => client.onAuth(render)).catch(() => {
         status.textContent = 'Sign-in is unavailable on this connection right now.';
         signinBtn.disabled = true;

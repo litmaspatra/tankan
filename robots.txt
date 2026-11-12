@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tankan.in/sitemap.xml

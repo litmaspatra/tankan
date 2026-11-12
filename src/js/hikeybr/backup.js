@@ -182,6 +182,10 @@
                 Object.entries(obj.data).forEach(([k, v]) => localStorage.setItem(k, v));
             };
 
+            // Sync module surface: collect/validate/apply/build over the same
+            // versioned backup envelope used by export/import.
+            window.TANKAN_BACKUP = { collect: collectKeys, validate, apply: applyBackupData, buildPayload };
+
             confirmBtn.addEventListener('click', () => {
                 if (!pendingBackup) { closeModal(); return; }
                 try {
