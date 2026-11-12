@@ -250,7 +250,7 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     await page.evaluate(() => { window.__syncFail = true; });
     await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 5, marker: 'retry' })); window.dispatchEvent(new Event('tankan-progress-changed')); });
     await page.waitForTimeout(600);
-    assert.match(await page.locator('#sync-status').textContent(), /Could not reach your account/, 'failed save is honest');
+    assert.match(await page.locator('#sync-status').textContent(), /Could not save to your account/, 'failed save is honest');
     await page.evaluate(() => { window.__syncFail = false; window.dispatchEvent(new Event('online')); });
     await page.waitForTimeout(600);
     const doc10 = JSON.parse(await readCloud(page));
@@ -294,7 +294,7 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
         window.dispatchEvent(new Event('tankan-progress-changed'));
     });
     await page.waitForTimeout(600);
-    assert.match(await page.locator('#sync-status').textContent(), /Could not reach your account/, 'offline save honestly failed');
+    assert.match(await page.locator('#sync-status').textContent(), /Could not save to your account/, 'offline save honestly failed');
     assert.ok(!JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('"unlockedIndex":9'), 'failed change never reached the account');
     await page.goto(base); await page.waitForTimeout(900); // reopen; the auth stub restores the session
     assert.match(await page.locator('#sync-status').textContent(), /Saved to your account/, 'reopen pushes the owed change');
@@ -408,7 +408,88 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     assert.ok(Object.keys(await cloudData(page)).length === 0, '18: empty account copy untouched');
     await page.context().close();
 
+    // 19. Failed save: Retry button shows, local progress + owed copy survive a reload, retry saves, button hides.
+    const sv = n => JSON.stringify({ unlockedIndex: n, marker: 'r19' });
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(v => localStorage.setItem('hikeybr_store_v3', v), sv(4));
+    await openProfile(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
+    await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
+    assert.ok(!(await page.locator('#sync-retry').isVisible()), '19: no retry button when saved');
+    await page.evaluate(v => { window.__syncFail = true; localStorage.setItem('hikeybr_store_v3', v); window.dispatchEvent(new Event('tankan-progress-changed')); }, sv(7));
+    await page.waitForTimeout(600);
+    assert.ok(await page.locator('#sync-retry').isVisible(), '19: failed save shows Retry saving');
+    assert.match(await page.locator('#sync-status').textContent(), /safe on this device/, '19: failure text is honest');
+    await page.addInitScript(() => { window.__syncFail = true; });
+    await page.reload(); await page.waitForTimeout(900); await openProfile(page);
+    assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('"unlockedIndex":7'), '19: local progress kept after reload');
+    const st19 = await page.evaluate(() => JSON.parse(localStorage.getItem('tankan_sync_state_u1') || '{}'));
+    assert.ok(st19.owedLocalJson && /unlockedIndex\\+":7/.test(st19.owedLocalJson), '19: durable owed copy kept after failed reload ' + JSON.stringify(st19).slice(0,300));
+    await page.evaluate(() => { window.__syncFail = false; });
+    await page.click('#sync-retry'); await page.waitForTimeout(700);
+    assert.ok((await readCloud(page)).includes('unlockedIndex\\":7'), '19: retry saved the owed change');
+    assert.match(await page.locator('#sync-status').textContent(), /Saved to your account/, '19: status says saved only after success');
+    assert.ok(!(await page.locator('#sync-retry').isVisible()), '19: retry hidden after success');
+    await page.context().close();
+
+    // 20. Failed save, then another device changes the account: Retry must not overwrite it.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(v => localStorage.setItem('hikeybr_store_v3', v), sv(4));
+    await openProfile(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
+    await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
+    await page.evaluate(v => { window.__syncFail = true; localStorage.setItem('hikeybr_store_v3', v); window.dispatchEvent(new Event('tankan-progress-changed')); }, sv(8));
+    await page.waitForTimeout(600);
+    await page.evaluate(() => {
+        window.__syncFail = false;
+        const d = JSON.parse(localStorage.getItem('__syncDocs'));
+        d.u1 = { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T01:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 30, marker: 'other-device20' }) } }), savedAt: { seconds: 1794002000 } };
+        localStorage.setItem('__syncDocs', JSON.stringify(d));
+    });
+    await page.click('#sync-retry'); await page.waitForTimeout(700);
+    assert.ok(await page.locator('#sync-conflict').isVisible(), '20: diverged account copy surfaces the choice on retry');
+    assert.ok((await readCloud(page)).includes('other-device20'), '20: retry did not overwrite the account copy');
+    assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('"unlockedIndex":8'), '20: local progress preserved');
+    await page.context().close();
+
+    // 21. Stuck (slow) save: honest "still saving" text with Retry; late success clears it.
+    page = await newPage();
+    await page.addInitScript(() => { window.TANKAN_SYNC_SLOW_MS = 300; });
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(v => localStorage.setItem('hikeybr_store_v3', v), sv(4));
+    await openProfile(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
+    await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
+    await page.evaluate(v => {
+        const s = window.TANKAN_SYNC_TEST_STORE; const orig = s.write.bind(s);
+        s.write = async p => { await new Promise(r => setTimeout(r, 1200)); return orig(p); };
+        localStorage.setItem('hikeybr_store_v3', v); window.dispatchEvent(new Event('tankan-progress-changed'));
+    }, sv(9));
+    await page.waitForTimeout(800);
+    assert.match(await page.locator('#sync-status').textContent(), /Still saving/, '21: slow save is described as still saving, not saved');
+    assert.ok(await page.locator('#sync-retry').isVisible(), '21: retry offered while stuck');
+    await page.waitForTimeout(1200);
+    assert.match(await page.locator('#sync-status').textContent(), /Saved to your account/, '21: late success shows saved');
+    assert.ok(!(await page.locator('#sync-retry').isVisible()), '21: retry hidden after late success');
+    await page.context().close();
+
+    // 22. Account check itself fails: Retry re-runs the check; it never binds on its own.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(v => { localStorage.setItem('hikeybr_store_v3', v); localStorage.setItem('__authSeed', JSON.stringify({ uid: 'u1', displayName: 'Test User', email: 'test@example.com' })); }, sv(5));
+    await page.addInitScript(() => { const t = window.TANKAN_SYNC_TEST_STORE; t.__origRead = t.read.bind(t); t.read = async () => { if (window.__readFail) throw new Error('down'); return t.__origRead(); }; window.__readFail = true; });
+    await page.reload(); await page.waitForTimeout(900); await openProfile(page);
+    assert.ok(await page.locator('#sync-retry').isVisible(), '22: failed account check offers Retry');
+    assert.ok(!(await page.locator('#sync-bind-prompt').isVisible()) && !(await readCloud(page)), '22: nothing bound or uploaded while the check failed');
+    await page.evaluate(() => { window.__readFail = false; });
+    await page.click('#sync-retry'); await page.waitForTimeout(700);
+    assert.ok(await page.locator('#sync-bind-prompt').isVisible(), '22: after retry the normal bind question is asked');
+    assert.ok(!(await readCloud(page)), '22: retry did not auto-bind or upload');
+    await page.context().close();
+
     await browser.close();
     server.close();
-    console.log('PASS tests/sync.cjs (18 scenarios)');
+    console.log('PASS tests/sync.cjs (22 scenarios)');
 })().catch(e => { console.error('FAIL tests/sync.cjs:', e.message); server.close(); process.exit(1); });

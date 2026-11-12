@@ -78,25 +78,68 @@
     const readState = id => { try { return JSON.parse(localStorage.getItem(stateKey(id)) || '{}'); } catch (_) { return {}; } };
     const writeState = (id, patch) => { const s = readState(id); Object.assign(s, patch); localStorage.setItem(stateKey(id), JSON.stringify(s)); };
 
+    // Retry button: shown only when a save failed or is stuck. It never writes
+    // directly - it re-runs the full account check, so the same guards apply
+    // (owed change is pushed only if the account copy still equals what it
+    // was built on; any divergence goes to the normal choice prompt).
+    const retryBtn = $('sync-retry');
+    let curUser = null;
+    let slowTimer = null;
+    let inFlight = 0;
+    const showRetry = v => { if (retryBtn) retryBtn.hidden = !v; };
+
     const push = async () => {
         if (!bound || applying || !store) return;
         pushPending = false;
+        const snapshot = localJson();
+        const payload = window.TANKAN_BACKUP.buildPayload();
+        const myUid = uid;
+        inFlight++;
+        showRetry(false);
         setStatus('Saving to your account…');
+        clearTimeout(slowTimer);
+        slowTimer = setTimeout(() => {
+            if (inFlight && uid === myUid) {
+                setStatus('Still saving - the connection is slow. Your progress is safe on this device; you can retry.');
+                showRetry(true);
+            }
+        }, window.TANKAN_SYNC_SLOW_MS || 15000);
         try {
-            await store.write(window.TANKAN_BACKUP.buildPayload());
-            writeState(uid, { baseDataJson: localJson(), owedLocalJson: null });
-            setStatus('Saved to your account.');
+            await store.write(payload);
+            if (uid !== myUid) return;
+            const now = localJson();
+            const newer = now !== snapshot;
+            writeState(myUid, { baseDataJson: snapshot, owedLocalJson: newer ? now : null });
+            if (newer) {
+                setStatus('Saving newer changes to your account…');
+            } else {
+                setStatus('Saved to your account.');
+                showRetry(false);
+            }
         } catch (e) {
+            if (uid !== myUid) return;
             pushPending = true; // retried on reconnect, on reopen, and on the next change
-            writeState(uid, { owedLocalJson: localJson() });
-            setStatus('Could not reach your account - progress is safe on this device and will be saved when you are back online.');
+            writeState(myUid, { owedLocalJson: localJson() });
+            setStatus('Could not save to your account - your progress is safe on this device. Tap Retry saving, or it will retry when you are back online.');
+            showRetry(true);
+        } finally {
+            inFlight--;
+            if (!inFlight) clearTimeout(slowTimer);
         }
     };
+
+    if (retryBtn) retryBtn.addEventListener('click', () => {
+        if (!curUser || curUser.uid !== uid) return;
+        clearTimeout(pushTimer);
+        showRetry(false);
+        onSignedIn(curUser);
+    });
 
     const schedulePush = () => {
         if (!bound) return;
         pushPending = true;
         writeState(uid, { owedLocalJson: localJson() });
+        if (!inFlight) setStatus('Changes not saved to your account yet - saving shortly.');
         clearTimeout(pushTimer);
         pushTimer = setTimeout(push, DEBOUNCE_MS);
     };
@@ -131,7 +174,9 @@
 
     const onSignedIn = async user => {
         uid = user.uid;
+        curUser = user;
         hideBoxes();
+        showRetry(false);
         setStatus('Checking your account…');
         // What this device held when the check began. The read can take many
         // seconds on a cold Firestore stream; progress made meanwhile is a
@@ -207,8 +252,10 @@
                 setStatus('Progress differs between this device and your account.');
             }
         } catch (e) {
+            if (uid !== user.uid) return;
             bound = false;
-            setStatus('Could not reach your account - progress is safe on this device. Saving will resume when you are back online.');
+            setStatus('Could not reach your account - progress is safe on this device. Tap Retry saving to check again.');
+            showRetry(true);
         }
     };
 
@@ -248,6 +295,9 @@
         bound = false;
         store = null;
         uid = user ? user.uid : null;
+        curUser = user || null;
+        clearTimeout(slowTimer);
+        showRetry(false);
         hideBoxes();
         if (user) onSignedIn(user);
         else setStatus('');
