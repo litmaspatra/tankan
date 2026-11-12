@@ -6,6 +6,7 @@ const path=require('node:path');
 (async()=>{
  const browser=await chromium.launch({headless:true});
  const page=await browser.newPage({viewport:{width:1366,height:900}});
+ await page.setDefaultNavigationTimeout(90000);page.setDefaultTimeout(60000); // parallel runs of many Chromiums made the 30s goto default time out (observed once)
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const url='file://'+path.resolve(__dirname,'../index.html');
  const fresh=async(seed)=>{await page.goto(url);await page.evaluate(seed=>{localStorage.clear();if(seed)localStorage.setItem('hikeybr_store_v3',JSON.stringify(seed));},seed);await page.reload();await page.waitForTimeout(400);};
