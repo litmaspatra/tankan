@@ -47,7 +47,22 @@ const path = require('node:path');
     await page.click('#typing-canvas', { modifiers: ['Alt'] });
     await page.waitForTimeout(500);
     assert.equal(await fs(), 32, 'Alt+click resets text size');
+    // Phones: the slider's full 18-64 range must apply (a min() cap at 1.75rem
+    // once made every value above 28px render identically - "size doesn't change").
+    const mpage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    mpage.on('pageerror', e => errors.push(e.message));
+    await mpage.goto('file://' + path.resolve(__dirname, '../index.html'));
+    await mpage.evaluate(() => localStorage.clear());
+    await mpage.reload();
+    await mpage.waitForTimeout(700);
+    const mfs = () => mpage.evaluate(() => parseFloat(getComputedStyle(document.getElementById('text-stream-container')).fontSize));
+    const setSlider = v => mpage.evaluate(val => { const s = document.getElementById('opt-text-size'); s.value = val; s.dispatchEvent(new Event('input', { bubbles: true })); }, v);
+    await setSlider(48); await mpage.waitForTimeout(400);
+    assert.ok(Math.abs((await mfs()) - 48) < 1.2, 'phone slider applies 48px (got ' + (await mfs()) + ')');
+    await setSlider(22); await mpage.waitForTimeout(400);
+    assert.ok(Math.abs((await mfs()) - 22) < 1.2, 'phone slider applies 22px (got ' + (await mfs()) + ')');
+    await mpage.close();
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log('PASS: eight themes, theme persistence, wheel zoom of text/keyboard, reset.');
+    console.log('PASS: eight themes, theme persistence, wheel zoom of text/keyboard, reset, phone text-size range.');
 })();

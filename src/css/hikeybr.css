@@ -1720,7 +1720,9 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
             .text-stream-container { font-size: var(--practice-fs, clamp(1.3rem, 2vw, 1.55rem)) !important; }
         }
         @media (max-width: 650px) {
-            .text-stream-container { font-size: min(var(--practice-fs, 1.3rem), 1.75rem) !important; height: 4.9em !important; max-height: 4.9em !important; }
+            /* No silent cap: the slider's promise is that every value 18-64
+               applies. The 4.9em scroll box keeps tall sizes bounded. */
+            .text-stream-container { font-size: var(--practice-fs, 1.3rem) !important; height: 4.9em !important; max-height: 4.9em !important; }
         }
 
         /* Keep the whole practice view inside one 1366x768-class viewport */
