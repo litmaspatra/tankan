@@ -67,6 +67,12 @@
     signinBtn.addEventListener('click', async () => {
         status.textContent = 'Opening Google sign-in…';
         signinBtn.disabled = true;
+        // Watchdog: if popup-close detection is ever blocked (COOP) the SDK
+        // promise stays pending - reset the waiting UI rather than sticking.
+        const watchdog = setTimeout(() => {
+            status.textContent = '';
+            signinBtn.disabled = false;
+        }, 30000);
         try {
             const client = await clientPromise;
             await client.signIn();
@@ -77,6 +83,7 @@
                 ? 'Sign-in was closed before it finished - nothing changed.'
                 : 'Sign-in did not complete. Your progress on this device is unchanged.';
         } finally {
+            clearTimeout(watchdog);
             signinBtn.disabled = false;
         }
     });
