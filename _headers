@@ -1,9 +1,10 @@
 # Cloudflare Pages headers (tankan.pages.dev / tankan.in).
 # GitHub Pages ignores this file; the bridge does not depend on any header.
-# NOTE for future Firebase auth: the SDK loaded from a CDN will need
-# script-src widened for that origin when login work lands.
+# Firebase Auth: SDK is vendored same-origin (src/js/vendor/) so script-src
+# stays 'self'. connect-src allows the two Auth API endpoints; frame-src
+# allows the authDomain helper iframe the SDK uses for popup/redirect flows.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://tankan-6e340.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
