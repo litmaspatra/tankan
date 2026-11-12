@@ -45,14 +45,28 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
                     return Promise.resolve();
                 }
             };
+            window.__authSwitch = u => {
+                window.__authUser = u;
+                if (u) localStorage.setItem('__authSeed', JSON.stringify(u));
+                else localStorage.removeItem('__authSeed');
+                window.__authCbs.forEach(cb => cb(u));
+            };
             window.TANKAN_SYNC_TEST_STORE = {
                 _docs() { return JSON.parse(localStorage.getItem('__syncDocs') || '{}'); },
                 _save(d) { localStorage.setItem('__syncDocs', JSON.stringify(d)); },
-                async read() { return this._docs().u1 || null; },
+                _key() { return (window.__authUser || {}).uid || 'u1'; },
+                async read() {
+                    if (window.__syncReadDelay) {
+                        const d = window.__syncReadDelay;
+                        window.__syncReadDelay = 0;
+                        await new Promise(r => setTimeout(r, d));
+                    }
+                    return this._docs()[this._key()] || null;
+                },
                 async write(payload) {
                     if (window.__syncFail) throw new Error('unavailable');
                     const d = this._docs();
-                    d.u1 = { payload, savedAt: { seconds: 1794000000 } };
+                    d[this._key()] = { payload, savedAt: { seconds: 1794000000 } };
                     this._save(d);
                 }
             };
@@ -159,7 +173,51 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     assert.match(await page.locator('#sync-status').textContent(), /safe on this device/, 'failed save is honest about local safety');
     await page.context().close();
 
+    // 7. Account switch A->B, B's cloud empty: asks before binding, and a
+    // progress change racing the async transition never lands A's data in B's doc.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'A-progress' })));
+    await openSettings(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
+    await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
+    assert.ok(((await page.evaluate(() => JSON.parse(localStorage.getItem('__syncDocs') || '{}').u1 || {})).payload || '').includes('A-progress'), 'A bound and saved to A doc');
+    await page.evaluate(() => {
+        window.__syncReadDelay = 400; // keep the account read in flight
+        window.__authSwitch({ uid: 'u2', displayName: 'B User', email: 'b@example.com' });
+        setTimeout(() => window.dispatchEvent(new Event('tankan-progress-changed')), 50); // mid-transition practice change
+    });
+    await page.waitForTimeout(900);
+    assert.ok(await page.locator('#sync-bind-prompt').isVisible(), 'switch to an empty-B account asks before binding');
+    assert.match(await page.locator('#sync-bind-text').textContent(), /b@example.com/, 'bind prompt names the B account');
+    assert.ok(!JSON.parse(await page.evaluate(() => localStorage.getItem('__syncDocs') || '{}')).u2, 'no silent upload of A progress into B doc across the async transition');
+    await page.click('#sync-bind-skip'); await page.waitForTimeout(200);
+    assert.ok(!JSON.parse(await page.evaluate(() => localStorage.getItem('__syncDocs') || '{}')).u2, 'declining the B bind writes nothing');
+    await page.context().close();
+
+    // 8. Account switch A->B, B's cloud differs: conflict surfaces, B doc untouched before a choice.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'A-progress' }));
+        localStorage.setItem('__syncDocs', JSON.stringify({
+            u2: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 7, marker: 'B-progress' }) } }), savedAt: { seconds: 1794000000 } }
+        }));
+    });
+    await openSettings(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
+    await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        window.dispatchEvent(new Event('tankan-progress-changed')); // pending debounce at the moment of the switch
+        window.__authSwitch({ uid: 'u2', displayName: 'B User', email: 'b@example.com' });
+    });
+    await page.waitForTimeout(800);
+    assert.ok(await page.locator('#sync-conflict').isVisible(), 'A->B switch with different B cloud surfaces the conflict');
+    const bDoc = await page.evaluate(() => (JSON.parse(localStorage.getItem('__syncDocs') || '{}').u2 || {}).payload || '');
+    assert.ok(bDoc.includes('B-progress') && !bDoc.includes('A-progress'), 'B doc untouched until B chooses');
+    await page.context().close();
+
     await browser.close();
     server.close();
-    console.log('PASS tests/sync.cjs (6 scenarios)');
+    console.log('PASS tests/sync.cjs (8 scenarios)');
 })().catch(e => { console.error('FAIL tests/sync.cjs:', e.message); server.close(); process.exit(1); });

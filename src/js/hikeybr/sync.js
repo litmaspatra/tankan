@@ -171,7 +171,14 @@
     if (!authReady) return;
     authReady.then(client => client.onAuth(user => {
         clearTimeout(pushTimer);
+        // Any auth transition drops the previous account's binding and store
+        // synchronously: a racing debounced push must never carry one
+        // account's progress into another account's document.
+        bound = false;
+        store = null;
+        uid = user ? user.uid : null;
+        hideBoxes();
         if (user) onSignedIn(user);
-        else { uid = null; store = null; bound = false; hideBoxes(); setStatus(''); }
+        else setStatus('');
     })).catch(() => {});
 })();
