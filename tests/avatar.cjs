@@ -52,6 +52,10 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     await page.waitForTimeout(200);
     assert.ok(await page.locator('#avatar-corner').isVisible(), 'signed in: header avatar visible');
     assert.strictEqual(await page.locator('#avatar-img').getAttribute('src'), PIXEL, 'default is the Google photo');
+    // Circle regression: the global * { border-radius: 0 !important } reset must not square the avatar.
+    const radii = await page.evaluate(() => ['#avatar-corner', '#avatar-img', '#avatar-preview', '#avatar-preview-img']
+        .map(sel => getComputedStyle(document.querySelector(sel)).borderRadius));
+    assert.ok(radii.every(r => r === '50%'), 'avatar circle wins over the global radius reset, got: ' + radii.join(','));
     await openSettings(page);
     assert.strictEqual(await page.locator('#avatar-preview-img').getAttribute('src'), PIXEL, 'settings preview matches');
     assert.ok(await page.locator('#avatar-use-google').isHidden(), 'google button hidden while already on google photo');
