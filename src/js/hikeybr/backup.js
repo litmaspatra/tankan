@@ -30,6 +30,11 @@
                 const data = {};
                 for (let i = 0; i < localStorage.length; i++) {
                     const k = localStorage.key(i);
+                    // hikeybr_presync_backup is sync's internal rollback
+                    // snapshot, not progress: carrying it into payloads
+                    // would make a restored device look different from its
+                    // account copy and loop the conflict dialog.
+                    if (k === 'hikeybr_presync_backup') continue;
                     if (PREFIXES.some(p => k.startsWith(p))) data[k] = localStorage.getItem(k);
                 }
                 return data;

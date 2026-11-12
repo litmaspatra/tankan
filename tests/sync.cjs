@@ -126,6 +126,14 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     assert.ok(after.cur.includes('"marker":"account"'), 'account choice replaces local progress');
     const preData = after.pre && JSON.parse(after.pre).data;
     assert.ok(preData && preData.hikeybr_store_v3.includes('"marker":"device"'), 'pre-sync snapshot keeps the replaced device progress');
+
+    // Regression: the internal presync snapshot must not make the restored
+    // device look different from its account copy on the next sign-in.
+    await page.reload(); await page.waitForTimeout(400);
+    await openSettings(page);
+    await page.waitForTimeout(500);
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()), 'no false conflict after restore with presync snapshot present');
+    assert.match(await page.locator('#sync-status').textContent(), /Saved to your account/, 'restored device compares equal to its account copy');
     await page.context().close();
 
     page = await newPage();
