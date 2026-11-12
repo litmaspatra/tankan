@@ -133,11 +133,17 @@
         uid = user.uid;
         hideBoxes();
         setStatus('Checking your account…');
+        // What this device held when the check began. The read can take many
+        // seconds on a cold Firestore stream; progress made meanwhile is a
+        // change built on this snapshot (see 'changedDuringCheck' below).
+        const startLocal = localJson();
         try {
             store = await getStore();
             const doc = await store.read();
+            if (uid !== user.uid) return; // account changed mid-check: a newer check owns the state
             const cloudObj = doc && parseCloud(doc);
             const local = localJson();
+            const changedDuringCheck = local !== startLocal;
             const localEmpty = !hasLocalProgress();
 
             // Owed-state recovery: a change that never reached the account
@@ -149,6 +155,19 @@
             if (st.owedLocalJson && cloudObj && JSON.stringify(cloudObj.data) === st.baseDataJson && local === st.owedLocalJson) {
                 bound = true;
                 hideBoxes();
+                push();
+                return;
+            }
+
+            // Progress made while this check was still reading. It is safe to
+            // save only when the account copy is exactly what the change built
+            // on (or the account has nothing and the device had nothing): then
+            // nothing on either side is overwritten. Anything else falls
+            // through to the normal ask/conflict flow below.
+            if (changedDuringCheck && ((cloudObj && JSON.stringify(cloudObj.data) === startLocal) || ((!doc || !cloudObj) && startLocal === '{}'))) {
+                bound = true;
+                hideBoxes();
+                writeState(user.uid, { baseDataJson: cloudObj ? startLocal : '{}', owedLocalJson: local });
                 push();
                 return;
             }

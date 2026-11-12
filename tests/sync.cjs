@@ -353,7 +353,62 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('"unlockedIndex":7'), 'returning to A saves the owed change');
     await page.context().close();
 
+    // 15-18. Changes made while "Checking your account..." is still running (a
+    // cold Firestore read took 12s live). They must not be dropped from sync and
+    // must not trip a conflict when the account copy is exactly what they built on.
+    const envelope = data => JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data });
+    const signedInReload = async (pg, docs, localKeys, duringKeys) => {
+        await pg.goto(base); await pg.waitForTimeout(300);
+        await pg.evaluate(([docs, localKeys]) => {
+            localStorage.setItem('__authSeed', JSON.stringify({ uid: 'u1', displayName: 'Test User', email: 'test@example.com' }));
+            if (docs) localStorage.setItem('__syncDocs', JSON.stringify({ u1: { payload: docs, savedAt: { seconds: 1794000000 } } }));
+            Object.entries(localKeys).forEach(([k, v]) => localStorage.setItem(k, v));
+        }, [docs, localKeys]);
+        await pg.addInitScript(() => { window.__syncReadDelay = 1500; });
+        await pg.reload();
+        await openProfile(pg);
+        await pg.waitForTimeout(300); // still inside the delayed read
+        await pg.evaluate(keys => {
+            Object.entries(keys).forEach(([k, v]) => localStorage.setItem(k, v));
+            window.dispatchEvent(new Event('tankan-progress-changed'));
+        }, duringKeys);
+        await pg.waitForTimeout(2600); // read finishes, debounce + push
+    };
+    const cloudData = pg => pg.evaluate(() => { const d = (JSON.parse(localStorage.getItem('__syncDocs') || '{}').u1 || {}).payload; return d ? JSON.parse(d).data : null; });
+
+    // 15. Account copy equals the device at sign-in; the user keeps practising during the check.
+    page = await newPage();
+    await signedInReload(page, envelope({ hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5 }) }),
+        { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5 }) }, { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 6 }) });
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()), '15: no conflict when the account copy is what the change built on');
+    assert.ok((await cloudData(page)).hikeybr_store_v3.includes('"unlockedIndex":6'), '15: change made during the check reaches the account without another change');
+    assert.strictEqual((await page.evaluate(() => JSON.parse(localStorage.getItem('tankan_sync_state_u1') || '{}'))).owedLocalJson, null, '15: nothing left owed');
+    await page.context().close();
+
+    // 16. Empty device, empty account; first progress arrives during the check.
+    page = await newPage();
+    await signedInReload(page, null, {}, { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 1 }) });
+    assert.ok(!(await page.locator('#sync-bind-prompt').isVisible()), '16: no bind prompt for a device that was empty when sign-in started');
+    const c16 = await cloudData(page);
+    assert.ok(c16 && c16.hikeybr_store_v3.includes('"unlockedIndex":1'), '16: first progress made during the check is saved');
+    await page.context().close();
+
+    // 17. Another device saved different progress: a change during the check must NOT overwrite it; the user chooses.
+    page = await newPage();
+    await signedInReload(page, envelope({ hikeybr_store_v3: JSON.stringify({ unlockedIndex: 9, marker: 'other-device' }) }),
+        { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5 }) }, { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 6 }) });
+    assert.ok(await page.locator('#sync-conflict').isVisible(), '17: differing account copy still asks');
+    assert.ok((await cloudData(page)).hikeybr_store_v3.includes('other-device'), '17: account copy untouched before a choice');
+    await page.context().close();
+
+    // 18. Account holds an empty backup (e.g. after removing the only item) and the device has data: asks, never auto-pushes.
+    page = await newPage();
+    await signedInReload(page, envelope({}), { hikeybr_avatar_u_u1: JSON.stringify({ kind: 'preset', preset: 'smuggrin' }) }, {});
+    assert.ok(await page.locator('#sync-bind-prompt').isVisible(), '18: device data with an empty account copy asks before binding');
+    assert.ok(Object.keys(await cloudData(page)).length === 0, '18: empty account copy untouched');
+    await page.context().close();
+
     await browser.close();
     server.close();
-    console.log('PASS tests/sync.cjs (14 scenarios)');
+    console.log('PASS tests/sync.cjs (18 scenarios)');
 })().catch(e => { console.error('FAIL tests/sync.cjs:', e.message); server.close(); process.exit(1); });

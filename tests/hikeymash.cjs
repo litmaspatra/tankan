@@ -124,9 +124,14 @@ const path = require('node:path');
 
     // 13. Mixed pool serves both cinema and literature with no immediate repeat.
     await page.click('#match-leave-btn');
-    // 400 draws: cinema is ~6% of the pool, so 40 draws missed it ~9% of runs (random flake, not load).
     assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('lobby-screen')).display), 'block', 'LEAVE returns to the lobby');
-    const mixPicks = await page.evaluate(() => Array.from({length: 400}, () => window.__HIKEYMASH__.pickRaceSnippet()));
+    // Deterministic: sweep Math.random across [0,1) so draws cover the whole pool
+    // (cinema is the tail ~6%), instead of hoping a random sample hits it.
+    const mixPicks = await page.evaluate(() => {
+        const real = Math.random; let i = 0; const N = 2000;
+        Math.random = () => ((i++ % N) + 0.5) / N;
+        try { return Array.from({length: N}, () => window.__HIKEYMASH__.pickRaceSnippet()); } finally { Math.random = real; }
+    });
     const cats = new Set(mixPicks.map(p => p.category));
     assert.ok(cats.has('cinema'), 'mixed pool includes cinema');
     assert.ok([...cats].some(c => c && c !== 'cinema'), 'mixed pool includes literature');
