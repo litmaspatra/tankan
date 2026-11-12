@@ -280,7 +280,80 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     assert.match(await page.locator('#sync-status').textContent(), /Saved to your account/, 'warm-up keeps the saved status');
     await page.context().close();
 
+    // 12. Offline change + tab closed: the owed change saves itself on reopen
+    //     when the account copy has not moved.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'owed' })); });
+    await openSettings(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
+    await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        window.__syncFail = true;
+        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 9, marker: 'owed' }));
+        window.dispatchEvent(new Event('tankan-progress-changed'));
+    });
+    await page.waitForTimeout(600);
+    assert.match(await page.locator('#sync-status').textContent(), /Could not reach your account/, 'offline save honestly failed');
+    assert.ok(!JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('"unlockedIndex":9'), 'failed change never reached the account');
+    await page.goto(base); await page.waitForTimeout(900); // reopen; the auth stub restores the session
+    assert.match(await page.locator('#sync-status').textContent(), /Saved to your account/, 'reopen pushes the owed change');
+    const doc12 = JSON.parse(await readCloud(page));
+    assert.ok(doc12.data.hikeybr_store_v3.includes('"unlockedIndex":9'), 'owed change landed after reopen');
+    const st12 = await page.evaluate(() => JSON.parse(localStorage.getItem('tankan_sync_state_u1') || '{}'));
+    assert.strictEqual(st12.owedLocalJson, null, 'owed marker cleared after recovery');
+    await page.context().close();
+
+    // 13. Owed change + another device saved meanwhile: conflict prompt, no silent overwrite.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'owed13' })); });
+    await openSettings(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
+    await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        window.__syncFail = true;
+        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 6, marker: 'owed13' }));
+        window.dispatchEvent(new Event('tankan-progress-changed'));
+    });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => {
+        const d = JSON.parse(localStorage.getItem('__syncDocs'));
+        d.u1 = { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T01:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 20, marker: 'other-device' }) } }), savedAt: { seconds: 1794001000 } };
+        localStorage.setItem('__syncDocs', JSON.stringify(d));
+    });
+    await page.goto(base); await page.waitForTimeout(900);
+    await openSettings(page);
+    assert.ok(await page.locator('#sync-conflict').isVisible(), 'moved account copy surfaces the conflict, not a silent push');
+    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('other-device'), 'other device copy untouched before the user chooses');
+    assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('"unlockedIndex":6'), 'owed local change preserved');
+    await page.click('#sync-use-device'); await page.waitForTimeout(500);
+    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('"unlockedIndex":6'), 'explicit device choice saves the owed change');
+    await page.context().close();
+
+    // 14. Owed state is per-account: B gets no auto-push; returning to A recovers.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'isoA' })); });
+    await openSettings(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
+    await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        window.__syncFail = true;
+        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 7, marker: 'isoA' }));
+        window.dispatchEvent(new Event('tankan-progress-changed'));
+    });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => window.__authSwitch({ uid: 'u2', displayName: 'B User', email: 'b@example.com' }));
+    await page.waitForTimeout(600);
+    assert.ok(await page.locator('#sync-bind-prompt').isVisible(), 'B gets the normal bind ask, not an auto-push');
+    assert.ok(!(await page.evaluate(() => JSON.parse(localStorage.getItem('__syncDocs') || '{}').u2 || null)), 'nothing auto-saved to B');
+    await page.evaluate(() => { window.__syncFail = false; window.__authSwitch({ uid: 'u1', displayName: 'Test User', email: 'test@example.com' }); });
+    await page.waitForTimeout(700);
+    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('"unlockedIndex":7'), 'returning to A saves the owed change');
+    await page.context().close();
+
     await browser.close();
     server.close();
-    console.log('PASS tests/sync.cjs (11 scenarios)');
+    console.log('PASS tests/sync.cjs (14 scenarios)');
 })().catch(e => { console.error('FAIL tests/sync.cjs:', e.message); server.close(); process.exit(1); });

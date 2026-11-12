@@ -69,15 +69,26 @@
 
     let pushPending = false;   // a change is owed to the account but not yet acked
 
+    // Durable owed-state, per account: survives tab closure. baseDataJson is
+    // the cloud content the local changes built on (last acked state);
+    // owedLocalJson is the local snapshot still owed to the account. Named
+    // tankan_sync_state_ so the backup sweep (hikeybr_/hikeymash_) never
+    // uploads it, and per-uid so account B never consults account A's debt.
+    const stateKey = id => 'tankan_sync_state_' + id;
+    const readState = id => { try { return JSON.parse(localStorage.getItem(stateKey(id)) || '{}'); } catch (_) { return {}; } };
+    const writeState = (id, patch) => { const s = readState(id); Object.assign(s, patch); localStorage.setItem(stateKey(id), JSON.stringify(s)); };
+
     const push = async () => {
         if (!bound || applying || !store) return;
         pushPending = false;
         setStatus('Saving to your account…');
         try {
             await store.write(window.TANKAN_BACKUP.buildPayload());
+            writeState(uid, { baseDataJson: localJson(), owedLocalJson: null });
             setStatus('Saved to your account.');
         } catch (e) {
-            pushPending = true; // retried on reconnect and on the next change
+            pushPending = true; // retried on reconnect, on reopen, and on the next change
+            writeState(uid, { owedLocalJson: localJson() });
             setStatus('Could not reach your account - progress is safe on this device and will be saved when you are back online.');
         }
     };
@@ -85,6 +96,7 @@
     const schedulePush = () => {
         if (!bound) return;
         pushPending = true;
+        writeState(uid, { owedLocalJson: localJson() });
         clearTimeout(pushTimer);
         pushTimer = setTimeout(push, DEBOUNCE_MS);
     };
@@ -128,6 +140,19 @@
             const local = localJson();
             const localEmpty = !hasLocalProgress();
 
+            // Owed-state recovery: a change that never reached the account
+            // (offline, failed save, tab closed mid-debounce) is pushed now,
+            // but only when the account copy is EXACTLY what that change was
+            // based on - if another device saved since, the normal conflict
+            // prompt decides; nothing is overwritten silently.
+            const st = readState(user.uid);
+            if (st.owedLocalJson && cloudObj && JSON.stringify(cloudObj.data) === st.baseDataJson && local === st.owedLocalJson) {
+                bound = true;
+                hideBoxes();
+                push();
+                return;
+            }
+
             if (!doc || !cloudObj) {
                 if (localEmpty) {
                     bound = true; // nothing anywhere yet; first practice saves
@@ -147,6 +172,7 @@
                 setStatus('This device has no progress yet.');
             } else if (JSON.stringify(cloudObj.data) === JSON.stringify(collect())) {
                 bound = true;
+                writeState(user.uid, { baseDataJson: local, owedLocalJson: null });
                 setStatus('Saved to your account.');
                 // Warm the write stream with an identical-content write so the
                 // first real change saves in ~1s instead of paying cold stream
