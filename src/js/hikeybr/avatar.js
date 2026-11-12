@@ -109,10 +109,14 @@
             rejectP(new Error('not-an-image'));
             return;
         }
-        const url = URL.createObjectURL(file);
+        // FileReader data URL, not createObjectURL: the site's CSP img-src is
+        // intentionally narrow ('self' data: lh3) and blocks blob: URLs.
+        const reader = new FileReader();
         const pic = new Image();
+        reader.onload = () => { pic.src = reader.result; };
+        reader.onerror = () => rejectP(new Error('unreadable'));
+        reader.readAsDataURL(file);
         pic.onload = () => {
-            URL.revokeObjectURL(url);
             const side = Math.min(pic.naturalWidth, pic.naturalHeight);
             const sx = (pic.naturalWidth - side) / 2;
             const sy = (pic.naturalHeight - side) / 2;
@@ -121,8 +125,7 @@
             c.getContext('2d').drawImage(pic, sx, sy, side, side, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
             resolveP(c.toDataURL('image/jpeg', 0.85));
         };
-        pic.onerror = () => { URL.revokeObjectURL(url); rejectP(new Error('unreadable')); };
-        pic.src = url;
+        pic.onerror = () => rejectP(new Error('unreadable'));
     });
 
     const say = msg => { if (status) status.textContent = msg; };

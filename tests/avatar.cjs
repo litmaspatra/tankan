@@ -115,3 +115,16 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     server.close();
     console.log('avatar: all assertions passed');
 })().catch(e => { console.error(e); process.exit(1); });
+
+// Static guard: the upload decode path must stay inside the narrow CSP.
+// The local test server does not apply _headers, so the Playwright flows
+// cannot catch a blob: regression - this reads the files directly.
+{
+    const fs = require('fs');
+    const avatarSrc = fs.readFileSync(require('path').join(__dirname, '..', 'src', 'js', 'hikeybr', 'avatar.js'), 'utf8');
+    const headers = fs.readFileSync(require('path').join(__dirname, '..', '_headers'), 'utf8');
+    assert.ok(!avatarSrc.includes('URL.createObjectURL('), 'avatar decode must not use blob: object URLs (CSP blocks them)');
+    const imgSrc = (headers.match(/img-src ([^;]+)/) || [])[1] || '';
+    assert.ok(imgSrc.includes('data:'), 'CSP img-src must allow data: for uploaded avatars');
+    console.log('PASS: static CSP/upload-path guard');
+}
