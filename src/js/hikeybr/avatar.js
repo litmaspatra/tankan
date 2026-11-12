@@ -22,6 +22,11 @@
     const MAX_DATAURL_CHARS = 200000;            // hard per-upload ceiling
     const PAYLOAD_BUDGET_CHARS = 450000;         // total payload must stay under the 500KB rule
     const AVATAR_SIZE = 128;
+    // Built-in original faces, bundled as small local webp files. A preset
+    // choice stores only its name in the per-account key, so it adds ~40
+    // bytes to the sync payload and needs no upload budget check.
+    const PRESETS = ['dumbstruck','deadlystare','singletear','smuggrin','quiethorror','derpygrin','horrorgrit','deadfish','blissnosebleed','shadowglare','nosepick','goofylaugh'];
+    const presetSrc = name => 'assets/avatars/' + name + '.webp';
 
     const img = $('avatar-img');
     const initial = $('avatar-initial');
@@ -31,6 +36,7 @@
     const uploadBtn = $('avatar-upload-btn');
     const fileInput = $('avatar-file');
     const removeBtn = $('avatar-remove');
+    const presetGrid = $('avatar-preset-grid');
     const status = $('avatar-status');
 
     let currentUser = null;
@@ -70,13 +76,16 @@
     const resolve = user => {
         if (!user || !user.uid) return { kind: 'none' };
         const custom = readCustom(user.uid);
-        if (custom && custom.src) return custom;
+        if (custom && custom.kind === 'preset') {
+            // An unknown name (older/newer build) is ignored, not shown broken.
+            if (PRESETS.includes(custom.preset)) return { kind: 'preset', preset: custom.preset, src: presetSrc(custom.preset) };
+        } else if (custom && custom.src) return custom;
         if (user.photoURL) return { kind: 'google', src: user.photoURL };
         return { kind: 'initial', letter: ((user.displayName || user.email || 'ट').trim()[0] || 'ट').toUpperCase() };
     };
 
     const paintInto = (imgEl, initialEl, resolved) => {
-        const showImg = resolved.src && (resolved.kind === 'google' || resolved.kind === 'upload');
+        const showImg = resolved.src && (resolved.kind === 'google' || resolved.kind === 'upload' || resolved.kind === 'preset');
         imgEl.hidden = !showImg;
         if (showImg) imgEl.src = resolved.src;
         initialEl.hidden = showImg;
@@ -89,8 +98,14 @@
         corner.hidden = resolved.kind === 'none';
         if (!corner.hidden) paintInto(img, initial, resolved);
         if (previewImg) paintInto(previewImg, previewInitial, resolved);
-        if (removeBtn) removeBtn.hidden = resolved.kind !== 'upload';
-        if (useGoogleBtn) useGoogleBtn.hidden = !user || !user.photoURL || resolved.kind !== 'upload';
+        const customShown = resolved.kind === 'upload' || resolved.kind === 'preset';
+        if (removeBtn) removeBtn.hidden = !customShown;
+        if (useGoogleBtn) useGoogleBtn.hidden = !user || !user.photoURL || !customShown;
+        if (presetGrid) {
+            presetGrid.querySelectorAll('.avatar-preset').forEach(btn => {
+                btn.classList.toggle('selected', resolved.kind === 'preset' && btn.dataset.preset === resolved.preset);
+            });
+        }
     };
 
     // Total serialized backup payload with `entry` stored under key `key`:
@@ -168,6 +183,29 @@
         });
     }
 
+    // Built-in preset picker: one button per face, stored as just its name.
+    if (presetGrid) {
+        PRESETS.forEach(name => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'avatar-preset';
+            btn.dataset.preset = name;
+            btn.title = 'Use the ' + name + ' avatar';
+            const pic = document.createElement('img');
+            pic.src = presetSrc(name);
+            pic.alt = name + ' avatar';
+            pic.loading = 'lazy';
+            btn.appendChild(pic);
+            btn.addEventListener('click', () => {
+                if (!currentUser) return;
+                setCustom(currentUser.uid, { kind: 'preset', preset: name });
+                say('Avatar updated.');
+                apply(currentUser);
+            });
+            presetGrid.appendChild(btn);
+        });
+    }
+
     // Header circle opens Settings > Account.
     corner.addEventListener('click', () => {
         const tab = document.querySelector('button.nav-tab[data-target="settings"]');
@@ -194,6 +232,6 @@
     // Test seam: pure logic only; UI flows go through the real controls.
     window.TANKAN_AVATAR = {
         resolve, isolateFor, wouldFit, apply,
-        KEY_PREFIX, VAULT_PREFIX, MAX_DATAURL_CHARS, PAYLOAD_BUDGET_CHARS
+        KEY_PREFIX, VAULT_PREFIX, MAX_DATAURL_CHARS, PAYLOAD_BUDGET_CHARS, PRESETS
     };
 })();

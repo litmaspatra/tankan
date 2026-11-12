@@ -1864,3 +1864,41 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
         }
 
         .avatar-corner.avatar-preview:hover { border-color: var(--border); }
+
+        /* Built-in avatar picker (Settings > Account) */
+        .avatar-preset-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 44px);
+            gap: 8px;
+            margin: 2px 0 10px;
+        }
+
+        .avatar-preset {
+            width: 44px;
+            height: 44px;
+            border-radius: 50% !important;
+            border: 2px solid var(--border);
+            background: var(--surface);
+            padding: 0;
+            overflow: hidden;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .avatar-preset img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50% !important;
+        }
+
+        .avatar-preset:hover { border-color: var(--accent); }
+
+        .avatar-preset.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+
+        @media (max-width: 480px) {
+            .avatar-preset-grid { grid-template-columns: repeat(4, 44px); }
+        }

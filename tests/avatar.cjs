@@ -8,7 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.woff2': 'font/woff2' };
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2' };
 const server = http.createServer((req, res) => {
     const p = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html');
     const file = fs.existsSync(p) && fs.statSync(p).isFile() ? p : path.join(ROOT, 'index.html');
@@ -96,7 +96,41 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     assert.ok(restored && restored.startsWith('data:image/jpeg'), "A's custom photo restored from vault");
     assert.strictEqual(await page.evaluate(u => localStorage.getItem('tankan_avatar_vault_' + u), A.uid), null, 'vault emptied after restore');
 
-    // 7. Sign out: header avatar hidden, no custom key touched.
+    // 7. Preset picker: grid lists every built-in face; picking one replaces
+    // the upload, stores only the preset name, and marks the selection.
+    const expectedPresets = await page.evaluate(() => window.TANKAN_AVATAR.PRESETS.length);
+    assert.strictEqual(await page.locator('#avatar-preset-grid .avatar-preset').count(), expectedPresets, 'grid shows all presets');
+    await page.click('#avatar-preset-grid .avatar-preset[data-preset="dumbstruck"]');
+    await page.waitForTimeout(200);
+    assert.ok((await page.locator('#avatar-img').getAttribute('src')).endsWith('assets/avatars/dumbstruck.webp'), 'header shows the picked preset');
+    assert.deepStrictEqual(await page.evaluate(u => JSON.parse(localStorage.getItem('hikeybr_avatar_u_' + u)), A.uid),
+        { kind: 'preset', preset: 'dumbstruck' }, 'preset stored as just a name');
+    assert.ok(await page.locator('#avatar-preset-grid .avatar-preset[data-preset="dumbstruck"]').evaluate(el => el.classList.contains('selected')), 'picked preset is marked');
+    assert.ok(await page.locator('#avatar-remove').isVisible(), 'remove offered with a preset');
+    assert.ok(await page.locator('#avatar-use-google').isVisible(), 'google button offered to switch back');
+
+    // 8. Switch to B and back: a preset choice vaults and restores like an upload.
+    await page.evaluate(u => window.__setAuthUser(u), B);
+    await page.waitForTimeout(200);
+    assert.strictEqual(await page.locator('#avatar-img').getAttribute('src'), B.photoURL, "B never sees A's preset");
+    assert.strictEqual(await page.evaluate(u => localStorage.getItem('hikeybr_avatar_u_' + u), A.uid), null, "A's preset key left the syncable namespace");
+    await page.evaluate(u => window.__setAuthUser(u), A);
+    await page.waitForTimeout(200);
+    assert.ok((await page.locator('#avatar-img').getAttribute('src')).endsWith('assets/avatars/dumbstruck.webp'), "A's preset restored from vault");
+
+    // 9. Remove clears the preset, back to the Google photo.
+    await page.click('#avatar-remove');
+    await page.waitForTimeout(200);
+    assert.strictEqual(await page.locator('#avatar-img').getAttribute('src'), PIXEL, 'preset removed, Google photo back');
+
+    // 10. An unknown preset name (written by another build) is ignored, not shown broken.
+    await page.evaluate(u => localStorage.setItem('hikeybr_avatar_u_' + u, JSON.stringify({ kind: 'preset', preset: 'not-a-face' })), A.uid);
+    const fellThrough = await page.evaluate(() =>
+        window.TANKAN_AVATAR.resolve({ uid: 'uid-aaa', displayName: 'Asha', email: 'a@example.com', photoURL: 'data:x' }).kind);
+    assert.strictEqual(fellThrough, 'google', 'unknown preset falls back to the Google photo');
+    await page.evaluate(u => localStorage.removeItem('hikeybr_avatar_u_' + u), A.uid);
+
+    // 11. Sign out: header avatar hidden, no custom key touched.
     await page.evaluate(() => window.__setAuthUser(null));
     await page.waitForTimeout(200);
     assert.ok(await page.locator('#avatar-corner').isHidden(), 'signed out again: hidden');
