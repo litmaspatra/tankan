@@ -11,9 +11,9 @@
     <link rel="preload" href="./fonts/DevLys-040-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-021-Italic.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-070-Bold.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261112m">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261112n">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/keyboard.css?v=20261112m">
+    <link rel="stylesheet" href="src/css/keyboard.css?v=20261112n">
 </head>
 <body>
 
@@ -265,6 +265,58 @@
             <div class="content-card">
                 <div class="card-header">
                     <div>
+                        <h2>Account</h2>
+                        <p>Sign in and pick your avatar. Sync keeps a copy of your progress under your account.</p>
+                    </div>
+                </div>
+                <div class="settings-grid">
+                    <div class="settings-row" id="account-row" style="grid-column: 1 / -1;" hidden>
+                        <div class="settings-info">
+                            <strong>Account</strong>
+                            <p>Sign in with your Google account - optional. Progress always stays on this device too: signing in or out never changes or deletes it. If you choose to save it (the site asks first), a copy of your progress is stored under your account - readable only by you, never public - so it survives a lost or changed device and can be restored when you sign in elsewhere. See <a href="privacy.html">Privacy</a> for exactly what sign-in involves.</p>
+                        </div>
+                        <div class="settings-ctrl">
+                            <div id="account-signed-out">
+                                <button class="btn-modal cancel" id="google-signin-btn">Sign in with Google</button>
+                            </div>
+                            <div id="account-signed-in" hidden>
+                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                                    <span class="avatar-corner avatar-preview" id="avatar-preview">
+                                        <img id="avatar-preview-img" alt="Profile photo" referrerpolicy="no-referrer" hidden>
+                                        <span id="avatar-preview-initial"></span>
+                                    </span>
+                                    <p id="account-name" style="margin:0;"></p>
+                                </div>
+                                <div style="margin-bottom:8px;">
+                                    <button class="btn-modal cancel" id="avatar-use-google">Use my Google photo</button>
+                                    <button class="btn-modal cancel" id="avatar-upload-btn" style="margin-left:6px;">Upload a photo</button>
+                                    <button class="btn-modal cancel" id="avatar-remove" style="margin-left:6px;" hidden>Remove custom photo</button>
+                                    <input type="file" id="avatar-file" accept="image/*" hidden>
+                                </div>
+                                <p style="margin:0 0 4px; font-size:0.8rem;">Or pick a built-in avatar:</p>
+                                <div class="avatar-preset-grid" id="avatar-preset-grid" role="group" aria-label="Built-in avatars"></div>
+                                <p id="avatar-status" style="margin:0 0 6px; font-size:0.8rem;"></p>
+                                <button class="btn-modal cancel" id="google-signout-btn">Sign out</button>
+                            </div>
+                            <p id="account-status" style="margin:6px 0 0; font-size:0.8rem;"></p>
+                            <p id="sync-status" style="margin:4px 0 0; font-size:0.8rem;"></p>
+                            <div id="sync-bind-prompt" hidden style="margin-top:8px;">
+                                <p id="sync-bind-text" style="margin:0 0 6px; font-size:0.85rem;"></p>
+                                <button class="btn-modal cancel" id="sync-bind-confirm">Save to my account</button>
+                                <button class="btn-modal cancel" id="sync-bind-skip" style="margin-left:6px;">Not now</button>
+                            </div>
+                            <div id="sync-conflict" hidden style="margin-top:8px;">
+                                <p id="sync-conflict-text" style="margin:0 0 6px; font-size:0.85rem;"></p>
+                                <button class="btn-modal cancel" id="sync-use-device">Keep this device's progress</button>
+                                <button class="btn-modal danger" id="sync-use-account" style="margin-left:6px;">Use the account copy here</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="content-card">
+                <div class="card-header">
+                    <div>
                         <h2>Your Typing Profile &amp; Performance</h2>
                         <p>Track your accuracy, lesson speed, and confidence across every single Remington key.</p>
                     </div>
@@ -445,48 +497,6 @@
                     </div>
 
 
-                    <div class="settings-row" id="account-row" style="grid-column: 1 / -1;" hidden>
-                        <div class="settings-info">
-                            <strong>Account</strong>
-                            <p>Sign in with your Google account - optional. Progress always stays on this device too: signing in or out never changes or deletes it. If you choose to save it (the site asks first), a copy of your progress is stored under your account - readable only by you, never public - so it survives a lost or changed device and can be restored when you sign in elsewhere. See <a href="privacy.html">Privacy</a> for exactly what sign-in involves.</p>
-                        </div>
-                        <div class="settings-ctrl">
-                            <div id="account-signed-out">
-                                <button class="btn-modal cancel" id="google-signin-btn">Sign in with Google</button>
-                            </div>
-                            <div id="account-signed-in" hidden>
-                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-                                    <span class="avatar-corner avatar-preview" id="avatar-preview">
-                                        <img id="avatar-preview-img" alt="Profile photo" referrerpolicy="no-referrer" hidden>
-                                        <span id="avatar-preview-initial"></span>
-                                    </span>
-                                    <p id="account-name" style="margin:0;"></p>
-                                </div>
-                                <div style="margin-bottom:8px;">
-                                    <button class="btn-modal cancel" id="avatar-use-google">Use my Google photo</button>
-                                    <button class="btn-modal cancel" id="avatar-upload-btn" style="margin-left:6px;">Upload a photo</button>
-                                    <button class="btn-modal cancel" id="avatar-remove" style="margin-left:6px;" hidden>Remove custom photo</button>
-                                    <input type="file" id="avatar-file" accept="image/*" hidden>
-                                </div>
-                                <p style="margin:0 0 4px; font-size:0.8rem;">Or pick a built-in avatar:</p>
-                                <div class="avatar-preset-grid" id="avatar-preset-grid" role="group" aria-label="Built-in avatars"></div>
-                                <p id="avatar-status" style="margin:0 0 6px; font-size:0.8rem;"></p>
-                                <button class="btn-modal cancel" id="google-signout-btn">Sign out</button>
-                            </div>
-                            <p id="account-status" style="margin:6px 0 0; font-size:0.8rem;"></p>
-                            <p id="sync-status" style="margin:4px 0 0; font-size:0.8rem;"></p>
-                            <div id="sync-bind-prompt" hidden style="margin-top:8px;">
-                                <p id="sync-bind-text" style="margin:0 0 6px; font-size:0.85rem;"></p>
-                                <button class="btn-modal cancel" id="sync-bind-confirm">Save to my account</button>
-                                <button class="btn-modal cancel" id="sync-bind-skip" style="margin-left:6px;">Not now</button>
-                            </div>
-                            <div id="sync-conflict" hidden style="margin-top:8px;">
-                                <p id="sync-conflict-text" style="margin:0 0 6px; font-size:0.85rem;"></p>
-                                <button class="btn-modal cancel" id="sync-use-device">Keep this device's progress</button>
-                                <button class="btn-modal danger" id="sync-use-account" style="margin-left:6px;">Use the account copy here</button>
-                            </div>
-                        </div>
-                    </div>
                     <div class="settings-row" style="grid-column: 1 / -1;">
                         <div class="settings-info">
                             <strong>Export progress</strong>
@@ -567,25 +577,25 @@
     <!-- ═══════════════════════════════════════════════════════════
          APPLICATION JAVASCRIPT
          ═══════════════════════════════════════════════════════════ -->
-    <script src="data/books/nirmala.js?v=20261112m"></script>
-    <script src="data/books/godan.js?v=20261112m"></script>
-    <script src="books.js?v=20261112m"></script>
-    <script src="data/essays.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/progression.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/state.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/audio.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/storage.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/engine.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/keyboard.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/adaptive.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/lessons.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/display.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/input.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/ui.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/backup.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/auth.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/sync.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/avatar.js?v=20261112m"></script>
-    <script src="src/js/hikeybr/init.js?v=20261112m"></script>
+    <script src="data/books/nirmala.js?v=20261112n"></script>
+    <script src="data/books/godan.js?v=20261112n"></script>
+    <script src="books.js?v=20261112n"></script>
+    <script src="data/essays.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/progression.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/state.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/audio.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/storage.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/engine.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/keyboard.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/adaptive.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/lessons.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/display.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/input.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/ui.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/backup.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/auth.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/sync.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/avatar.js?v=20261112n"></script>
+    <script src="src/js/hikeybr/init.js?v=20261112n"></script>
 </body>
 </html>

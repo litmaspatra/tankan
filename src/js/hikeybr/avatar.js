@@ -206,9 +206,9 @@
         });
     }
 
-    // Header circle opens Settings > Account.
+    // Header circle opens Profile > Account.
     corner.addEventListener('click', () => {
-        const tab = document.querySelector('button.nav-tab[data-target="settings"]');
+        const tab = document.querySelector('button.nav-tab[data-target="profile"]');
         if (tab) tab.click();
     });
 

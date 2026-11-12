@@ -14,7 +14,7 @@ const server = http.createServer((req, res) => {
     res.setHeader('Content-Type', MIME[path.extname(file)] || 'application/octet-stream');
     fs.createReadStream(file).pipe(res);
 });
-const openSettings = async page => { await page.click('button.nav-tab[data-target="settings"]'); await page.waitForTimeout(250); };
+const openProfile = async page => { await page.click('button.nav-tab[data-target="profile"]'); await page.waitForTimeout(250); };
 
 (async () => {
     await new Promise(r => server.listen(0, 'localhost', r));
@@ -79,7 +79,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     let page = await newPage();
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 5, bestLessonWpm: 33 })));
-    await openSettings(page);
+    await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
     assert.ok(await page.locator('#sync-bind-prompt').isVisible(), 'bind prompt shows on first sign-in with local progress');
     assert.match(await page.locator('#sync-bind-text').textContent(), /test@example\.com/, 'prompt names the account');
@@ -113,7 +113,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     await page.evaluate(() => localStorage.setItem('__syncDocs', JSON.stringify({
         u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 12, bestLessonWpm: 40 }) } }), savedAt: { seconds: 1794000000 } }
     })));
-    await openSettings(page);
+    await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
     assert.match(await page.locator('#sync-conflict-text').textContent(), /Restore it to this device/, 'empty device is offered the account copy');
     await page.click('#sync-use-account');
@@ -131,7 +131,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
             u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 8, marker: 'account' }) } }), savedAt: { seconds: 1794000000 } }
         }));
     });
-    await openSettings(page);
+    await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
     assert.ok(await page.locator('#sync-conflict').isVisible(), 'conflict surfaces when both sides differ');
     await page.click('#sync-use-account');
@@ -144,7 +144,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     // Regression: the internal presync snapshot must not make the restored
     // device look different from its account copy on the next sign-in.
     await page.reload(); await page.waitForTimeout(400);
-    await openSettings(page);
+    await openProfile(page);
     await page.waitForTimeout(500);
     assert.ok(!(await page.locator('#sync-conflict').isVisible()), 'no false conflict after restore with presync snapshot present');
     assert.match(await page.locator('#sync-status').textContent(), /Saved to your account/, 'restored device compares equal to its account copy');
@@ -158,7 +158,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
             u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 8, marker: 'account2' }) } }), savedAt: { seconds: 1794000000 } }
         }));
     });
-    await openSettings(page);
+    await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
     await page.click('#sync-use-device'); await page.waitForTimeout(400);
     assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('"marker":"device2"'), 'device choice updates the account copy');
@@ -178,7 +178,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     page = await newPage();
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'A-progress' })));
-    await openSettings(page);
+    await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
     await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
     assert.ok(((await page.evaluate(() => JSON.parse(localStorage.getItem('__syncDocs') || '{}').u1 || {})).payload || '').includes('A-progress'), 'A bound and saved to A doc');
@@ -204,7 +204,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
             u2: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 7, marker: 'B-progress' }) } }), savedAt: { seconds: 1794000000 } }
         }));
     });
-    await openSettings(page);
+    await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
     await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
     await page.evaluate(() => {
@@ -223,7 +223,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     await page.addInitScript(() => { window.TANKAN_SYNC_DEBOUNCE_MS = 60000; });
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'flush' })); });
-    await openSettings(page);
+    await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
     await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
     await page.evaluate(() => {
@@ -244,7 +244,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     page = await newPage();
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'retry' })); });
-    await openSettings(page);
+    await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
     await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
     await page.evaluate(() => { window.__syncFail = true; });
@@ -268,7 +268,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
             u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data }), savedAt: { seconds: 1794000000 } }
         }));
     });
-    await openSettings(page);
+    await openProfile(page);
     await page.evaluate(() => {
         window.__writes = 0;
         const s = window.TANKAN_SYNC_TEST_STORE;
@@ -285,7 +285,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     page = await newPage();
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'owed' })); });
-    await openSettings(page);
+    await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
     await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
     await page.evaluate(() => {
@@ -308,7 +308,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     page = await newPage();
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'owed13' })); });
-    await openSettings(page);
+    await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
     await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
     await page.evaluate(() => {
@@ -323,7 +323,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
         localStorage.setItem('__syncDocs', JSON.stringify(d));
     });
     await page.goto(base); await page.waitForTimeout(900);
-    await openSettings(page);
+    await openProfile(page);
     assert.ok(await page.locator('#sync-conflict').isVisible(), 'moved account copy surfaces the conflict, not a silent push');
     assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('other-device'), 'other device copy untouched before the user chooses');
     assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('"unlockedIndex":6'), 'owed local change preserved');
@@ -335,7 +335,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     page = await newPage();
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'isoA' })); });
-    await openSettings(page);
+    await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
     await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
     await page.evaluate(() => {

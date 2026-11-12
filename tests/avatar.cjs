@@ -20,7 +20,7 @@ const PIXEL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS
 const A = { uid: 'uid-aaa', displayName: 'Asha', email: 'a@example.com', photoURL: PIXEL };
 const B = { uid: 'uid-bbb', displayName: 'Bhanu', email: 'b@example.com', photoURL: 'https://lh3.googleusercontent.com/a/b' };
 
-const openSettings = async page => { await page.click('button.nav-tab[data-target="settings"]'); await page.waitForTimeout(250); };
+const openProfile = async page => { await page.click('button.nav-tab[data-target="profile"]'); await page.waitForTimeout(250); };
 
 (async () => {
     await new Promise(r => server.listen(0, 'localhost', r));
@@ -56,7 +56,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     const radii = await page.evaluate(() => ['#avatar-corner', '#avatar-img', '#avatar-preview', '#avatar-preview-img']
         .map(sel => getComputedStyle(document.querySelector(sel)).borderRadius));
     assert.ok(radii.every(r => r === '50%'), 'avatar circle wins over the global radius reset, got: ' + radii.join(','));
-    await openSettings(page);
+    await openProfile(page);
     assert.strictEqual(await page.locator('#avatar-preview-img').getAttribute('src'), PIXEL, 'settings preview matches');
     assert.ok(await page.locator('#avatar-use-google').isHidden(), 'google button hidden while already on google photo');
     assert.ok(await page.locator('#avatar-remove').isHidden(), 'remove hidden with no custom photo');

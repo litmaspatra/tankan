@@ -19,7 +19,7 @@ const server = http.createServer((req, res) => {
     fs.createReadStream(file).pipe(res);
 });
 
-const openSettings = async page => { await page.click('button.nav-tab[data-target="settings"]'); await page.waitForTimeout(250); };
+const openProfile = async page => { await page.click('button.nav-tab[data-target="profile"]'); await page.waitForTimeout(250); };
 
 (async () => {
     await new Promise(r => server.listen(0, 'localhost', r));
@@ -54,7 +54,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     // 1. Signed-out render on an authorized origin: button visible, no errors.
     await page.goto(base);
     await page.waitForTimeout(400);
-    await openSettings(page);
+    await openProfile(page);
     assert.ok(await page.locator('#account-row').isVisible(), 'account row shows on localhost');
     assert.ok(await page.locator('#google-signin-btn').isVisible(), 'sign-in button shows when signed out');
     assert.ok(await page.locator('#account-signed-in').isHidden(), 'signed-in box hidden when signed out');
@@ -91,13 +91,13 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     await page.evaluate(() => { localStorage.setItem('__authSeed', JSON.stringify({ displayName: 'Test User', email: 'test@example.com' })); });
     await page.reload();
     await page.waitForTimeout(400);
-    await openSettings(page);
+    await openProfile(page);
     assert.match(await page.locator('#account-name').textContent(), /Signed in as Test User/, 'session restored on reload');
 
     // 5. The row stays hidden where sign-in cannot work (file://).
     await page.goto('file://' + path.join(ROOT, 'index.html'));
     await page.waitForTimeout(400);
-    await openSettings(page);
+    await openProfile(page);
     assert.ok(await page.locator('#account-row').isHidden(), 'account row hidden on file://');
 
     // 6. The real vendored SDK (no stub) initializes without page errors and
@@ -106,7 +106,7 @@ const openSettings = async page => { await page.click('button.nav-tab[data-targe
     const errors2 = []; page2.on('pageerror', e => errors2.push(e.message));
     await page2.goto(base);
     await page2.waitForTimeout(4000);
-    await openSettings(page2);
+    await openProfile(page2);
     assert.ok(await page2.locator('#account-row').isVisible(), 'account row shows with the real SDK');
     const status2 = (await page2.locator('#account-status').textContent()).trim();
     const btnEnabled = await page2.locator('#google-signin-btn').isEnabled();
