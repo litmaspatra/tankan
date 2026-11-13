@@ -115,13 +115,14 @@
             if (lastPracticeFocus && !lessonCompleted) el.leadSamplesStatus.textContent += ` - practice focus: ${lastPracticeFocus}`;
             if(!unlockState.ready){
                 const current=keyStats[currentItem.k],unmet=[];
-                if((current.recentLessonAccuracy||current.lastAccuracy||0)<95)unmet.push('need 95% lesson accuracy');
+                const lastAcc=(current.recentLessonAccuracy||current.lastAccuracy||0);
+                if(lastAcc<95)unmet.push('need 95% lesson accuracy'+(lastAcc>0?' (last: '+lastAcc.toFixed(1)+'%)':''));
                 if((current.modelSamples||0)<10)unmet.push('need '+(10-(current.modelSamples||0))+' more clean timings');
                 // The gate checks the BANKED accurateBest (95%+ lessons), which
                 // can differ from the readiness bar's measuredBest (any lesson).
                 // Quote the banked figure here or the line contradicts itself
                 // after a fast-but-sloppy lesson.
-                if((current.accurateBest||Infinity)>12000/targetSpeedGoal)unmet.push(currentItem.h+" banked best "+(current.accurateBest?(12000/current.accurateBest).toFixed(1):'none yet')+' / '+targetSpeedGoal+" WPM (95%+ lessons, key's own pace)");
+                if((current.accurateBest||Infinity)>12000/targetSpeedGoal)unmet.push(currentItem.h+" banked best "+(current.accurateBest?(12000/current.accurateBest).toFixed(1):'none yet')+' / '+targetSpeedGoal+" WPM (banks only on 95%+ accuracy lessons, key's own pace)");
                 if(!unlockState.starterReady)unmet.push('calibrating starter keys');
                 if(!unlockState.strictOk)unmet.push('earlier keys must also reach the target speed');
                 if(unmet.length)el.leadSamplesStatus.textContent+=' · '+unmet.join(' · ');
