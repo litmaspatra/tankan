@@ -3,8 +3,8 @@
         // 10. TYPING INPUT ENGINE (STRICT ERROR BLOCKING & METRICS)
         // ─────────────────────────────────────────────────────────────
         function lessonElapsed(){return sessionStartTime?Math.max(0,(lessonEndedAt||pausedAt||Date.now())-sessionStartTime-pausedTotal):0;}
-        function pauseLesson(){if(sessionStartTime&&!lessonCompleted&&!pausedAt){pausedAt=Date.now();activityAt=null;lastKeystrokeTime=null;const ht=document.getElementById('canvas-hint-text');if(ht)ht.textContent='Paused';}}
-        function resumeLesson(){if(pausedAt){pausedTotal+=Date.now()-pausedAt;pausedAt=null;lastKeystrokeTime=null;activityAt=null;const ht=document.getElementById('canvas-hint-text');if(ht)ht.textContent='Typing…';}el.hiddenInput.focus({preventScroll:true});}
+        function pauseLesson(){if(sessionStartTime&&!lessonCompleted&&!pausedAt){pausedAt=Date.now();activityAt=null;lastKeystrokeTime=null;pendingShiftTiming.clear();const ht=document.getElementById('canvas-hint-text');if(ht)ht.textContent='Paused';}}
+        function resumeLesson(){if(pausedAt){pausedTotal+=Date.now()-pausedAt;pausedAt=null;lastKeystrokeTime=null;activityAt=null;pendingShiftTiming.clear();const ht=document.getElementById('canvas-hint-text');if(ht)ht.textContent='Typing…';}el.hiddenInput.focus({preventScroll:true});}
         function handleKeystroke(keyString) {
             if(pausedAt)resumeLesson();
             if (cursorIndex >= targetKrutiText.length) return;
@@ -28,8 +28,12 @@
 
             const activeItem = KEY_PROGRESSION[unlockedIndex];
             const interval=lastKeystrokeTime===null?0:now-lastKeystrokeTime;
+            const timingActions=1+pendingShiftTiming.size;
+            pendingShiftTiming.clear(); // consumed even by an incorrect attempt
             lastKeystrokeTime=now;
-            const validInterval=interval>=40&&interval<=12000?interval:0;
+            // Keep the existing raw-gap filter. A modifier must not turn an
+            // idle gap into a clean sample or change overall elapsed WPM.
+            const validInterval=interval>=40&&interval<=12000?interval/timingActions:0;
 
             // ─────────────────────────────────────────────────────────
             // STRICT ERROR BLOCKING:

@@ -21,6 +21,9 @@
         let cursorIndex = 0; // Current typing position in targetKrutiText
         let rawKeys = []; // Array of physical keys typed for current lesson
         let lastKeystrokeTime = null;
+        // Only actual, currently-down Shift presses since the previous text
+        // attempt count. A held Shift is consumed once, not once per letter.
+        const pendingShiftTiming = new Set();
         let sessionStartTime = null;
         let sessionCorrect = 0;
         let sessionErrors = 0;

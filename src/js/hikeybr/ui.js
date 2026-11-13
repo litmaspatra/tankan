@@ -24,6 +24,17 @@
         el.hiddenInput.addEventListener('focus', () => el.canvas.classList.add('active-focus'));
         el.hiddenInput.addEventListener('blur', () => el.canvas.classList.remove('active-focus'));
 
+        // Match keybr's modifier-aware per-key calibration. This changes no
+        // lesson elapsed time or score. Alt-code entry keeps its whole-action
+        // timing rather than turning its numpad digits into fast samples.
+        el.hiddenInput.addEventListener('keydown', e => {
+            if(e.key==='Shift'&&!e.repeat)pendingShiftTiming.add(e.code||e.key);
+        });
+        el.hiddenInput.addEventListener('keyup', e => {
+            if(e.key==='Shift')pendingShiftTiming.delete(e.code||e.key);
+        });
+        el.hiddenInput.addEventListener('blur',()=>pendingShiftTiming.clear());
+
         // Keystroke Dispatcher on hiddenInput
         el.hiddenInput.addEventListener('keydown', (e) => {
             // A fresh Alt press while a code is still pending means the previous

@@ -148,6 +148,7 @@
             sessionErrors = 0;
             sessionStartTime = null;
             lastKeystrokeTime = null;
+            pendingShiftTiming.clear();
             { const ht=document.getElementById('canvas-hint-text'); if(ht) ht.textContent='Start typing'; }
 
             updateDisplay();
