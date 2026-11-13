@@ -3,7 +3,7 @@
 // writes nothing in localStorage - the hikeybr_/hikeymash_ progress keys are
 // untouched by sign-in, sign-out, or session restore. Firebase keeps its own
 // session under its own IndexedDB database. Score sync and leaderboards are
-// not built; signing in only identifies the visitor to the site itself.
+// separate opt-in features; signing in alone never publishes anything.
 (function () {
     const $ = id => document.getElementById(id);
     const row = $('account-row');

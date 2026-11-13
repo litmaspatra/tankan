@@ -328,7 +328,9 @@
             const words=currentLessonText.trim().split(/\s+/).length;
             const prevBestWpm=bestLessonWpm, prevBestScore=bestScore;
             // keybr Result analog: one durable record per completed lesson.
-            lessonHistory.push({wpm:cpm/5,acc,chars:sessionCorrect,errors:sessionErrors,seconds:elapsedMs/1000,keys:highestUnlocked+1,score,wordsPerMinute:elapsed?words/elapsed:0,ts:Date.now(),model:3});
+            const completedResult={wpm:cpm/5,acc,chars:sessionCorrect,errors:sessionErrors,seconds:elapsedMs/1000,keys:highestUnlocked+1,score,wordsPerMinute:elapsed?words/elapsed:0,ts:Date.now(),model:3,distinctKeys:complexity,communityId:crypto.randomUUID()};
+            lessonHistory.push(completedResult);
+            window.dispatchEvent(new CustomEvent('tankan-lesson-completed',{detail:completedResult}));
             lessonHistory=lessonHistory.slice(-400);
             accuracyStreak=acc>=95?accuracyStreak+1:0;
             bestStreak=Math.max(bestStreak,accuracyStreak);

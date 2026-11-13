@@ -11,9 +11,9 @@
     <link rel="preload" href="./fonts/DevLys-040-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-021-Italic.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-070-Bold.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261113f">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261113g">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/keyboard.css?v=20261113f">
+    <link rel="stylesheet" href="src/css/keyboard.css?v=20261113g">
 </head>
 <body>
 
@@ -37,9 +37,9 @@
             <button class="nav-tab" data-target="settings" title="Settings">
                 <span class="nav-icon">⚙️</span><span class="nav-label"> Settings</span>
             </button>
-            <span class="nav-tab disabled" title="Arena is coming soon" aria-disabled="true">
-                <span class="nav-icon">📜</span><span class="nav-label"> Arena <span class="nav-soon">Coming soon</span></span>
-            </span>
+            <button class="nav-tab" data-target="leaderboard" title="Leaderboard">
+                <span class="nav-icon">🏆</span><span class="nav-label"> Leaderboard</span>
+            </button>
         </nav>
 
         <div class="header-actions">
@@ -313,6 +313,23 @@
                     </div>
                 </div>
             </div>
+            <div class="content-card community-card">
+                <h2>Public display name <span class="recommended-badge">Recommended</span></h2>
+                <p id="community-signed-out">Sign in with Google above to choose a display name. Signing in does not make your progress public.</p>
+                <div id="community-account" hidden>
+                    <form id="community-username-form">
+                        <label for="community-username">Display name</label>
+                        <div class="community-form-row"><input id="community-username" name="username" minlength="2" maxlength="40" autocomplete="off" spellcheck="false" required aria-describedby="community-username-hint"><button class="btn-modal cancel" type="submit">Save display name</button></div>
+                        <p id="community-username-hint" class="community-note">2-40 letters, spaces, apostrophes or hyphens. Duplicate names are fine. No email addresses, phone numbers, handles or links.</p>
+                    </form>
+                    <div id="community-participation" hidden>
+                        <p id="community-joined"></p>
+                        <label class="community-consent"><input type="checkbox" id="community-public-consent"> I want a public leaderboard profile showing my chosen display name, lesson scores, speed, accuracy and shared lesson count. Qualifying lesson summaries are stored privately to support result review. My Google name, email and photo stay private.</label>
+                        <div class="community-actions"><button class="btn-modal cancel" id="community-join" type="button">Join leaderboard</button><button class="btn-modal cancel" id="community-share-history" type="button" hidden>Share saved results from this device</button><button class="btn-modal cancel" id="community-leave" type="button" hidden>Leave leaderboard</button></div>
+                    </div>
+                    <p id="community-status" role="status" aria-live="polite"></p>
+                </div>
+            </div>
             <div class="content-card">
                 <div class="card-header">
                     <div>
@@ -414,6 +431,16 @@
         <!-- ═══════════════════════════════════════════════════════
              PANEL 4: SETTINGS & CUSTOMIZATION
              ═══════════════════════════════════════════════════════ -->
+        <section class="panel" id="panel-leaderboard">
+            <div class="content-card community-card">
+                <div class="card-header"><div><h2>Community leaderboard</h2><p>Your best qualifying ordinary-practice lesson from the last 14 days.</p></div><button class="btn-modal cancel" id="leaderboard-refresh" type="button">Refresh</button></div>
+                <p class="community-note">One best qualifying lesson per person. Top 20 scores. Results expire after 14 days. A lesson needs at least 50 correct Remington input units and 10 different input keys.</p>
+                <table class="community-table"><thead><tr><th scope="col">Rank</th><th scope="col">Name</th><th scope="col">Score</th></tr></thead><tbody id="leaderboard-rows"></tbody></table>
+                <p id="leaderboard-status" role="status" aria-live="polite">Choose a period to load shared scores.</p>
+                <p class="community-note">Community results are reported by browsers, not verified proof of human typing. Old personal results without key-variety metadata cannot enter the ranking. Lesson length and character variety affect scores. No Google identity or contact details are public. Join or leave in Profile.</p>
+            </div>
+        </section>
+
         <section class="panel" id="panel-settings">
             <div class="content-card">
                 <div class="card-header">
@@ -567,6 +594,9 @@
     <!-- ═══════════════════════════════════════════════════════════
          APPLICATION JAVASCRIPT
          ═══════════════════════════════════════════════════════════ -->
+    <dialog id="community-profile-dialog" aria-labelledby="community-profile-name">
+        <h3 id="community-profile-name"></h3><div id="community-profile-body"></div><button type="button" id="community-profile-close">Close</button>
+    </dialog>
     <dialog id="score-help-dialog" aria-labelledby="score-help-title">
         <h3 id="score-help-title">How score works</h3>
         <p>Practice points for your last completed lesson. Faster typing, more correct characters and more different keys increase it. Mistakes reduce it.</p>
@@ -574,24 +604,25 @@
         <p>"Best" is your highest lesson score. Lesson length and key variety affect the score, so it is not a like-for-like speed rating. It does not unlock keys.</p>
         <button type="button" id="score-help-close">Got it</button>
     </dialog>
-    <script src="data/books/nirmala.js?v=20261113f"></script>
-    <script src="data/books/godan.js?v=20261113f"></script>
-    <script src="books.js?v=20261113f"></script>
-    <script src="data/essays.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/progression.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/state.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/audio.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/storage.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/engine.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/keyboard.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/adaptive.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/lessons.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/display.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/input.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/ui.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/backup.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/auth.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/sync.js?v=20261113f"></script>
+    <script src="data/books/nirmala.js?v=20261113g"></script>
+    <script src="data/books/godan.js?v=20261113g"></script>
+    <script src="books.js?v=20261113g"></script>
+    <script src="data/essays.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/progression.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/state.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/audio.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/storage.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/engine.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/keyboard.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/adaptive.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/lessons.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/display.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/input.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/ui.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/backup.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/auth.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/sync.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/community.js?v=20261113g"></script>
     <div id="avatar-lightbox" hidden>
         <div class="avatar-lightbox-card" role="dialog" aria-label="Enlarged profile photo">
             <img id="avatar-lightbox-img" alt="Enlarged profile photo" referrerpolicy="no-referrer">
@@ -602,8 +633,8 @@
             <p class="avatar-lightbox-hint" id="avatar-lightbox-hint"></p>
         </div>
     </div>
-    <script src="src/js/hikeybr/avatar.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/moved-banner.js?v=20261113f"></script>
-    <script src="src/js/hikeybr/init.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/avatar.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/moved-banner.js?v=20261113g"></script>
+    <script src="src/js/hikeybr/init.js?v=20261113g"></script>
 </body>
 </html>
