@@ -856,7 +856,8 @@
             });
             document.addEventListener('focusin',e=>{
                 const a=popupAnchorKey(e.target);
-                if(a){keyPopupAnchor=a.element;keyPopupPinned=true;showKeyPopup(a.key,a.rect);}
+                // Pointer focus must not open an overlay before pointer-up.
+                if(a&&a.element.matches(':focus-visible')){keyPopupAnchor=a.element;keyPopupPinned=true;showKeyPopup(a.key,a.rect);}
             });
             document.addEventListener('keydown',e=>{
                 if(e.key==='Escape')hideKeyPopup();

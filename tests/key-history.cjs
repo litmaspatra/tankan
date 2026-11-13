@@ -68,7 +68,13 @@ require('node:fs').mkdirSync(shots,{recursive:true});
  assert.ok(await page.locator('.kp-dot[fill="var(--surface)"]').count()>0);
  await page.screenshot({path:path.join(shots,'tankan-history-demo-desktop.png')});
  for(const width of [390,320]){
-  await page.setViewportSize({width,height:844});await page.locator('.ak-badge[data-key="="]').click();
+  await page.setViewportSize({width,height:844});
+  const target=page.locator('.ak-badge[data-key="="]');
+  await target.scrollIntoViewIfNeeded();const anchor=await target.boundingBox();
+  await page.mouse.move(anchor.x+anchor.width/2,anchor.y+anchor.height/2);
+  await page.mouse.down();
+  assert.equal(await page.locator('#key-popup').isVisible(),false,'pointer-down must not open covering popup');
+  await page.mouse.up();
   const box=await page.locator('#key-popup').boundingBox();
   assert.ok(box.x>=0&&box.x+box.width<=width&&box.y>=0&&box.y+box.height<=844,'phone popup contained');
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
