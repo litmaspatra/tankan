@@ -174,6 +174,11 @@
                 if (!showAllKeys && idx > highestUnlocked) return;
                 const badge = document.createElement('div');
                 badge.className = 'ak-badge';
+                badge.dataset.key=item.k;
+                badge.tabIndex=0;
+                badge.setAttribute('role','button');
+                badge.setAttribute('aria-label',item.h+' speed history');
+                badge.setAttribute('aria-haspopup','dialog');
                 badge.title = `${item.h} (Key ${item.k.toUpperCase()}) — ${item.d}\nFinger: ${item.finger}`;
 
                 if (idx <= highestUnlocked) {
@@ -209,17 +214,6 @@
                     }
                 }
                 badge.innerHTML = bar+`<span class="ak-char">${item.h}</span><span class="ak-key">${item.alt ? item.alt : (item.conjunct ? item.h : item.k.toUpperCase())}</span>`;
-
-                badge.addEventListener('click', () => {
-                    if (idx <= highestUnlocked) {
-                        reviewMode = idx !== highestUnlocked;
-                        unlockedIndex = idx;
-                        targetKeyBuffer = [];
-                        populateJumpSelect();
-                        saveStorage();
-                        regenerateLesson();
-                    }
-                });
 
                 el.alphabetContainer.appendChild(badge);
             });
@@ -293,6 +287,12 @@
                 if(item.k===KEY_PROGRESSION[unlockedIndex].k&&(item.conjunct||item.alt))stats.targetSamples=(stats.targetSamples||0)+times.length;
                 stats.ttt=stats.modelTtt;stats.tttSamples=stats.modelSamples;
                 const history=keyLearning[item.k]||{speeds:[],best:0,times:[],timestamps:[]};
+                // Keep genuine per-lesson own-key pace separate from the older EMA
+                // series. Never backfill own pace from smoothed timing samples.
+                history.lessons=(history.lessons||[]).concat({
+                    wpm:stats.lastLessonWpm, accuracy:lessonAccuracy,
+                    samples:times.length, ts:stats.lastLessonAt, lesson:totalLessons+1
+                }).slice(-120);
                 history.times=(history.times||[]).concat(stats.modelTtt).slice(-30);
                 history.timestamps=(history.timestamps||[]).concat(Date.now()).slice(-30);
                 let start=0;
@@ -615,7 +615,7 @@
                 const color=ratio>=1?'var(--correct)':ratio>=.8?'#eab308':'var(--error)';
                 g+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${(padT+ih-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="${color}"><title>${r.h}: ${r.wpm.toFixed(1)} wpm over ${r.samples} clean hit(s)</title></rect>`;
                 // Full-column transparent hit area for the per-key popup
-                g+=`<rect class="key-hit" data-key="${r.k}" x="${(cx-iw/rows.length/2).toFixed(1)}" y="${padT}" width="${(iw/rows.length).toFixed(1)}" height="${ih}" fill="transparent"/>`;
+                g+=`<rect class="key-hit" tabindex="0" role="button" aria-label="${r.h} speed history" data-key="${r.k}" x="${(cx-iw/rows.length/2).toFixed(1)}" y="${padT}" width="${(iw/rows.length).toFixed(1)}" height="${ih}" fill="transparent"/>`;
                 g+=`<text x="${cx.toFixed(1)}" y="${(padT+ih+16).toFixed(1)}" font-size="12" text-anchor="middle" style="font-family:'Noto Sans Devanagari'">${r.h}</text>`;
                 g+=`<text x="${cx.toFixed(1)}" y="${(padT+ih+29).toFixed(1)}" font-size="9" text-anchor="middle" fill="var(--text-faint)">${r.wpm.toFixed(0)}</text>`;
             });
@@ -666,14 +666,11 @@
             const nat=box.querySelector('svg'); if(nat){ nat.style.minWidth=W+'px'; }
         }
 
-        /* ── keybr-style per-key popup ───────────────────────────────────
-           Hover (desktop) / tap (phone) on a Key Typing Speed bar or a Key
-           details row: last/top speed, accuracy, learning rate, lessons-to-
-           goal prediction, and a speed-per-lesson scatter with fitted curve.
-           LearningRate is a faithful port of keybr's learningrate.ts: last 30
-           session samples (keyLearning is already session-trimmed), polynomial
-           degree 3/2/1 by sample count, R² >= 0.5 gate, rate = derivative at
-           the latest sample, scan <= 50 lessons forward for the prediction. */
+        /* Per-key history. Hover, tap or keyboard focus opens the same card
+           from the practice strip and Profile. Genuine per-lesson own pace is
+           separate from the legacy EMA samples. The graph trend is a trailing
+           five-point average, with no extrapolation. Existing learning-rate
+           forecasts below are explicitly based on smoothed speed history. */
         function polyFit(ys,degree){
             const n=ys.length, d=Math.min(degree,n-1), m=d+1, A=[], b=[];
             for(let r=0;r<m;r++){A.push([]);for(let c=0;c<m;c++){let s=0;for(let i=0;i<n;i++)s+=Math.pow(i,r+c);A[r].push(s);}let s=0;for(let i=0;i<n;i++)s+=ys[i]*Math.pow(i,r);b.push(s);}
@@ -707,9 +704,49 @@
             }
             return{speeds,fit,degree,rate,certainty,remaining};
         }
-        let keyPopupEl=null,keyPopupTimer=0;
-        function hideKeyPopup(){keyPopupTimer=0;if(keyPopupEl)keyPopupEl.hidden=true;}
-        function showKeyPopup(keyId,anchorRect){
+        function renderKeyHistory(keyId,preferSmoothed=false){
+            const hist=keyLearning[keyId]||{};
+            const valid=(hist.lessons||[]).filter(p=>Number.isFinite(p.wpm)&&p.wpm>0).slice(-120);
+            const own=valid.length>0&&!preferSmoothed;
+            const points=own?valid:((hist.times||[]).length?(hist.times||[]).map((ms,i)=>({wpm:12000/ms,ts:(hist.timestamps||[])[i]})):(hist.speeds||[]).map(wpm=>({wpm})))
+                .filter(p=>Number.isFinite(p.wpm)&&p.wpm>0).slice(-30);
+            const switcher=valid.length&&((hist.times||[]).length||(hist.speeds||[]).length)?`<label class="kp-series">History <select aria-label="History series"><option value="own" ${own?'selected':''}>Own-key lesson pace</option><option value="smoothed" ${!own?'selected':''}>Smoothed samples</option></select></label>`:'';
+            const heading=own?"Lesson-by-lesson own-key speed":"Smoothed speed history";
+            const note=own?"Each dot is this key's own pace in a completed lesson, not overall lesson WPM. Last 120 measured lessons are kept.":(valid.length?"These dots are smoothed samples, not individual lesson pace. Switch to Own-key lesson pace for newly recorded lessons.":"Older saves kept smoothed speed only, not each lesson's own pace. Genuine lesson dots start with your next completed lesson using this key.");
+            if(!points.length)return `<section class="kp-chart"><h3>${heading}</h3><div class="kp-empty">No recorded history yet</div><p class="kp-note">${note}</p></section>`;
+            const W=Math.min(560,window.innerWidth-44),H=220,L=44,R=16,T=24,B=38,iw=W-L-R,ih=H-T-B,n=points.length;
+            const values=points.map(p=>p.wpm);
+            const low=Math.max(0,Math.floor(Math.min(targetSpeedGoal,...values)*.85/5)*5);
+            const high=Math.max(low+10,Math.ceil(Math.max(targetSpeedGoal,...values)*1.12/5)*5);
+            const xval=(p,i)=>own&&Number.isFinite(p.lesson)?p.lesson:i+1;
+            const first=xval(points[0],0),last=xval(points[n-1],n-1);
+            const X=(p,i)=>L+iw*(n===1?.5:(xval(p,i)-first)/Math.max(1,last-first));
+            const Y=v=>T+ih*(1-(v-low)/(high-low));
+            let g='';
+            for(let i=0;i<=4;i++){
+                const v=low+(high-low)*i/4,y=Y(v);
+                g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--border-subtle)"/><text x="${L-7}" y="${y+4}" text-anchor="end">${Number(v.toFixed(1))}</text>`;
+            }
+            g+=`<text x="${L}" y="13">WPM</text><line class="kp-goal" x1="${L}" x2="${W-R}" y1="${Y(targetSpeedGoal)}" y2="${Y(targetSpeedGoal)}" stroke="var(--error)" stroke-dasharray="6 4"/><text x="${W-R}" y="13" text-anchor="end" class="kp-goal-text">Target ${targetSpeedGoal}</text>`;
+            if(n>1){
+                // Trailing five-point average is descriptive, not a forecast.
+                const trend=points.map((p,i)=>values.slice(Math.max(0,i-4),i+1).reduce((a,b)=>a+b,0)/Math.min(5,i+1));
+                g+=`<path class="kp-trend" d="${points.map((p,i)=>(i?'L':'M')+X(p,i).toFixed(1)+','+Y(trend[i]).toFixed(1)).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>`;
+            }
+            points.forEach((p,i)=>{
+                const acc=Number.isFinite(p.accuracy)?p.accuracy.toFixed(1)+'% lesson accuracy':'';
+                const date=p.ts?new Date(p.ts).toLocaleString():'';
+                const label=`${own?'Lesson':'Smoothed sample'} ${xval(p,i)}: ${p.wpm.toFixed(1)} WPM${acc?', '+acc:''}${p.samples?', '+p.samples+' clean timings':''}${date?', '+date:''}`;
+                g+=`<circle class="kp-dot" tabindex="0" role="button" aria-label="${label}" cx="${X(p,i).toFixed(1)}" cy="${Y(p.wpm).toFixed(1)}" r="4.5" stroke="var(--accent)" stroke-width="1.8" fill="${own&&p.accuracy<95?'var(--surface)':'var(--accent)'}"><title>${label}</title></circle>`;
+            });
+            const ticks=[...new Set([0,Math.floor((n-1)/2),n-1])];
+            ticks.forEach(i=>{g+=`<text x="${X(points[i],i)}" y="${H-20}" text-anchor="middle">${xval(points[i],i)}</text>`;});
+            g+=`<text x="${L+iw/2}" y="${H-3}" text-anchor="middle">${own?'Lesson number':'Recorded smoothed sample'}</text>`;
+            return `<section class="kp-chart">${switcher}<h3>${heading}</h3><svg class="kp-history-svg" viewBox="0 0 ${W} ${H}" role="group" aria-label="${heading}, ${n} points; target ${targetSpeedGoal} WPM">${g}</svg><div class="kp-legend"><span>● ${own?'Own-key lesson speed':'Smoothed speed'}</span>${own?'<span>○ Under 95% lesson accuracy</span>':''}<span>━ ${n>1?'5-point trend':'Trend after 2 points'}</span><span class="kp-target-label">┄ Target</span></div><div class="kp-point-detail" aria-live="polite">Hover, tap or focus a dot for its details.</div><p class="kp-note">${note}</p></section>`;
+        }
+        let keyPopupEl=null,keyPopupTimer=0,keyPopupAnchor=null,keyPopupPinned=false;
+        function hideKeyPopup(){clearTimeout(keyPopupTimer);keyPopupTimer=0;keyPopupPinned=false;if(keyPopupEl)keyPopupEl.hidden=true;}
+        function showKeyPopup(keyId,anchorRect,preferSmoothed=false){
             const item=KEY_PROGRESSION.find(it=>it.k===keyId);
             if(!item)return;
             const s=keyStats[keyId]||{hits:0,errors:0};
@@ -727,40 +764,17 @@
                 const lr=keyLearningRate(keyId);
                 if(s.lastLessonWpm)lines+=`<div class="kp-line"><span>Last lesson</span><b>${s.lastLessonWpm.toFixed(1)} wpm (key's own pace)</b></div>`;
                 lines+=`<div class="kp-line"><span>Smoothed speed</span><b>${smoothWpm.toFixed(1)} wpm (${conf}% of goal)</b></div>`;
-                lines+=`<div class="kp-line"><span>Top speed</span><b>${topWpm.toFixed(1)} wpm</b></div>`;
+                lines+=`<div class="kp-line"><span>Best smoothed speed</span><b>${topWpm.toFixed(1)} wpm</b></div>`;
                 if(s.accurateBest&&s.accurateBest<Infinity)lines+=`<div class="kp-line"><span>Banked best</span><b>${(12000/s.accurateBest).toFixed(1)} / ${targetSpeedGoal} wpm (95%+ lessons)</b></div>`;
                 lines+=`<div class="kp-line"><span>Accuracy</span><b>${accStr}</b></div>`;
                 if(lr.certainty>=0.5){
                     const sign=lr.rate>=0?'+':'';
-                    lines+=`<div class="kp-line kp-rate ${lr.rate>=0?'pos':'neg'}"><span>Learning rate</span><b>${sign}${lr.rate.toFixed(1)} wpm/lesson</b></div>`;
-                    if(lr.remaining===0)lines+=`<div class="kp-line"><span>Goal ${targetSpeedGoal} wpm</span><b>reached</b></div>`;
-                    else if(lr.remaining>0)lines+=`<div class="kp-line"><span>Goal ${targetSpeedGoal} wpm</span><b>about ${lr.remaining} lesson${lr.remaining===1?'':'s'} away</b></div>`;
-                    else lines+=`<div class="kp-line"><span>Goal ${targetSpeedGoal} wpm</span><b>not within 50 lessons at this rate</b></div>`;
+                    lines+=`<div class="kp-line kp-rate ${lr.rate>=0?'pos':'neg'}"><span>Smoothed learning rate</span><b>${sign}${lr.rate.toFixed(1)} wpm/lesson</b></div>`;
+                    if(lr.remaining===0)lines+=`<div class="kp-line"><span>Smoothed goal forecast</span><b>reached</b></div>`;
+                    else if(lr.remaining>0)lines+=`<div class="kp-line"><span>Smoothed goal forecast</span><b>about ${lr.remaining} lesson${lr.remaining===1?'':'s'} away</b></div>`;
+                    else lines+=`<div class="kp-line"><span>Smoothed goal forecast</span><b>not within 50 lessons at this rate</b></div>`;
                 }else{
-                    lines+=`<div class="kp-line"><span>Learning rate</span><b>not enough stable history</b></div>`;
-                }
-                // Scatter of stored per-lesson speeds + fitted curve + goal line
-                if(lr.speeds.length>=2){
-                    const W=258,H=104,padL=30,padR=6,padT=8,padB=16;
-                    const iw=W-padL-padR, ih=H-padT-padB;
-                    const speeds=lr.speeds, n=speeds.length;
-                    const project=lr.certainty>=0.5&&lr.remaining>0?Math.min(lr.remaining,50):0;
-                    const xMax=n-1+project;
-                    const maxV=ChartMath.niceCeil(Math.max(targetSpeedGoal*1.15,...speeds));
-                    const X=i=>padL+iw*(xMax>0?i/xMax:0), Y=v=>padT+ih*(1-Math.min(v,maxV)/maxV);
-                    let g='';
-                    for(let t=0;t<=2;t++){const y=padT+ih*t/2;g+=`<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="var(--border-subtle)"/>`;g+=`<text x="${padL-4}" y="${(y+3).toFixed(1)}" font-size="8" text-anchor="end">${(maxV*(1-t/2)).toFixed(0)}</text>`;}
-                    g+=`<line x1="${padL}" y1="${Y(targetSpeedGoal).toFixed(1)}" x2="${W-padR}" y2="${Y(targetSpeedGoal).toFixed(1)}" stroke="var(--error)" stroke-dasharray="5 3" stroke-width="1"/>`;
-                    g+=`<text x="${W-padR-2}" y="${(Y(targetSpeedGoal)-3).toFixed(1)}" font-size="7.5" text-anchor="end" fill="var(--error)">${targetSpeedGoal} wpm</text>`;
-                    if(lr.fit&&lr.certainty>=0.5){
-                        let path='';
-                        const steps=Math.max(24,xMax*2);
-                        for(let s2=0;s2<=steps;s2++){const xi=xMax*s2/steps;path+=(s2?'L':'M')+X(xi).toFixed(1)+','+Y(evalFitSafe(lr.fit,xi)).toFixed(1);}
-                        g+=`<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity=".9"/>`;
-                    }
-                    g+=speeds.map((v,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.2" fill="var(--accent)"/>`).join('');
-                    g+=`<text x="${padL}" y="${H-3}" font-size="7.5">older lessons</text><text x="${W-padR}" y="${H-3}" font-size="7.5" text-anchor="end">latest${project?' + projection':''}</text>`;
-                    chartSvg=`<div class="kp-chart"><svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${g}</svg><div class="kp-note">Speed per lesson (last ${n} sample${n===1?'':'s'})${lr.certainty>=0.5?', fitted curve':''} · dashed = your ${targetSpeedGoal} wpm goal</div></div>`;
+                    lines+=`<div class="kp-line"><span>Smoothed learning rate</span><b>not enough stable history</b></div>`;
                 }
             }else if(total>0){
                 lines+=`<div class="kp-line"><span>Accuracy</span><b>${accStr}</b></div>`;
@@ -769,33 +783,58 @@
             }else{
                 lines+=`<div class="kp-note">No measurements for this key yet.</div>`;
             }
-            pop.innerHTML=`<div class="kp-head"><span class="kp-glyph">${item.h}</span><span class="kp-sub">Key: ${phys} · ${item.finger}</span></div>${lines}${chartSvg}`;
+            chartSvg=renderKeyHistory(keyId,preferSmoothed);
+            const idx=KEY_PROGRESSION.indexOf(item);
+            pop.innerHTML=`<div class="kp-head"><span class="kp-glyph" id="kp-title">${item.h} speed history</span><button type="button" class="kp-close" aria-label="Close key history">✕</button></div><div class="kp-sub">Key: ${phys} · ${item.finger}</div><div class="kp-metrics">${lines}</div>${chartSvg}<div class="kp-actions">${idx<=highestUnlocked?'<button type="button" class="kp-practice">Practice this key</button>':'<span class="kp-note">This key is still locked.</span>'}<span class="kp-note">History does not change unlocking.</span></div>`;
+            pop.querySelector('.kp-close').onclick=()=>{hideKeyPopup();if(keyPopupAnchor&&keyPopupAnchor.focus)keyPopupAnchor.focus({preventScroll:true});hideKeyPopup();};
+            const series=pop.querySelector('.kp-series select');
+            if(series)series.onchange=()=>{showKeyPopup(keyId,anchorRect,series.value==='smoothed');pop.querySelector('.kp-series select').focus({preventScroll:true});};
+            const practice=pop.querySelector('.kp-practice');
+            if(practice)practice.onclick=()=>{
+                reviewMode=idx!==highestUnlocked;unlockedIndex=idx;targetKeyBuffer=[];
+                populateJumpSelect();saveStorage();regenerateLesson();hideKeyPopup();
+                document.querySelector('.nav-tab[data-target="practice"]').click();
+            };
+            pop.querySelectorAll('.kp-dot').forEach(dot=>{
+                const show=()=>{pop.querySelector('.kp-point-detail').textContent=dot.getAttribute('aria-label');};
+                dot.addEventListener('mouseenter',show);dot.addEventListener('focus',show);dot.addEventListener('click',show);
+            });
             pop.hidden=false;
-            // Position next to the anchor, clamped into the viewport
+            pop.scrollTop=0;
+            // Avoid covering the hover anchor: above/below when it fits,
+            // otherwise beside it. Small touch screens use a contained card.
             const pw=pop.offsetWidth, ph=pop.offsetHeight, m=8;
-            let left=anchorRect.left+anchorRect.width/2-pw/2;
-            left=Math.max(m,Math.min(left,window.innerWidth-pw-m));
-            let top=anchorRect.top-ph-8;
-            if(top<m)top=Math.min(anchorRect.bottom+8,window.innerHeight-ph-m);
+            let left=Math.max(m,Math.min(anchorRect.left+anchorRect.width/2-pw/2,window.innerWidth-pw-m));
+            let top;
+            if(anchorRect.top>=ph+m+8)top=anchorRect.top-ph-8;
+            else if(window.innerHeight-anchorRect.bottom>=ph+m+8)top=anchorRect.bottom+8;
+            else{
+                top=Math.max(m,Math.min(anchorRect.top,window.innerHeight-ph-m));
+                if(anchorRect.left>=pw+m+8)left=anchorRect.left-pw-8;
+                else if(window.innerWidth-anchorRect.right>=pw+m+8)left=anchorRect.right+8;
+            }
             pop.style.left=left+'px';pop.style.top=top+'px';
         }
-        function evalFitSafe(fit,x){return fit.reduce((a,c,k)=>a+c*Math.pow(x,k),0);}
         function ensureKeyPopup(){
             if(keyPopupEl)return keyPopupEl;
             keyPopupEl=document.createElement('div');
             keyPopupEl.id='key-popup';
             keyPopupEl.hidden=true;
+            keyPopupEl.setAttribute('role','dialog');
+            keyPopupEl.setAttribute('aria-labelledby','kp-title');
             document.body.appendChild(keyPopupEl);
             keyPopupEl.addEventListener('mouseenter',()=>{clearTimeout(keyPopupTimer);keyPopupTimer=0;});
-            keyPopupEl.addEventListener('mouseleave',hideKeyPopup);
+            keyPopupEl.addEventListener('mouseleave',()=>{if(!keyPopupPinned)hideKeyPopup();});
             return keyPopupEl;
         }
         function popupAnchorKey(t){
             if(!t)return null;
+            const badge=t.closest?t.closest('#alphabet-container .ak-badge'):null;
+            if(badge)return{key:badge.dataset.key,rect:badge.getBoundingClientRect(),element:badge};
             const hit=t.closest?t.closest('#chart-key-speed rect.key-hit'):null;
-            if(hit)return{key:hit.getAttribute('data-key'),rect:hit.getBoundingClientRect()};
+            if(hit)return{key:hit.getAttribute('data-key'),rect:hit.getBoundingClientRect(),element:hit};
             const tr=t.closest?t.closest('#profile-table-body tr[data-key]'):null;
-            if(tr)return{key:tr.getAttribute('data-key'),rect:tr.getBoundingClientRect()};
+            if(tr)return{key:tr.getAttribute('data-key'),rect:tr.getBoundingClientRect(),element:tr};
             return null;
         }
         let keyPopupWired=false;
@@ -803,20 +842,32 @@
             if(keyPopupWired)return;keyPopupWired=true;
             document.addEventListener('mouseover',e=>{
                 const a=popupAnchorKey(e.target);
-                if(a){clearTimeout(keyPopupTimer);keyPopupTimer=0;showKeyPopup(a.key,a.rect);}
+                if(a&&!keyPopupPinned&&window.innerWidth>=700&&matchMedia('(hover: hover)').matches){keyPopupAnchor=a.element;clearTimeout(keyPopupTimer);keyPopupTimer=0;showKeyPopup(a.key,a.rect);}
             });
             document.addEventListener('mouseout',e=>{
                 const a=popupAnchorKey(e.target);
-                if(a){clearTimeout(keyPopupTimer);keyPopupTimer=setTimeout(()=>{keyPopupTimer=0;hideKeyPopup();},180);}
+                if(a&&!keyPopupPinned){clearTimeout(keyPopupTimer);keyPopupTimer=setTimeout(()=>{keyPopupTimer=0;hideKeyPopup();},250);}
             });
             document.addEventListener('click',e=>{
                 if(keyPopupEl&&!keyPopupEl.hidden&&keyPopupEl.contains(e.target))return;
                 const a=popupAnchorKey(e.target);
-                if(a){clearTimeout(keyPopupTimer);keyPopupTimer=0;showKeyPopup(a.key,a.rect);}
+                if(a){keyPopupAnchor=a.element;clearTimeout(keyPopupTimer);keyPopupTimer=0;keyPopupPinned=true;showKeyPopup(a.key,a.rect);}
                 else hideKeyPopup();
             });
-            document.addEventListener('keydown',e=>{if(e.key==='Escape')hideKeyPopup();});
-            window.addEventListener('scroll',hideKeyPopup,true);
+            document.addEventListener('focusin',e=>{
+                const a=popupAnchorKey(e.target);
+                if(a){keyPopupAnchor=a.element;keyPopupPinned=true;showKeyPopup(a.key,a.rect);}
+            });
+            document.addEventListener('keydown',e=>{
+                if(e.key==='Escape')hideKeyPopup();
+                const a=popupAnchorKey(e.target);
+                if(a&&(e.key==='Enter'||e.key===' ')){
+                    e.preventDefault();keyPopupAnchor=a.element;keyPopupPinned=true;showKeyPopup(a.key,a.rect);
+                    keyPopupEl.querySelector('.kp-close').focus({preventScroll:true});
+                }
+            });
+            window.addEventListener('scroll',e=>{if(!keyPopupPinned&&(!keyPopupEl||!keyPopupEl.contains(e.target)))hideKeyPopup();},true);
+            window.addEventListener('resize',hideKeyPopup);
         }
 
         function renderProgressOverview(){
@@ -926,6 +977,7 @@
 
                 const tr = document.createElement('tr');
                 tr.dataset.key = item.k;
+                tr.tabIndex=0;tr.setAttribute('role','button');tr.setAttribute('aria-label',item.h+' speed history');
                 tr.innerHTML = `
                     <td style="font-family:'Noto Sans Devanagari'; font-size:1.15rem; font-weight:700; color:var(--text);">${item.h}</td>
                     <td><span class="key-chip">${item.alt ? ('Alt+' + item.alt) : (item.conjunct ? item.h : item.k.toUpperCase())}</span></td>

@@ -1944,3 +1944,37 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
         .avatar-lightbox-hint:empty { display: none; }
 
 .backup-advanced>summary{cursor:pointer;font-size:.8rem;opacity:.8}
+
+        /* Per-key history: roomy on desktop, contained on phones. */
+        #key-popup{width:600px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto;padding:16px 18px;border-radius:10px;font-size:.8rem}
+        #key-popup .kp-head{justify-content:space-between;align-items:center;margin-bottom:5px}
+        #key-popup .kp-glyph{font-size:1.2rem;line-height:1.5}
+        #key-popup .kp-close{border:0;background:transparent;color:var(--text-dim);padding:5px 9px;cursor:pointer;font-size:1rem}
+        #key-popup .kp-metrics{display:grid;grid-template-columns:1fr 1fr;gap:2px 22px;margin-top:10px}
+        #key-popup .kp-line{gap:8px;flex-wrap:wrap;align-content:start;padding:3px 0}
+        #key-popup .kp-line b{text-align:right}
+        #key-popup .kp-chart{margin-top:10px;padding-top:10px}
+        #key-popup .kp-chart h3{font-size:.85rem;margin:0 0 6px;color:var(--text)}
+        #key-popup .kp-history-svg{display:block;width:100%;height:auto;overflow:visible}
+        #key-popup svg text{font-size:11px;fill:var(--text-dim);font-family:inherit}
+        #key-popup .kp-dot{cursor:pointer;outline:none}
+        #key-popup .kp-dot:hover,#key-popup .kp-dot:focus{stroke:var(--text);stroke-width:3}
+        #key-popup .kp-legend{display:flex;flex-wrap:wrap;gap:5px 14px;color:var(--text-dim);font-size:.7rem}
+        #key-popup .kp-target-label{color:var(--error)}
+        #key-popup .kp-point-detail{font-size:.73rem;color:var(--text);min-height:2.5em;margin-top:8px;line-height:1.4}
+        #key-popup .kp-note{font-size:.7rem;line-height:1.4;color:var(--text-dim)}
+        #key-popup .kp-actions{border-top:1px solid var(--border-subtle);padding-top:10px;margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+        #key-popup .kp-practice{font:inherit;background:var(--accent);color:var(--surface);border:0;border-radius:5px;padding:8px 12px;cursor:pointer}
+        #key-popup .kp-empty{padding:20px 0;color:var(--text-dim)}
+        .ak-badge:focus-visible,#profile-table-body tr[data-key]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+        @media(max-width:620px){
+            #key-popup{padding:12px}
+            #key-popup .kp-metrics{grid-template-columns:1fr;gap:0}
+            #key-popup .kp-line{padding:2px 0}
+            #key-popup .kp-point-detail{min-height:3.8em}
+        }
+
+        #key-popup .kp-series{display:flex;justify-content:space-between;align-items:center;gap:12px;color:var(--text-dim);margin-bottom:10px}
+        #key-popup .kp-series select{font:inherit;background:var(--surface);color:var(--text);border:1px solid var(--border);padding:5px;max-width:70%}
+
+        #key-popup svg .kp-goal-text{fill:var(--error)}

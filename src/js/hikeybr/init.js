@@ -2,6 +2,7 @@
 
         // 12. INITIALIZATION
         // ─────────────────────────────────────────────────────────────
+        initKeyPopup();
         renderVirtualKeyboard();
         Object.keys(FONT_REGISTRY).forEach(ensureFontLoaded);
         loadStorage();

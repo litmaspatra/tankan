@@ -8,6 +8,7 @@
         });
 
         document.addEventListener('keydown', (e) => {
+            if(e.target.closest&&e.target.closest('#key-popup, [role="button"]'))return;
             const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
             if (tag !== 'select' && tag !== 'button' && tag !== 'input' && tag !== 'textarea' && !e.ctrlKey && !e.metaKey) {
                 el.hiddenInput.focus({preventScroll:true});
