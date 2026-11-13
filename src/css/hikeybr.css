@@ -1901,4 +1901,46 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
             .avatar-preset-grid { grid-template-columns: repeat(4, 44px); }
         }
 
+        /* Tap-to-enlarge photo view: the header circle and picker thumbnails
+           are too small to appreciate the painted preset faces. */
+        #avatar-lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.78);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+            padding: 16px;
+        }
+        #avatar-lightbox[hidden] { display: none; }
+        .avatar-lightbox-card {
+            background: var(--bg);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 18px;
+            max-width: min(92vw, 470px);
+            text-align: center;
+        }
+        .avatar-lightbox-card img {
+            width: min(70vmin, 360px);
+            height: min(70vmin, 360px);
+            border-radius: 10px;
+            object-fit: cover;
+            display: block;
+            margin: 0 auto;
+        }
+        .avatar-lightbox-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+        .avatar-lightbox-hint {
+            margin: 8px 0 0;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+        .avatar-lightbox-hint:empty { display: none; }
+
 .backup-advanced>summary{cursor:pointer;font-size:.8rem;opacity:.8}

@@ -96,18 +96,44 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     assert.ok(restored && restored.startsWith('data:image/jpeg'), "A's custom photo restored from vault");
     assert.strictEqual(await page.evaluate(u => localStorage.getItem('tankan_avatar_vault_' + u), A.uid), null, 'vault emptied after restore');
 
-    // 7. Preset picker: grid lists every built-in face; picking one replaces
-    // the upload, stores only the preset name, and marks the selection.
+    // 7. Preset picker: grid lists every built-in face; tapping one opens the
+    // enlarged preview without changing the saved choice, and its Use button
+    // applies the pick (replaces the upload, stores only the preset name).
     const expectedPresets = await page.evaluate(() => window.TANKAN_AVATAR.PRESETS.length);
     assert.strictEqual(await page.locator('#avatar-preset-grid .avatar-preset').count(), expectedPresets, 'grid shows all presets');
     await page.click('#avatar-preset-grid .avatar-preset[data-preset="dumbstruck"]');
     await page.waitForTimeout(200);
+    assert.ok(await page.locator('#avatar-lightbox').isVisible(), 'tapping a preset opens the enlarged preview');
+    assert.ok((await page.locator('#avatar-lightbox-img').getAttribute('src')).endsWith('assets/avatars/dumbstruck.webp'), 'preview shows the tapped face');
+    assert.ok(await page.locator('#avatar-lightbox-use').isVisible(), 'preset preview offers Use');
+    assert.strictEqual(await page.evaluate(u => JSON.parse(localStorage.getItem('hikeybr_avatar_u_' + u)).kind, A.uid), 'upload', 'preview alone changes nothing');
+    await page.click('#avatar-lightbox-use');
+    await page.waitForTimeout(200);
+    assert.ok(await page.locator('#avatar-lightbox').isHidden(), 'Use closes the preview');
     assert.ok((await page.locator('#avatar-img').getAttribute('src')).endsWith('assets/avatars/dumbstruck.webp'), 'header shows the picked preset');
     assert.deepStrictEqual(await page.evaluate(u => JSON.parse(localStorage.getItem('hikeybr_avatar_u_' + u)), A.uid),
         { kind: 'preset', preset: 'dumbstruck' }, 'preset stored as just a name');
     assert.ok(await page.locator('#avatar-preset-grid .avatar-preset[data-preset="dumbstruck"]').evaluate(el => el.classList.contains('selected')), 'picked preset is marked');
     assert.ok(await page.locator('#avatar-remove').isVisible(), 'remove offered with a preset');
     assert.ok(await page.locator('#avatar-use-google').isVisible(), 'google button offered to switch back');
+
+    // 7b. Header photo tap enlarges the current avatar (no Use button), Esc closes.
+    await page.click('#avatar-corner');
+    await page.waitForTimeout(150);
+    assert.ok(await page.locator('#avatar-lightbox').isVisible(), 'tapping the header photo enlarges it');
+    assert.ok((await page.locator('#avatar-lightbox-img').getAttribute('src')).endsWith('assets/avatars/dumbstruck.webp'), 'header tap shows the current avatar');
+    assert.ok(await page.locator('#avatar-lightbox-use').isHidden(), 'plain viewing has no Use button');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
+    assert.ok(await page.locator('#avatar-lightbox').isHidden(), 'Esc closes the lightbox');
+    // Settings preview tap enlarges too, backdrop click closes.
+    await openProfile(page);
+    await page.click('#avatar-preview');
+    await page.waitForTimeout(150);
+    assert.ok(await page.locator('#avatar-lightbox').isVisible(), 'tapping the Settings preview enlarges it');
+    await page.click('#avatar-lightbox', { position: { x: 5, y: 5 } });
+    await page.waitForTimeout(100);
+    assert.ok(await page.locator('#avatar-lightbox').isHidden(), 'backdrop click closes the lightbox');
 
     // 8. Switch to B and back: a preset choice vaults and restores like an upload.
     await page.evaluate(u => window.__setAuthUser(u), B);

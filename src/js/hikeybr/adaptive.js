@@ -125,6 +125,7 @@
                 if((current.accurateBest||Infinity)>12000/targetSpeedGoal)unmet.push(currentItem.h+" banked best "+(current.accurateBest?(12000/current.accurateBest).toFixed(1):'none yet')+' / '+targetSpeedGoal+" WPM (banks only on 95%+ accuracy lessons, key's own pace)");
                 if(!unlockState.starterReady)unmet.push('calibrating starter keys');
                 if(!unlockState.strictOk)unmet.push('earlier keys must also reach the target speed');
+                if(current.lastLessonWpm)unmet.push(currentItem.h+' last lesson: '+current.lastLessonWpm.toFixed(1)+' WPM own pace');
                 if(unmet.length)el.leadSamplesStatus.textContent+=' · '+unmet.join(' · ');
             }
 
@@ -183,7 +184,9 @@
                     if(idx<INITIAL_UNLOCKED_COUNT)badge.title += '\nStarter key: available from the first lesson, not automatically mastered';
                     if(hs?.ttt)badge.title += `\nSpeed goal: ${Math.round((12000/targetSpeedGoal)/hs.ttt*100)}%`;
                     if (hs && (hs.tttSamples || 0) >= 6 && typeof hs.ttt === 'number' && hs.ttt > 0) {
-                        badge.title += `\nSpeed: ~${Math.max(1, Math.round(12000 / hs.ttt))} WPM`;
+                        badge.title += `\nSmoothed speed: ~${Math.max(1, Math.round(12000 / hs.ttt))} WPM`;
+                        if (hs.lastLessonWpm) badge.title += `\nLast lesson: ${hs.lastLessonWpm.toFixed(1)} WPM (key's own pace, ${(hs.lastAccuracy||0).toFixed(1)}% lesson accuracy)`;
+                        if (hs.accurateBest && isFinite(hs.accurateBest)) badge.title += `\nBanked best: ${(12000/hs.accurateBest).toFixed(1)} / ${targetSpeedGoal} WPM`;
                         if (idx < unlockedIndex && hs.ttt > (12000 / targetSpeedGoal) / 0.8) {
                             badge.title += '\nNeeds practice - extra mixed-word review';
                             badge.style.outline = '1px dashed #eab308';
@@ -272,6 +275,13 @@
                 const filtered=sorted.slice(trim,sorted.length-trim),mean=filtered.reduce((a,b)=>a+b,0)/filtered.length;
                 stats.modelTtt=stats.modelTtt ? .1*mean+.9*stats.modelTtt : mean;
                 stats.modelBest=Math.min(stats.modelBest||Infinity,stats.modelTtt);
+                // This lesson's own pace for the key, kept beside the smoothed
+                // figure so "last lesson" never has to mean the EMA (Kartik
+                // 2026-11-13: "i should be able to see the last lesson tra key
+                // speed too").
+                stats.lastLessonWpm=12000/mean;
+                stats.lastLessonSamples=times.length;
+                stats.lastLessonAt=Date.now();
                 const lessonAccuracy=sessionCorrect/Math.max(1,sessionCorrect+sessionErrors)*100;
                 stats.lastAccuracy=lessonAccuracy;
                 if(item.k===KEY_PROGRESSION[unlockedIndex].k)stats.recentLessonAccuracy=lessonAccuracy;
@@ -711,12 +721,14 @@
             const accStr=total>0?Math.round(s.hits/total*100)+'%':'—';
             let chartSvg='';
             if(measured){
-                const lastWpm=12000/s.modelTtt;
-                const topWpm=s.modelBest>0&&s.modelBest<Infinity?12000/s.modelBest:lastWpm;
-                const conf=Math.round(lastWpm/targetSpeedGoal*100);
+                const smoothWpm=12000/s.modelTtt;
+                const topWpm=s.modelBest>0&&s.modelBest<Infinity?12000/s.modelBest:smoothWpm;
+                const conf=Math.round(smoothWpm/targetSpeedGoal*100);
                 const lr=keyLearningRate(keyId);
-                lines+=`<div class="kp-line"><span>Last speed</span><b>${lastWpm.toFixed(1)} wpm (${conf}%)</b></div>`;
+                if(s.lastLessonWpm)lines+=`<div class="kp-line"><span>Last lesson</span><b>${s.lastLessonWpm.toFixed(1)} wpm (key's own pace)</b></div>`;
+                lines+=`<div class="kp-line"><span>Smoothed speed</span><b>${smoothWpm.toFixed(1)} wpm (${conf}% of goal)</b></div>`;
                 lines+=`<div class="kp-line"><span>Top speed</span><b>${topWpm.toFixed(1)} wpm</b></div>`;
+                if(s.accurateBest&&s.accurateBest<Infinity)lines+=`<div class="kp-line"><span>Banked best</span><b>${(12000/s.accurateBest).toFixed(1)} / ${targetSpeedGoal} wpm (95%+ lessons)</b></div>`;
                 lines+=`<div class="kp-line"><span>Accuracy</span><b>${accStr}</b></div>`;
                 if(lr.certainty>=0.5){
                     const sign=lr.rate>=0?'+':'';

@@ -39,6 +39,39 @@
     const presetGrid = $('avatar-preset-grid');
     const status = $('avatar-status');
 
+    // Tap-to-enlarge lightbox (Kartik 2026-11-13): the header circle and the
+    // picker thumbnails are too small to appreciate the painted faces. The
+    // header photo and the Settings preview open it for viewing; a preset
+    // thumbnail opens it with a Use button so choosing stays one extra tap.
+    const lightbox = $('avatar-lightbox');
+    const lightboxImg = $('avatar-lightbox-img');
+    const lightboxUse = $('avatar-lightbox-use');
+    const lightboxClose = $('avatar-lightbox-close');
+    const lightboxHint = $('avatar-lightbox-hint');
+    let lightboxPreset = null;
+    const closeLightbox = () => { if (lightbox) lightbox.hidden = true; lightboxPreset = null; };
+    const openLightbox = (src, opts = {}) => {
+        if (!lightbox || !lightboxImg || !src) return;
+        lightboxImg.src = src;
+        lightboxPreset = opts.preset || null;
+        if (lightboxUse) lightboxUse.hidden = !lightboxPreset;
+        if (lightboxHint) lightboxHint.textContent = opts.hint || '';
+        lightbox.hidden = false;
+    };
+    if (lightbox) {
+        lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !lightbox.hidden) closeLightbox(); });
+        if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+        if (lightboxUse) lightboxUse.addEventListener('click', () => {
+            if (lightboxPreset && currentUser) {
+                setCustom(currentUser.uid, { kind: 'preset', preset: lightboxPreset });
+                say('Avatar updated.');
+                apply(currentUser);
+            }
+            closeLightbox();
+        });
+    }
+
     let currentUser = null;
 
     const keyFor = uid => KEY_PREFIX + uid;
@@ -190,7 +223,7 @@
             btn.type = 'button';
             btn.className = 'avatar-preset';
             btn.dataset.preset = name;
-            btn.title = 'Use the ' + name + ' avatar';
+            btn.title = 'Preview the ' + name + ' avatar';
             const pic = document.createElement('img');
             pic.src = presetSrc(name);
             pic.alt = name + ' avatar';
@@ -198,18 +231,24 @@
             btn.appendChild(pic);
             btn.addEventListener('click', () => {
                 if (!currentUser) return;
-                setCustom(currentUser.uid, { kind: 'preset', preset: name });
-                say('Avatar updated.');
-                apply(currentUser);
+                openLightbox(presetSrc(name), { preset: name, hint: 'Tap "Use this avatar" to pick this face.' });
             });
             presetGrid.appendChild(btn);
         });
     }
 
-    // Header circle opens Profile > Account.
+    // Header circle: tap enlarges the photo; with no photo it still opens
+    // Profile > Account as before.
     corner.addEventListener('click', () => {
+        const resolved = resolve(currentUser);
+        if (resolved && resolved.src) { openLightbox(resolved.src, { hint: 'Change photo in Settings > Account.' }); return; }
         const tab = document.querySelector('button.nav-tab[data-target="profile"]');
         if (tab) tab.click();
+    });
+    const previewBox = $('avatar-preview');
+    if (previewBox) previewBox.addEventListener('click', () => {
+        const resolved = resolve(currentUser);
+        if (resolved && resolved.src) openLightbox(resolved.src);
     });
 
     // Auth wiring: hide signed out; isolate per-account keys on every
@@ -231,7 +270,7 @@
 
     // Test seam: pure logic only; UI flows go through the real controls.
     window.TANKAN_AVATAR = {
-        resolve, isolateFor, wouldFit, apply,
+        resolve, isolateFor, wouldFit, apply, openLightbox, closeLightbox,
         KEY_PREFIX, VAULT_PREFIX, MAX_DATAURL_CHARS, PAYLOAD_BUDGET_CHARS, PRESETS
     };
 })();
