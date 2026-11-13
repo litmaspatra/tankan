@@ -29,11 +29,12 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
         await page.addInitScript(() => {
             window.TANKAN_SYNC_DEBOUNCE_MS = 150;
             window.__authUser = JSON.parse(localStorage.getItem('__authSeed') || 'null');
+            if(window.__authUser)window.__authUser.getIdToken=async()=>'synthetic-test-token';
             window.__authCbs = [];
             window.TANKAN_AUTH_TEST_CLIENT = {
                 onAuth(cb) { window.__authCbs.push(cb); setTimeout(() => cb(window.__authUser), 0); },
                 signIn() {
-                    window.__authUser = { uid: 'u1', displayName: 'Test User', email: 'test@example.com' };
+                    window.__authUser = { uid: 'u1', displayName: 'Test User', email: 'test@example.com', getIdToken:async()=>'synthetic-test-token' };
                     localStorage.setItem('__authSeed', JSON.stringify(window.__authUser));
                     window.__authCbs.forEach(cb => cb(window.__authUser));
                     return Promise.resolve({ user: window.__authUser });
@@ -71,6 +72,10 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
                 }
             };
         });
+        await page.route('**/api/community*',route=>{
+            assert.equal(route.request().method(),'GET','sync test never publishes a profile');
+            return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({account:null,pending:0,rows:[]})});
+        });
         return page;
     };
     const readCloud = page => page.evaluate(() => (JSON.parse(localStorage.getItem('__syncDocs') || '{}').u1 || {}).payload || null);
@@ -89,7 +94,7 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     const avatar=JSON.stringify({kind:'preset',preset:'bottts'});
     const seed=async(p,n)=>{await p.goto(base);await p.evaluate(({n,avatar})=>{localStorage.setItem('hikeybr_store_v3',n);localStorage.setItem('hikeybr_avatar_u_u1',avatar);},{n:progress(n),avatar});await openProfile(p);await p.click('#google-signin-btn');};
     const status=async(p,fragment)=>p.waitForFunction(t=>document.getElementById('sync-status').textContent.includes(t),fragment);
-    const hidden=async p=>{assert.equal(await p.locator('#sync-conflict').isVisible(),false);assert.equal(await p.locator('#sync-bind-prompt').isVisible(),false);};
+    const hidden=async p=>{await p.waitForFunction(()=>!document.getElementById('community-account').hidden);assert.equal(await p.locator('#account-signed-in').evaluate(n=>n.hidden),false);assert.equal(await p.locator('#community-status').textContent(),'');assert.equal(await p.locator('#sync-conflict').isVisible(),false);assert.equal(await p.locator('#sync-bind-prompt').isVisible(),false);};
 
     // Same account on two device contexts, different key/property order.
     shared=envelope({hikeybr_avatar_u_u1:JSON.stringify({preset:'bottts',kind:'preset'}),hikeybr_store_v3:progress(8)});
@@ -115,7 +120,7 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     await laptop.reload();await status(laptop,'Saved');await hidden(laptop);
     await openProfile(laptop);await laptop.locator('#sync-status').scrollIntoViewIfNeeded();await laptop.screenshot({animations:'disabled',path:path.join(process.env.TANKAN_SCREENSHOTS||require('node:os').tmpdir(),'tankan-sync-after-update-desktop.png')});
     await phone.reload();await openProfile(phone);await status(phone,'differs');assert.ok(await phone.locator('#sync-conflict').isVisible(),'a newer genuine other-device change still needs consent');
-    await laptop.context().close();await phone.context().close();
+    await laptop.click('#google-signout-btn');await laptop.locator('#community-account').waitFor({state:'hidden'});assert.equal(await laptop.locator('#account-signed-in').isVisible(),false);await laptop.context().close();await phone.context().close();
 
     // Legacy outer-JSON owed state must still recover, including reordered
     // keys. No debt is discarded or replaced by the remote base.
