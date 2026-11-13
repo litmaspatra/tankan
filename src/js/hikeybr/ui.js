@@ -470,3 +470,12 @@
         });
 
         // ─────────────────────────────────────────────────────────────
+
+        // Short score explanation. This never changes the scoring formula.
+        const scoreHelpDialog=document.getElementById('score-help-dialog');
+        const scoreHelpBtn=document.getElementById('score-help-btn');
+        if(scoreHelpDialog&&scoreHelpBtn){
+            scoreHelpBtn.addEventListener('click',()=>scoreHelpDialog.showModal());
+            document.getElementById('score-help-close').addEventListener('click',()=>scoreHelpDialog.close());
+            scoreHelpDialog.addEventListener('click',e=>{if(e.target===scoreHelpDialog)scoreHelpDialog.close();});
+        }

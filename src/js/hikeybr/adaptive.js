@@ -187,16 +187,9 @@
                     if (idx === unlockedIndex) badge.classList.add('current');
                     const hs = keyStats[item.k];
                     if(idx<INITIAL_UNLOCKED_COUNT)badge.title += '\nStarter key: available from the first lesson, not automatically mastered';
-                    if(hs?.ttt)badge.title += `\nSpeed goal: ${Math.round((12000/targetSpeedGoal)/hs.ttt*100)}%`;
-                    if (hs && (hs.tttSamples || 0) >= 6 && typeof hs.ttt === 'number' && hs.ttt > 0) {
-                        badge.title += `\nSmoothed speed: ~${Math.max(1, Math.round(12000 / hs.ttt))} WPM`;
-                        if (hs.lastLessonWpm) badge.title += `\nLast lesson: ${hs.lastLessonWpm.toFixed(1)} WPM (key's own pace, ${(hs.lastAccuracy||0).toFixed(1)}% lesson accuracy)`;
-                        if (hs.accurateBest && isFinite(hs.accurateBest)) badge.title += `\nBanked best: ${(12000/hs.accurateBest).toFixed(1)} / ${targetSpeedGoal} WPM`;
-                        if (idx < unlockedIndex && hs.ttt > (12000 / targetSpeedGoal) / 0.8) {
-                            badge.title += '\nNeeds practice - extra mixed-word review';
-                            badge.style.outline = '1px dashed #eab308';
-                        }
-                    }
+                    if(hs?.lastLessonWpm)badge.title+=`\nLast: ${hs.lastLessonWpm.toFixed(1)} WPM`;
+                    const recordedBest=ownKeyBest(item.k);
+                    if(recordedBest)badge.title+=`\nBest recorded: ${recordedBest.toFixed(1)} WPM`;
                 } else {
                     badge.classList.add('locked');
                 }
@@ -273,6 +266,7 @@
                 // figure so "last lesson" never has to mean the EMA (Kartik
                 // 2026-11-13: "i should be able to see the last lesson tra key
                 // speed too").
+                stats.bestLessonWpm=Math.max(ownKeyBest(item.k),12000/mean);
                 stats.lastLessonWpm=12000/mean;
                 stats.lastLessonSamples=times.length;
                 stats.lastLessonAt=Date.now();
@@ -289,10 +283,13 @@
                 const history=keyLearning[item.k]||{speeds:[],best:0,times:[],timestamps:[]};
                 // Keep genuine per-lesson own-key pace separate from the older EMA
                 // series. Never backfill own pace from smoothed timing samples.
-                history.lessons=(history.lessons||[]).concat({
-                    wpm:stats.lastLessonWpm, accuracy:lessonAccuracy,
-                    samples:times.length, ts:stats.lastLessonAt, lesson:totalLessons+1
-                }).slice(-120);
+                // Compact tuples leave room under the private sync payload cap:
+                // [own WPM, lesson accuracy, clean timings, timestamp, lesson #].
+                const compact=p=>Array.isArray(p)?p:[p.wpm,p.accuracy,p.samples,p.ts,p.lesson];
+                history.lessons=(history.lessons||[]).map(compact).concat([[
+                    +stats.lastLessonWpm.toFixed(2), +lessonAccuracy.toFixed(2),
+                    times.length, stats.lastLessonAt, totalLessons+1
+                ]]).slice(-120);
                 history.times=(history.times||[]).concat(stats.modelTtt).slice(-30);
                 history.timestamps=(history.timestamps||[]).concat(Date.now()).slice(-30);
                 let start=0;
@@ -704,91 +701,56 @@
             }
             return{speeds,fit,degree,rate,certainty,remaining};
         }
-        function renderKeyHistory(keyId,preferSmoothed=false){
-            const hist=keyLearning[keyId]||{};
-            const valid=(hist.lessons||[]).filter(p=>Number.isFinite(p.wpm)&&p.wpm>0).slice(-120);
-            const own=valid.length>0&&!preferSmoothed;
-            const points=own?valid:((hist.times||[]).length?(hist.times||[]).map((ms,i)=>({wpm:12000/ms,ts:(hist.timestamps||[])[i]})):(hist.speeds||[]).map(wpm=>({wpm})))
-                .filter(p=>Number.isFinite(p.wpm)&&p.wpm>0).slice(-30);
-            const switcher=valid.length&&((hist.times||[]).length||(hist.speeds||[]).length)?`<label class="kp-series">History <select aria-label="History series"><option value="own" ${own?'selected':''}>Own-key lesson pace</option><option value="smoothed" ${!own?'selected':''}>Smoothed samples</option></select></label>`:'';
-            const heading=own?"Lesson-by-lesson own-key speed":"Smoothed speed history";
-            const note=own?"Each dot is this key's own pace in a completed lesson, not overall lesson WPM. Last 120 measured lessons are kept.":(valid.length?"These dots are smoothed samples, not individual lesson pace. Switch to Own-key lesson pace for newly recorded lessons.":"Older saves kept smoothed speed only, not each lesson's own pace. Genuine lesson dots start with your next completed lesson using this key.");
-            if(!points.length)return `<section class="kp-chart"><h3>${heading}</h3><div class="kp-empty">No recorded history yet</div><p class="kp-note">${note}</p></section>`;
-            const W=Math.min(560,window.innerWidth-44),H=220,L=44,R=16,T=24,B=38,iw=W-L-R,ih=H-T-B,n=points.length;
+        function ownKeyLessons(keyId){
+            return ((keyLearning[keyId]||{}).lessons||[]).map(p=>Array.isArray(p)?{wpm:p[0],accuracy:p[1],samples:p[2],ts:p[3],lesson:p[4]}:p)
+                .filter(p=>p&&Number.isFinite(p.wpm)&&p.wpm>0).slice(-120);
+        }
+        function ownKeyBest(keyId){
+            const s=keyStats[keyId]||{};
+            // accurateBest is an actual qualifying lesson mean, not the EMA.
+            // Older unqualified lessons were not saved, so only recorded best
+            // is knowable. Never turn the old smoothed series into lesson dots.
+            return Math.max(s.bestLessonWpm||0,s.lastLessonWpm||0,
+                s.accurateBest>0&&isFinite(s.accurateBest)?12000/s.accurateBest:0,
+                ...ownKeyLessons(keyId).map(p=>p.wpm));
+        }
+        function renderKeyHistory(keyId){
+            const points=ownKeyLessons(keyId).slice(-60),n=points.length;
+            const W=Math.min(332,window.innerWidth-40),H=126,L=30,R=9,T=13,B=21,iw=W-L-R,ih=H-T-B;
             const values=points.map(p=>p.wpm);
-            const low=Math.max(0,Math.floor(Math.min(targetSpeedGoal,...values)*.85/5)*5);
-            const high=Math.max(low+10,Math.ceil(Math.max(targetSpeedGoal,...values)*1.12/5)*5);
-            const xval=(p,i)=>own&&Number.isFinite(p.lesson)?p.lesson:i+1;
-            const first=xval(points[0],0),last=xval(points[n-1],n-1);
-            const X=(p,i)=>L+iw*(n===1?.5:(xval(p,i)-first)/Math.max(1,last-first));
-            const Y=v=>T+ih*(1-(v-low)/(high-low));
+            const low=Math.max(0,Math.floor(Math.min(targetSpeedGoal,...values)*.8/5)*5);
+            const high=Math.max(low+10,Math.ceil(Math.max(targetSpeedGoal,...values)*1.15/5)*5);
+            const X=i=>L+iw*(n>1?i/(n-1):.5),Y=v=>T+ih*(1-(v-low)/(high-low));
             let g='';
-            for(let i=0;i<=4;i++){
-                const v=low+(high-low)*i/4,y=Y(v);
-                g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--border-subtle)"/><text x="${L-7}" y="${y+4}" text-anchor="end">${Number(v.toFixed(1))}</text>`;
+            for(let i=0;i<=2;i++){
+                const v=low+(high-low)*i/2,y=Y(v);
+                g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--border-subtle)"/><text x="${L-5}" y="${y+3}" text-anchor="end">${Number(v.toFixed(1))}</text>`;
             }
-            g+=`<text x="${L}" y="13">WPM</text><line class="kp-goal" x1="${L}" x2="${W-R}" y1="${Y(targetSpeedGoal)}" y2="${Y(targetSpeedGoal)}" stroke="var(--error)" stroke-dasharray="6 4"/><text x="${W-R}" y="13" text-anchor="end" class="kp-goal-text">Target ${targetSpeedGoal}</text>`;
+            g+=`<line class="kp-goal" x1="${L}" x2="${W-R}" y1="${Y(targetSpeedGoal)}" y2="${Y(targetSpeedGoal)}" stroke="var(--error)" stroke-dasharray="4 3"/>`;
             if(n>1){
-                // Trailing five-point average is descriptive, not a forecast.
                 const trend=points.map((p,i)=>values.slice(Math.max(0,i-4),i+1).reduce((a,b)=>a+b,0)/Math.min(5,i+1));
-                g+=`<path class="kp-trend" d="${points.map((p,i)=>(i?'L':'M')+X(p,i).toFixed(1)+','+Y(trend[i]).toFixed(1)).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>`;
+                g+=`<path class="kp-trend" d="${points.map((p,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(trend[i]).toFixed(1)).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="1.6"/>`;
             }
             points.forEach((p,i)=>{
-                const acc=Number.isFinite(p.accuracy)?p.accuracy.toFixed(1)+'% lesson accuracy':'';
-                const date=p.ts?new Date(p.ts).toLocaleString():'';
-                const label=`${own?'Lesson':'Smoothed sample'} ${xval(p,i)}: ${p.wpm.toFixed(1)} WPM${acc?', '+acc:''}${p.samples?', '+p.samples+' clean timings':''}${date?', '+date:''}`;
-                g+=`<circle class="kp-dot" tabindex="0" role="button" aria-label="${label}" cx="${X(p,i).toFixed(1)}" cy="${Y(p.wpm).toFixed(1)}" r="4.5" stroke="var(--accent)" stroke-width="1.8" fill="${own&&p.accuracy<95?'var(--surface)':'var(--accent)'}"><title>${label}</title></circle>`;
+                const label=`Lesson ${p.lesson||i+1}: ${p.wpm.toFixed(1)} WPM`;
+                g+=`<circle class="kp-dot" tabindex="0" role="button" aria-label="${label}" cx="${X(i).toFixed(1)}" cy="${Y(p.wpm).toFixed(1)}" r="3" fill="var(--accent)"><title>${label}</title></circle>`;
             });
-            const ticks=[...new Set([0,Math.floor((n-1)/2),n-1])];
-            ticks.forEach(i=>{g+=`<text x="${X(points[i],i)}" y="${H-20}" text-anchor="middle">${xval(points[i],i)}</text>`;});
-            g+=`<text x="${L+iw/2}" y="${H-3}" text-anchor="middle">${own?'Lesson number':'Recorded smoothed sample'}</text>`;
-            return `<section class="kp-chart">${switcher}<h3>${heading}</h3><svg class="kp-history-svg" viewBox="0 0 ${W} ${H}" role="group" aria-label="${heading}, ${n} points; target ${targetSpeedGoal} WPM">${g}</svg><div class="kp-legend"><span>● ${own?'Own-key lesson speed':'Smoothed speed'}</span>${own?'<span>○ Under 95% lesson accuracy</span>':''}<span>━ ${n>1?'5-point trend':'Trend after 2 points'}</span><span class="kp-target-label">┄ Target</span></div><div class="kp-point-detail" aria-live="polite">Hover, tap or focus a dot for its details.</div><p class="kp-note">${note}</p></section>`;
+            if(n){g+=`<text x="${L}" y="${H-5}">older</text><text x="${W-R}" y="${H-5}" text-anchor="end">latest</text>`;}
+            else g+=`<text x="${L+iw/2}" y="${T+ih/2-5}" text-anchor="middle">New dots start with your next lesson.</text>`;
+            return `<div class="kp-chart"><svg viewBox="0 0 ${W} ${H}" class="kp-history-svg" role="group" aria-label="Own-key lesson speed, ${n} recorded points, target ${targetSpeedGoal} WPM">${g}</svg><div class="kp-point-detail" aria-live="polite">Key pace · dashed target ${targetSpeedGoal} WPM</div></div>`;
         }
         let keyPopupEl=null,keyPopupTimer=0,keyPopupAnchor=null,keyPopupPinned=false;
         function hideKeyPopup(){clearTimeout(keyPopupTimer);keyPopupTimer=0;keyPopupPinned=false;if(keyPopupEl)keyPopupEl.hidden=true;}
-        function showKeyPopup(keyId,anchorRect,preferSmoothed=false){
-            const item=KEY_PROGRESSION.find(it=>it.k===keyId);
-            if(!item)return;
-            const s=keyStats[keyId]||{hits:0,errors:0};
-            const total=(s.hits||0)+(s.errors||0);
-            const pop=ensureKeyPopup();
-            const phys=item.alt?('Alt+'+item.alt):(item.conjunct?(item.finger||item.h):item.k.toUpperCase());
-            let lines='';
-            const measured=s.modelTtt>0&&(s.modelSamples||0)>=1;
-            const accStr=total>0?Math.round(s.hits/total*100)+'%':'—';
-            let chartSvg='';
-            if(measured){
-                const smoothWpm=12000/s.modelTtt;
-                const topWpm=s.modelBest>0&&s.modelBest<Infinity?12000/s.modelBest:smoothWpm;
-                const conf=Math.round(smoothWpm/targetSpeedGoal*100);
-                const lr=keyLearningRate(keyId);
-                if(s.lastLessonWpm)lines+=`<div class="kp-line"><span>Last lesson</span><b>${s.lastLessonWpm.toFixed(1)} wpm (key's own pace)</b></div>`;
-                lines+=`<div class="kp-line"><span>Smoothed speed</span><b>${smoothWpm.toFixed(1)} wpm (${conf}% of goal)</b></div>`;
-                lines+=`<div class="kp-line"><span>Best smoothed speed</span><b>${topWpm.toFixed(1)} wpm</b></div>`;
-                if(s.accurateBest&&s.accurateBest<Infinity)lines+=`<div class="kp-line"><span>Banked best</span><b>${(12000/s.accurateBest).toFixed(1)} / ${targetSpeedGoal} wpm (95%+ lessons)</b></div>`;
-                lines+=`<div class="kp-line"><span>Accuracy</span><b>${accStr}</b></div>`;
-                if(lr.certainty>=0.5){
-                    const sign=lr.rate>=0?'+':'';
-                    lines+=`<div class="kp-line kp-rate ${lr.rate>=0?'pos':'neg'}"><span>Smoothed learning rate</span><b>${sign}${lr.rate.toFixed(1)} wpm/lesson</b></div>`;
-                    if(lr.remaining===0)lines+=`<div class="kp-line"><span>Smoothed goal forecast</span><b>reached</b></div>`;
-                    else if(lr.remaining>0)lines+=`<div class="kp-line"><span>Smoothed goal forecast</span><b>about ${lr.remaining} lesson${lr.remaining===1?'':'s'} away</b></div>`;
-                    else lines+=`<div class="kp-line"><span>Smoothed goal forecast</span><b>not within 50 lessons at this rate</b></div>`;
-                }else{
-                    lines+=`<div class="kp-line"><span>Smoothed learning rate</span><b>not enough stable history</b></div>`;
-                }
-            }else if(total>0){
-                lines+=`<div class="kp-line"><span>Accuracy</span><b>${accStr}</b></div>`;
-                lines+=`<div class="kp-line"><span>Hits / misses</span><b>${s.hits} / ${s.errors}</b></div>`;
-                lines+=`<div class="kp-note">No timing samples yet - finish a lesson that uses this key.</div>`;
-            }else{
-                lines+=`<div class="kp-note">No measurements for this key yet.</div>`;
-            }
-            chartSvg=renderKeyHistory(keyId,preferSmoothed);
-            const idx=KEY_PROGRESSION.indexOf(item);
-            pop.innerHTML=`<div class="kp-head"><span class="kp-glyph" id="kp-title">${item.h} speed history</span><button type="button" class="kp-close" aria-label="Close key history">✕</button></div><div class="kp-sub">Key: ${phys} · ${item.finger}</div><div class="kp-metrics">${lines}</div>${chartSvg}<div class="kp-actions">${idx<=highestUnlocked?'<button type="button" class="kp-practice">Practice this key</button>':'<span class="kp-note">This key is still locked.</span>'}<span class="kp-note">History does not change unlocking.</span></div>`;
+        function showKeyPopup(keyId,anchorRect){
+            const item=KEY_PROGRESSION.find(it=>it.k===keyId);if(!item)return;
+            const stat=keyStats[keyId]||{},pop=ensureKeyPopup(),best=ownKeyBest(keyId);
+            const last=stat.lastLessonWpm>0?stat.lastLessonWpm.toFixed(1):'-';
+            const average=stat.modelTtt>0?(12000/stat.modelTtt).toFixed(1):'-';
+            const lr=keyLearningRate(keyId);
+            const forecast=lr.certainty>=.5&&lr.remaining>0?`<div class="kp-forecast" title="Estimate from recent average-speed history, not an unlock promise. Accuracy and clean timing requirements still apply.">About ${lr.remaining} lesson${lr.remaining===1?'':'s'} to ${targetSpeedGoal} WPM <span>(estimate)</span></div>`:'';
+            const phys=item.k.toUpperCase(),idx=KEY_PROGRESSION.indexOf(item);
+            pop.innerHTML=`<div class="kp-head"><span class="kp-glyph" id="kp-title">${item.h}</span><span class="kp-sub">Key ${phys}</span><button type="button" class="kp-close" aria-label="Close key history">✕</button></div><div class="kp-speeds"><span>Last <b>${last}</b></span><span title="Best recorded own-key lesson pace. Earlier unrecorded lesson speeds may be missing.">Best <b>${best?best.toFixed(1):'-'}</b></span><span title="Weighted average of clean key timing across lessons, converted to WPM.">Average <b>${average}</b></span><span class="kp-sub">WPM</span></div>${forecast}${renderKeyHistory(keyId)}${idx<=highestUnlocked?'<button type="button" class="kp-practice">Practice this key</button>':''}`;
             pop.querySelector('.kp-close').onclick=()=>{hideKeyPopup();if(keyPopupAnchor&&keyPopupAnchor.focus)keyPopupAnchor.focus({preventScroll:true});hideKeyPopup();};
-            const series=pop.querySelector('.kp-series select');
-            if(series)series.onchange=()=>{showKeyPopup(keyId,anchorRect,series.value==='smoothed');pop.querySelector('.kp-series select').focus({preventScroll:true});};
             const practice=pop.querySelector('.kp-practice');
             if(practice)practice.onclick=()=>{
                 reviewMode=idx!==highestUnlocked;unlockedIndex=idx;targetKeyBuffer=[];
@@ -799,11 +761,8 @@
                 const show=()=>{pop.querySelector('.kp-point-detail').textContent=dot.getAttribute('aria-label');};
                 dot.addEventListener('mouseenter',show);dot.addEventListener('focus',show);dot.addEventListener('click',show);
             });
-            pop.hidden=false;
-            pop.scrollTop=0;
-            // Avoid covering the hover anchor: above/below when it fits,
-            // otherwise beside it. Small touch screens use a contained card.
-            const pw=pop.offsetWidth, ph=pop.offsetHeight, m=8;
+            pop.hidden=false;pop.scrollTop=0;
+            const pw=pop.offsetWidth,ph=pop.offsetHeight,m=8;
             let left=Math.max(m,Math.min(anchorRect.left+anchorRect.width/2-pw/2,window.innerWidth-pw-m));
             let top;
             if(anchorRect.top>=ph+m+8)top=anchorRect.top-ph-8;

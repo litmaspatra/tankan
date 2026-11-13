@@ -11,9 +11,9 @@
     <link rel="preload" href="./fonts/DevLys-040-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-021-Italic.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-070-Bold.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261113e">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261113f">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/keyboard.css?v=20261113e">
+    <link rel="stylesheet" href="src/css/keyboard.css?v=20261113f">
 </head>
 <body>
 
@@ -185,8 +185,9 @@
                     <div class="s-value"><span id="metric-accuracy">100</span><span class="s-unit">%</span></div>
                     <span class="s-sub" id="metric-accuracy-avg">avg of last lessons: -</span>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" id="score-stat-card">
                     <span class="s-label">Score</span>
+                    <button type="button" id="score-help-btn" aria-label="How is the score calculated?" aria-haspopup="dialog">?</button>
                     <div class="s-value" id="metric-score">0</div>
                     <span class="s-sub" id="metric-score-best">best: 0</span>
                 </div>
@@ -300,7 +301,7 @@
                             <button class="btn-modal cancel" id="sync-retry" hidden style="margin-top:6px;">Retry saving</button>
                             <div id="sync-bind-prompt" hidden style="margin-top:8px;">
                                 <p id="sync-bind-text" style="margin:0 0 6px; font-size:0.85rem;"></p>
-                                <button class="btn-modal cancel" id="sync-bind-confirm">Save to my account</button>
+                                <button class="btn-modal cancel" id="sync-bind-confirm">Save to my account</button><span class="recommended-badge">Recommended</span>
                                 <button class="btn-modal cancel" id="sync-bind-skip" style="margin-left:6px;">Not now</button>
                             </div>
                             <div id="sync-conflict" hidden style="margin-top:8px;">
@@ -566,24 +567,31 @@
     <!-- ═══════════════════════════════════════════════════════════
          APPLICATION JAVASCRIPT
          ═══════════════════════════════════════════════════════════ -->
-    <script src="data/books/nirmala.js?v=20261113e"></script>
-    <script src="data/books/godan.js?v=20261113e"></script>
-    <script src="books.js?v=20261113e"></script>
-    <script src="data/essays.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/progression.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/state.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/audio.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/storage.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/engine.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/keyboard.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/adaptive.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/lessons.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/display.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/input.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/ui.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/backup.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/auth.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/sync.js?v=20261113e"></script>
+    <dialog id="score-help-dialog" aria-labelledby="score-help-title">
+        <h3 id="score-help-title">How score works</h3>
+        <p>Practice points for your last completed lesson. Faster typing, more correct characters and more different keys increase it. Mistakes reduce it.</p>
+        <p class="score-formula">Score = characters/min × different keys × (correct characters ÷ 50) ÷ (mistakes + 1), rounded.</p>
+        <p>"Best" is your highest lesson score. Lesson length and key variety affect the score, so it is not a like-for-like speed rating. It does not unlock keys.</p>
+        <button type="button" id="score-help-close">Got it</button>
+    </dialog>
+    <script src="data/books/nirmala.js?v=20261113f"></script>
+    <script src="data/books/godan.js?v=20261113f"></script>
+    <script src="books.js?v=20261113f"></script>
+    <script src="data/essays.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/progression.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/state.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/audio.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/storage.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/engine.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/keyboard.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/adaptive.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/lessons.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/display.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/input.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/ui.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/backup.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/auth.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/sync.js?v=20261113f"></script>
     <div id="avatar-lightbox" hidden>
         <div class="avatar-lightbox-card" role="dialog" aria-label="Enlarged profile photo">
             <img id="avatar-lightbox-img" alt="Enlarged profile photo" referrerpolicy="no-referrer">
@@ -594,8 +602,8 @@
             <p class="avatar-lightbox-hint" id="avatar-lightbox-hint"></p>
         </div>
     </div>
-    <script src="src/js/hikeybr/avatar.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/moved-banner.js?v=20261113e"></script>
-    <script src="src/js/hikeybr/init.js?v=20261113e"></script>
+    <script src="src/js/hikeybr/avatar.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/moved-banner.js?v=20261113f"></script>
+    <script src="src/js/hikeybr/init.js?v=20261113f"></script>
 </body>
 </html>

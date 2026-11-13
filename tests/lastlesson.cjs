@@ -37,9 +37,9 @@ const path = require('node:path');
         Array.from(document.querySelectorAll('#alphabet-container .ak-badge')).map(b => b.title));
     const cur = titles.find(t => t.includes('E matra'));
     assert.ok(cur, 'current key badge exists');
-    assert.ok(cur.includes('Smoothed speed: ~35 WPM'), 'smoothed line, got: ' + cur);
-    assert.ok(cur.includes("Last lesson: 35.6 WPM (key's own pace, 94.5% lesson accuracy)"), 'last-lesson line, got: ' + cur);
-    assert.ok(cur.includes('Banked best: 37.1 / 40 WPM'), 'banked line, got: ' + cur);
+    assert.ok(cur.includes('Last: 35.6 WPM'),'last own-key pace');
+    assert.ok(cur.includes('Best recorded: 37.1 WPM'),'recorded own-key best');
+    assert.ok(!cur.includes('Smoothed'),'no smoothed display');
 
     // Mastery status line (phone-visible) names the last-lesson pace.
     const status = await page.evaluate(() => document.getElementById('lead-samples-status').textContent);
@@ -53,9 +53,10 @@ const path = require('node:path');
     await row.hover();
     await page.waitForTimeout(300);
     const popText = await page.evaluate(() => (document.getElementById('key-popup') || {}).textContent || '');
-    assert.ok(popText.includes('Last lesson') && popText.includes('35.6 wpm'), 'popup shows last lesson, got: ' + popText);
-    assert.ok(popText.includes('Smoothed speed') && popText.includes('35.3 wpm'), 'popup shows smoothed, got: ' + popText);
-    assert.ok(popText.includes('Banked best') && popText.includes('37.1 / 40 wpm'), 'popup shows banked, got: ' + popText);
+    assert.ok(popText.includes('Last')&&popText.includes('35.6'),'last own-key pace');
+    assert.ok(popText.includes('Best')&&popText.includes('37.1'),'best recorded pace');
+    assert.ok(popText.includes('Average')&&popText.includes('35.3'),'average is labelled plainly');
+    assert.ok(!popText.includes('Smoothed')&&!popText.includes('Banked'),'plain average, last and recorded best');
 
     // Old saves without lastLessonWpm render without the new lines.
     await page.evaluate(() => {
@@ -68,8 +69,8 @@ const path = require('node:path');
     const titles2 = await page.evaluate(() =>
         Array.from(document.querySelectorAll('#alphabet-container .ak-badge')).map(b => b.title));
     const cur2 = titles2.find(t => t.includes('E matra'));
-    assert.ok(!cur2.includes('Last lesson:'), 'no last-lesson line before any measured lesson, got: ' + cur2);
-    assert.ok(cur2.includes('Banked best:'), 'banked line still shown');
+    assert.ok(!cur2.includes('Last:'), 'no last-lesson line before any measured lesson, got: ' + cur2);
+    assert.ok(cur2.includes('Best recorded:'), 'banked line still shown');
 
     assert.deepEqual(errors, []);
     await browser.close();
