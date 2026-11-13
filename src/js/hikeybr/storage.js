@@ -128,8 +128,14 @@
                 }
                 if (typeof data.soundEnabled === 'boolean') {
                     soundEnabled = data.soundEnabled;
-                    updateSoundUI();
                 }
+                // One mute model: the old 'No sounds' mode and zero volume both mean muted.
+                if (opts.soundMode === 'none' || !['all','key','error'].includes(opts.soundMode)) {
+                    if (opts.soundMode === 'none') soundEnabled = false;
+                    opts.soundMode = 'all';
+                }
+                if (!(opts.volume > 0)) { soundEnabled = false; opts.volume = 70; }
+                updateSoundUI();
                 if (typeof data.showFingerHint === 'boolean') {
                     showFingerHint = data.showFingerHint;
                     if (el.fingerHintSelect) el.fingerHintSelect.value = showFingerHint ? 'show' : 'hide';
@@ -141,6 +147,9 @@
             el.soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
             el.soundBtn.classList.toggle('active', soundEnabled);
             if (el.soundSelect) el.soundSelect.value = soundEnabled ? 'on' : 'off';
+            document.querySelectorAll('input[name=snd]').forEach(r => { r.checked = r.value === (soundEnabled ? opts.soundMode : 'none'); });
+            const ov = document.getElementById('opt-volume'), ovl = document.getElementById('opt-volume-val');
+            if (ov) { ov.value = opts.volume; if (ovl) ovl.textContent = opts.volume + '%'; }
         }
 
         

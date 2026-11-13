@@ -1379,9 +1379,6 @@
         .insight-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.insight-row strong{color:var(--text)}.delta-up{color:var(--correct)}.delta-down{color:var(--error)}
         .goal-track{height:5px;max-width:350px;flex:1;min-width:80px;background:var(--border);border-radius:5px;overflow:hidden}.goal-fill{height:100%;background:var(--accent)}
         .history-bars{display:flex;align-items:end;gap:3px;height:24px}.history-bars i{display:block;width:12px;background:var(--accent);border-radius:2px 2px 0 0}
-        :root[data-lesson-style="bold"] .text-stream-container{font-weight:800}
-        :root[data-lesson-style="spaced"] .text-stream-container{letter-spacing:.06em;line-height:2}
-        :root[data-lesson-style="large"] .text-stream-container{font-size:2.9rem}
         :root[data-key-font="serif"] .k-key .hi-main,:root[data-key-font="serif"] .k-key .hi-shift,:root[data-key-font="serif"] .ak-char{font-family:'Noto Serif Devanagari',serif}
         :root[data-key-font="system"] .k-key .hi-main,:root[data-key-font="system"] .k-key .hi-shift,:root[data-key-font="system"] .ak-char{font-family:system-ui,sans-serif}
         :root[data-theme="sunshine"]{--bg:#ffd633;--surface:#ffe780;--surface-hover:#ffeb99;--surface-card:#ffdd51;--border:#b49b35;--border-subtle:#d4b942;--text:#302800;--text-dim:#5c4c0b;--text-faint:#78651a;--accent:#604a00;--accent-soft:#e9bf25;--correct:#246622;--error:#a82620;--key-bg:#ffe780;--key-border:#b49b35;--key-bottom:#a58d2c;--key-unlocked:#dbe785;--key-unlocked-border:#7b9531;--chip-bg:#ffe780;--chip-border:#604a00}
@@ -1690,7 +1687,6 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
             font-size: var(--practice-fs, clamp(1.6rem, 2.6vw, 2rem)) !important;
             transition: font-size .38s cubic-bezier(.22,.8,.3,1);
         }
-        :root[data-lesson-style="spaced"] .text-stream-container { height: calc(3 * 2.0667em) !important; max-height: calc(3 * 2.0667em) !important; }
 
         /* Never show legacy-encoded text before its font is ready (reload with
            a saved DevLys/KrutiDev variant would otherwise flash Latin glyphs). */
@@ -1904,3 +1900,5 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
         @media (max-width: 480px) {
             .avatar-preset-grid { grid-template-columns: repeat(4, 44px); }
         }
+
+.backup-advanced>summary{cursor:pointer;font-size:.8rem;opacity:.8}

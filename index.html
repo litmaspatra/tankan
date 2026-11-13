@@ -11,9 +11,9 @@
     <link rel="preload" href="./fonts/DevLys-040-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-021-Italic.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-070-Bold.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261113a">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261113b">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/keyboard.css?v=20261113a">
+    <link rel="stylesheet" href="src/css/keyboard.css?v=20261113b">
 </head>
 <body>
 
@@ -47,11 +47,8 @@
                 <img id="avatar-img" alt="Profile photo" referrerpolicy="no-referrer" hidden>
                 <span id="avatar-initial"></span>
             </button>
-            <button class="btn-icon active" id="sound-toggle-btn" title="Toggle Sound Feedback">
+            <button class="btn-icon active" id="sound-toggle-btn" title="Sound on / off" aria-label="Sound on / off">
                 <span id="sound-icon">🔊</span>
-            </button>
-            <button class="btn-icon" id="theme-toggle-btn" title="Cycle Themes">
-                <span>🎨</span>
             </button>
         </div>
     </header>
@@ -125,7 +122,7 @@
                     <div class="ls-row"><label for="opt-font">Font</label><select class="ctrl-select" id="opt-font"></select></div>
                     <div class="ls-row"><label for="opt-text-size">Paragraph text size</label><input type="range" id="opt-text-size" min="18" max="64" step="1" value="32"><span class="ls-val" id="opt-text-size-val">32px</span></div>
                     <div class="ls-row"><label>Play sounds</label><span class="ls-radios" id="opt-sounds"><label><input type="radio" name="snd" value="none"> No sounds</label><label><input type="radio" name="snd" value="error"> Error sounds only</label><label><input type="radio" name="snd" value="key"> Key sounds only</label><label><input type="radio" name="snd" value="all"> All sounds</label></span></div>
-                    <div class="ls-row"><label for="opt-volume">Volume</label><input type="range" id="opt-volume" min="0" max="100" step="5" value="70"><span class="ls-val" id="opt-volume-val">70%</span></div>
+                    <div class="ls-row"><label for="opt-volume">Volume</label><input type="range" id="opt-volume" min="5" max="100" step="5" value="70"><span class="ls-val" id="opt-volume-val">70%</span></div>
                     <div class="ls-row"><label for="opt-theme">Sound theme</label><select class="ctrl-select" id="opt-theme"><option value="mechanical">Mechanical keyboard</option><option value="typewriter">Typewriter</option><option value="soft">Soft</option><option value="click">Click</option><option value="retro">Retro beep</option><option value="thock">Thock</option></select></div>
                 </div>
             </details>
@@ -210,7 +207,7 @@
                     <span>Remington GAIL Progression (<span id="total-keys-header">54</span> Keys)</span>
                     <div style="display:flex; align-items:center; gap:10px;">
                         <button class="btn-modal" id="toggle-locked-keys-btn" style="padding:3px 10px; font-size:0.75rem;">Show All 54 Keys</button>
-                        <span id="progression-summary">Key 4 of 54 Unlocked</span>
+                        <span id="progression-summary">Automatic progression</span>
                     </div>
                 </div>
                 <div class="alphabet-keys" id="alphabet-container"></div>
@@ -447,21 +444,6 @@
 
                     <div class="settings-row">
                         <div class="settings-info">
-                            <strong>Lesson font style</strong>
-                            <p>Weight and spacing of the selected Remington lesson font.</p>
-                        </div>
-                        <div class="settings-ctrl">
-                            <select class="ctrl-select" id="lesson-style-select">
-                                <option value="classic">Classic KrutiDev</option>
-                                <option value="bold">Bold KrutiDev</option>
-                                <option value="spaced">Spacious KrutiDev</option>
-                                <option value="large">Large KrutiDev</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="settings-row">
-                        <div class="settings-info">
                             <strong>Keyboard Hindi font</strong>
                             <p>Font family used on the virtual on-screen keyboard.</p>
                         </div>
@@ -505,8 +487,11 @@
                         </div>
                         <div class="settings-ctrl">
                             <button class="btn-modal cancel" id="backup-download-btn">Download Backup File</button>
-                            <button class="btn-modal cancel" id="backup-code-btn">Show Backup Code</button>
-                            <textarea id="backup-code-output" readonly rows="2" hidden style="width:100%; margin-top:8px; font-size:0.72rem;" placeholder="Your backup code appears here"></textarea>
+                            <details class="backup-advanced" id="backup-advanced-export" style="margin-top:8px;">
+                                <summary>Advanced: backup code</summary>
+                                <button class="btn-modal cancel" id="backup-code-btn" style="margin-top:6px;">Show Backup Code</button>
+                                <textarea id="backup-code-output" readonly rows="2" hidden style="width:100%; margin-top:8px; font-size:0.72rem;" placeholder="Your backup code appears here"></textarea>
+                            </details>
                             <p id="backup-export-status" style="margin:6px 0 0; font-size:0.8rem;"></p>
                         </div>
                     </div>
@@ -519,8 +504,11 @@
                         <div class="settings-ctrl">
                             <input type="file" id="backup-file-input" accept=".json,application/json" hidden>
                             <button class="btn-modal cancel" id="backup-file-btn">Choose Backup File</button>
-                            <textarea id="backup-code-input" rows="2" placeholder="...or paste a backup code here" style="width:100%; margin-top:8px; font-size:0.72rem;"></textarea>
-                            <button class="btn-modal danger" id="backup-import-btn" style="margin-top:6px;">Import</button>
+                            <details class="backup-advanced" id="backup-advanced-import" style="margin-top:8px;">
+                                <summary>Advanced: paste a backup code</summary>
+                                <textarea id="backup-code-input" rows="2" placeholder="Paste a backup code here" style="width:100%; margin-top:6px; font-size:0.72rem;"></textarea>
+                                <button class="btn-modal danger" id="backup-import-btn" style="margin-top:6px;">Import</button>
+                            </details>
                             <p id="backup-import-status" style="margin:6px 0 0; font-size:0.8rem;"></p>
                             <button class="btn-modal cancel" id="bridge-fetch-btn" style="margin-top:10px;">Bring your progress from the old site</button>
                             <p id="bridge-status" style="margin:6px 0 0; font-size:0.8rem;"></p>
@@ -578,26 +566,26 @@
     <!-- ═══════════════════════════════════════════════════════════
          APPLICATION JAVASCRIPT
          ═══════════════════════════════════════════════════════════ -->
-    <script src="data/books/nirmala.js?v=20261113a"></script>
-    <script src="data/books/godan.js?v=20261113a"></script>
-    <script src="books.js?v=20261113a"></script>
-    <script src="data/essays.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/progression.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/state.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/audio.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/storage.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/engine.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/keyboard.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/adaptive.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/lessons.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/display.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/input.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/ui.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/backup.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/auth.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/sync.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/avatar.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/moved-banner.js?v=20261113a"></script>
-    <script src="src/js/hikeybr/init.js?v=20261113a"></script>
+    <script src="data/books/nirmala.js?v=20261113b"></script>
+    <script src="data/books/godan.js?v=20261113b"></script>
+    <script src="books.js?v=20261113b"></script>
+    <script src="data/essays.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/progression.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/state.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/audio.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/storage.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/engine.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/keyboard.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/adaptive.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/lessons.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/display.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/input.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/ui.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/backup.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/auth.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/sync.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/avatar.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/moved-banner.js?v=20261113b"></script>
+    <script src="src/js/hikeybr/init.js?v=20261113b"></script>
 </body>
 </html>

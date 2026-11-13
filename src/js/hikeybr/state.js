@@ -102,7 +102,6 @@
             wordsSelect: document.getElementById('words-select'),
             soundBtn: document.getElementById('sound-toggle-btn'),
             soundIcon: document.getElementById('sound-icon'),
-            themeBtn: document.getElementById('theme-toggle-btn'),
             themeSelect: document.getElementById('theme-select'),
             fingerHintSelect: document.getElementById('finger-hint-select'),
             confirmModal: document.getElementById('confirm-modal'),

@@ -329,7 +329,7 @@
         $id('focus-toggle').addEventListener('click',()=>setFocusMode(!focusMode));
         document.addEventListener('keydown',e=>{if(e.key==='Escape'&&focusMode){e.preventDefault();setFocusMode(false);}});
         window.addEventListener('resize',()=>{if(focusMode)applyCanvasRect($id('typing-canvas'),focusTargetRect());});
-        document.querySelectorAll('input[name=snd]').forEach(r=>r.onchange=()=>{opts.soundMode=r.value;applyOpts(false);sound.click();});
+        document.querySelectorAll('input[name=snd]').forEach(r=>r.onchange=()=>{if(r.value==='none'){soundEnabled=false;}else{opts.soundMode=r.value;soundEnabled=true;}updateSoundUI();applyOpts(false);saveStorage();sound.click();});
         $id('opt-volume').oninput=e=>{opts.volume=parseInt(e.target.value,10);$id('opt-volume-val').textContent=opts.volume+'%';};
         $id('opt-volume').onchange=()=>{saveStorage();sound.click();};
         $id('opt-theme').onchange=e=>{opts.soundTheme=e.target.value;applyOpts(false);sound.click();};
@@ -386,16 +386,6 @@
             if (soundEnabled) sound.click();
         });
 
-        // Theme Toggle
-        const themes = ['dark', 'navy', 'amber', 'light', 'sunshine', 'forest', 'epaper', 'blackwhite'];
-        el.themeBtn.addEventListener('click', () => {
-            const nextIdx = (themes.indexOf(currentTheme) + 1) % themes.length;
-            currentTheme = themes[nextIdx];
-            document.documentElement.setAttribute('data-theme', currentTheme);
-            if (el.themeSelect) el.themeSelect.value = currentTheme;
-            saveStorage();
-        });
-
         if (el.themeSelect) {
             el.themeSelect.addEventListener('change', (e) => {
                 currentTheme = e.target.value;
@@ -437,7 +427,6 @@
         // Practice-page Alt-sequence alias state (shared with the hint catalog).
         let practiceAlias='';
 
-        document.getElementById('lesson-style-select').addEventListener('change',e=>{lessonStyle=e.target.value;applyDisplayPreferences();saveStorage();});
         document.getElementById('key-font-select').addEventListener('change',e=>{keyFont=e.target.value;applyDisplayPreferences();saveStorage();});
         const smoothSlider=document.getElementById('smoothness');
         if(smoothSlider)smoothSlider.addEventListener('input',renderSpeedChart);

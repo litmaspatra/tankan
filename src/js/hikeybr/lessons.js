@@ -100,7 +100,7 @@
             $('opt-cursor').checked=opts.cursorHighlight!==false;
             const osw=$('opt-slow-words');if(osw){osw.checked=!!opts.slowWords;const sc=$('slow-words-count');if(sc)sc.textContent=slowOfficialPool().length;}
             const oi=$('official-info');if(oi)oi.textContent=`Formal words from government and office writing. ${officialPool().length} of ${OFFICIAL_WORDS.length.toLocaleString()} words fit the keys you have unlocked so far.`;
-            document.querySelectorAll('input[name=snd]').forEach(r=>r.checked=r.value===opts.soundMode);
+            document.querySelectorAll('input[name=snd]').forEach(r=>r.checked=r.value===(soundEnabled?opts.soundMode:'none'));
             $('opt-volume').value=opts.volume;$('opt-volume-val').textContent=opts.volume+'%';
             $('opt-theme').value=opts.soundTheme;
             if($('custom-text')&&$('custom-text').value!==opts.customText)$('custom-text').value=opts.customText;
@@ -152,7 +152,7 @@
             else if(textSource==='official'){
                 const total=KEY_PROGRESSION.filter(it=>!it.skip).length;
                 const got=KEY_PROGRESSION.filter((it,idx)=>idx<=highestUnlocked&&!it.skip).length;
-                cur.textContent=got+' of '+total+' keys unlocked · key unlocking is paused while practising official words.';
+                cur.textContent='Key unlocking is paused while practising official words.';
             }
             else cur.textContent='Current key: '+item.h+' ('+(item.alt?'Alt+'+item.alt:(item.conjunct?(item.finger||item.h):item.k.toUpperCase()))+')';
             const smp=document.getElementById('lp-sample');

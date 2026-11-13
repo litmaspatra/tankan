@@ -222,7 +222,7 @@
             });
 
             const availableCount=KEY_PROGRESSION.filter((it,i)=>i<=highestUnlocked&&!it.skip).length;
-            el.progressionSummary.textContent = `${availableCount} keys available · ${reviewMode ? "reviewing key "+(unlockedIndex+1) : "automatic progression"}`;
+            el.progressionSummary.textContent = reviewMode ? `Reviewing key ${unlockedIndex+1}` : "Automatic progression";
         }
 
         function applyPracticeTextPrefs() {
@@ -237,9 +237,7 @@
             if(kbf)kbf.style.marginBottom=Math.round((kbScaleEff-1)*kbf.offsetHeight)+'px';
         }
         function applyDisplayPreferences() {
-            document.documentElement.dataset.lessonStyle = lessonStyle;
             document.documentElement.dataset.keyFont = keyFont;
-            const lss=document.getElementById('lesson-style-select'); if(lss)lss.value=lessonStyle;
             const kfs=document.getElementById('key-font-select'); if(kfs)kfs.value=keyFont;
             const dglv=document.getElementById('daily-goal-select-lesson');if(dglv)dglv.value=dailyGoalMinutes;
         }

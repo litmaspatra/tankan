@@ -25,6 +25,7 @@ const path = require('node:path');
     await seed();
 
     // 1. Export produces a paste-safe TANKAN1 code covering every tankan key.
+    await page.evaluate(()=>{document.getElementById('backup-advanced-export').open=true;document.getElementById('backup-advanced-import').open=true;});
     await page.click('#backup-code-btn');
     await page.waitForSelector('#backup-code-output:not([hidden])');
     const code = await page.inputValue('#backup-code-output');
@@ -45,6 +46,7 @@ const path = require('node:path');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await page.click('button.nav-tab[data-target="settings"]');
+    await page.evaluate(()=>document.querySelectorAll('details.backup-advanced').forEach(d=>d.open=true));
     await page.fill('#backup-code-input', code);
     await page.click('#backup-import-btn');
     await page.waitForSelector('#import-modal.open');
@@ -69,6 +71,7 @@ const path = require('node:path');
     await page.evaluate(() => { localStorage.clear(); localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, highestUnlocked: 4 })); });
     await page.reload();
     await page.click('button.nav-tab[data-target="settings"]');
+    await page.evaluate(()=>document.querySelectorAll('details.backup-advanced').forEach(d=>d.open=true));
     await page.fill('#backup-code-input', code);
     await page.click('#backup-import-btn');
     await page.waitForSelector('#import-modal.open');
@@ -79,7 +82,8 @@ const path = require('node:path');
 
     // 4. Corrupt/foreign input is rejected and never overwrites.
     for (const bad of ['total garbage !!!', '{"kind":"other","data":{"hikeybr_store_v3":"{}"}}', '{"kind":"tankan-progress-backup","version":1,"data":{"evil_key":"x"}}', '{"kind":"tankan-progress-backup","version":1,"data":{}}', 'TANKAN1.corruptpayload']) {
-        await page.fill('#backup-code-input', bad);
+        await page.evaluate(()=>document.querySelectorAll('details.backup-advanced').forEach(d=>d.open=true));
+    await page.fill('#backup-code-input', bad);
         await page.click('#backup-import-btn');
         await page.waitForTimeout(150);
         assert.equal(await page.locator('#import-modal.open').count(), 0, 'no confirm modal for invalid input: ' + bad.slice(0, 30));
