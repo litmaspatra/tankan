@@ -31,7 +31,26 @@
     const PRESYNC_KEY = 'hikeybr_presync_backup';
 
     const collect = () => window.TANKAN_BACKUP.collect();
+    // localStorage enumeration order is device-specific. Compare named values,
+    // not serialized insertion order, or an identical restored account (for
+    // example progress + avatar) immediately looks like a new conflict.
+    // JSON object property order is likewise not progress; array order is.
+    const ordered = value => {
+        if (Array.isArray(value)) return value.map(ordered);
+        if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(key => [key, ordered(value[key])]));
+        return value;
+    };
+    const dataJson = data => JSON.stringify(Object.fromEntries(Object.keys(data).filter(key => key !== 'hikeybr_presync_backup').sort().map(key => {
+        const raw = data[key];
+        try { return [key, ordered(JSON.parse(raw))]; } catch (_) { return [key, raw]; }
+    })));
     const localJson = () => JSON.stringify(collect());
+    // Durable sync state from older versions contains the original outer map.
+    // Normalize it too instead of discarding any unsaved-change debt.
+    const sameSnapshot = (snapshot, data) => {
+        try { return dataJson(JSON.parse(snapshot)) === dataJson(data); }
+        catch (_) { return false; }
+    };
     const hasLocalProgress = () => Object.keys(collect()).length > 0;
 
     let uid = null;
@@ -197,7 +216,7 @@
             // based on - if another device saved since, the normal conflict
             // prompt decides; nothing is overwritten silently.
             const st = readState(user.uid);
-            if (st.owedLocalJson && cloudObj && JSON.stringify(cloudObj.data) === st.baseDataJson && local === st.owedLocalJson) {
+            if (st.owedLocalJson && cloudObj && sameSnapshot(st.baseDataJson, cloudObj.data) && sameSnapshot(st.owedLocalJson, collect())) {
                 bound = true;
                 hideBoxes();
                 push();
@@ -209,7 +228,7 @@
             // on (or the account has nothing and the device had nothing): then
             // nothing on either side is overwritten. Anything else falls
             // through to the normal ask/conflict flow below.
-            if (changedDuringCheck && ((cloudObj && JSON.stringify(cloudObj.data) === startLocal) || ((!doc || !cloudObj) && startLocal === '{}'))) {
+            if (changedDuringCheck && ((cloudObj && sameSnapshot(startLocal, cloudObj.data)) || ((!doc || !cloudObj) && startLocal === '{}'))) {
                 bound = true;
                 hideBoxes();
                 writeState(user.uid, { baseDataJson: cloudObj ? startLocal : '{}', owedLocalJson: local });
@@ -234,7 +253,7 @@
                 useAccountBtn.textContent = 'Restore to this device';
                 conflictBox.hidden = false;
                 setStatus('This device has no progress yet.');
-            } else if (JSON.stringify(cloudObj.data) === JSON.stringify(collect())) {
+            } else if (sameSnapshot(local, cloudObj.data)) {
                 bound = true;
                 writeState(user.uid, { baseDataJson: local, owedLocalJson: null });
                 setStatus('Saved to your account.');
