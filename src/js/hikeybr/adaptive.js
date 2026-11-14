@@ -179,17 +179,14 @@
                 badge.setAttribute('role','button');
                 badge.setAttribute('aria-label',item.h+' speed history');
                 badge.setAttribute('aria-haspopup','dialog');
-                badge.title = `${item.h} (Key ${item.k.toUpperCase()}) — ${item.d}\nFinger: ${item.finger}`;
+                // No native title tooltip: hover/focus/tap opens the history
+                // card below, and a browser tooltip would float next to it as
+                // a second window. Finger and key live inside the card itself.
 
                 if (idx <= highestUnlocked) {
                     const lvl = keyHeatLevel(item);
                     if (lvl > 0) badge.classList.add('heat-' + lvl);
                     if (idx === unlockedIndex) badge.classList.add('current');
-                    const hs = keyStats[item.k];
-                    if(idx<INITIAL_UNLOCKED_COUNT)badge.title += '\nStarter key: available from the first lesson, not automatically mastered';
-                    if(hs?.lastLessonWpm)badge.title+=`\nLast: ${hs.lastLessonWpm.toFixed(1)} WPM`;
-                    const recordedBest=ownKeyBest(item.k);
-                    if(recordedBest)badge.title+=`\nBest recorded: ${recordedBest.toFixed(1)} WPM`;
                 } else {
                     badge.classList.add('locked');
                 }
@@ -203,7 +200,6 @@
                         const wpm = 12000/hs2.modelTtt, ratio = Math.min(1, wpm/targetSpeedGoal);
                         const color = ratio>=1?'var(--correct)':ratio>=.8?'#eab308':'var(--error)';
                         bar = `<i class="ak-bar" style="height:${Math.max(6,Math.round(ratio*100))}%;background:${color}"></i>`;
-                        badge.title += '\nBar: fills to the top at your goal speed';
                     }
                 }
                 badge.innerHTML = bar+`<span class="ak-char">${item.h}</span><span class="ak-key">${item.alt ? item.alt : (item.conjunct ? item.h : item.k.toUpperCase())}</span>`;
@@ -735,7 +731,10 @@
             }
             points.forEach((p,i)=>{
                 const label=`Lesson ${p.lesson||i+1}: ${p.wpm.toFixed(1)} WPM`;
-                g+=`<circle class="kp-dot" tabindex="0" role="button" aria-label="${label}" cx="${X(i).toFixed(1)}" cy="${Y(p.wpm).toFixed(1)}" r="3" fill="var(--accent)"><title>${label}</title></circle>`;
+                // No <title> child: the point detail line below the graph
+                // already narrates hover/focus, and a native tooltip would
+                // float over the card as a second window.
+                g+=`<circle class="kp-dot" tabindex="0" role="button" aria-label="${label}" cx="${X(i).toFixed(1)}" cy="${Y(p.wpm).toFixed(1)}" r="3" fill="var(--accent)"></circle>`;
             });
             if(n){g+=`<text x="${L}" y="${H-5}">older</text><text x="${W-R}" y="${H-5}" text-anchor="end">latest</text>`;}
             else g+=`<text x="${L+iw/2}" y="${T+ih/2-5}" text-anchor="middle">New dots start with your next lesson.</text>`;
@@ -751,7 +750,7 @@
             const lr=keyLearningRate(keyId);
             const forecast=lr.certainty>=.5&&lr.remaining>0?`<div class="kp-forecast" title="Estimate from recent average-speed history, not an unlock promise. Accuracy and clean timing requirements still apply.">About ${lr.remaining} lesson${lr.remaining===1?'':'s'} to ${targetSpeedGoal} WPM <span>(estimate)</span></div>`:'';
             const phys=item.k.toUpperCase(),idx=KEY_PROGRESSION.indexOf(item);
-            pop.innerHTML=`<div class="kp-head"><span class="kp-glyph" id="kp-title">${item.h}</span><span class="kp-sub">Key ${phys}</span><button type="button" class="kp-close" aria-label="Close key history">✕</button></div><div class="kp-speeds"><span>Last <b>${last}</b></span><span title="Best recorded own-key lesson pace. Earlier unrecorded lesson speeds may be missing.">Best <b>${best?best.toFixed(1):'-'}</b></span><span title="Weighted average of clean key timing across lessons, converted to WPM.">Average <b>${average}</b></span><span class="kp-sub">WPM</span></div>${forecast}${renderKeyHistory(keyId)}${idx<=highestUnlocked?'<button type="button" class="kp-practice">Practice this key</button>':''}`;
+            pop.innerHTML=`<div class="kp-head"><span class="kp-glyph" id="kp-title">${item.h}</span><span class="kp-sub">Key ${phys} · ${item.finger}</span><button type="button" class="kp-close" aria-label="Close key history">✕</button></div><div class="kp-speeds"><span>Last <b>${last}</b></span><span title="Best recorded own-key lesson pace. Earlier unrecorded lesson speeds may be missing.">Best <b>${best?best.toFixed(1):'-'}</b></span><span title="Weighted average of clean key timing across lessons, converted to WPM.">Average <b>${average}</b></span><span class="kp-sub">WPM</span></div>${forecast}${renderKeyHistory(keyId)}${idx<=highestUnlocked?'<button type="button" class="kp-practice">Practice this key</button>':''}`;
             pop.querySelector('.kp-close').onclick=()=>{hideKeyPopup();if(keyPopupAnchor&&keyPopupAnchor.focus)keyPopupAnchor.focus({preventScroll:true});hideKeyPopup();};
             const practice=pop.querySelector('.kp-practice');
             if(practice)practice.onclick=()=>{

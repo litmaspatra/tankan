@@ -1,5 +1,5 @@
-// Last-lesson per-key speed display: strip tooltip, mastery status line,
-// profile popup. Run: node tests/lastlesson.cjs
+// Last-lesson per-key speed display: strip hover card (no native tooltip),
+// mastery status line, profile popup. Run: node tests/lastlesson.cjs
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const path = require('node:path');
@@ -32,14 +32,26 @@ const path = require('node:path');
     await page.reload();
     await page.waitForTimeout(400);
 
-    // Strip tooltip: smoothed + last lesson + banked best are distinct lines.
-    const titles = await page.evaluate(() =>
-        Array.from(document.querySelectorAll('#alphabet-container .ak-badge')).map(b => b.title));
-    const cur = titles.find(t => t.includes('E matra'));
-    assert.ok(cur, 'current key badge exists');
-    assert.ok(cur.includes('Last: 35.6 WPM'),'last own-key pace');
-    assert.ok(cur.includes('Best recorded: 37.1 WPM'),'recorded own-key best');
-    assert.ok(!cur.includes('Smoothed'),'no smoothed display');
+    // Strip badges carry no native tooltip (hover opens the history card;
+    // a browser tooltip would float next to it as a second window).
+    const badgeTitles = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('#alphabet-container .ak-badge')).map(b => b.getAttribute('title')));
+    assert.ok(badgeTitles.every(t => t === null), 'no badge carries a native tooltip');
+
+    // Hovering the current key's badge opens the history card with last own
+    // pace and recorded best, and no smoothed label.
+    await page.locator('#alphabet-container .ak-badge[data-key="s"]').hover();
+    await page.waitForTimeout(300);
+    const stripPop = await page.evaluate(() => { const p = document.getElementById('key-popup'); return p && !p.hidden ? p.textContent : ''; });
+    assert.ok(stripPop, 'hover opens the history card');
+    assert.ok(stripPop.includes('35.6'), 'card shows last own-key pace, got: ' + stripPop);
+    assert.ok(stripPop.includes('37.1'), 'card shows recorded best');
+    assert.ok(!stripPop.includes('Smoothed'), 'no smoothed display');
+    // Moving away hides the card again.
+    await page.mouse.move(10, 300);
+    await page.waitForTimeout(400);
+    const popGone = await page.evaluate(() => { const p = document.getElementById('key-popup'); return !p || p.hidden; });
+    assert.ok(popGone, 'card hides after hover ends');
 
     // Mastery status line (phone-visible) names the last-lesson pace.
     const status = await page.evaluate(() => document.getElementById('lead-samples-status').textContent);
@@ -66,11 +78,11 @@ const path = require('node:path');
     });
     await page.reload();
     await page.waitForTimeout(400);
-    const titles2 = await page.evaluate(() =>
-        Array.from(document.querySelectorAll('#alphabet-container .ak-badge')).map(b => b.title));
-    const cur2 = titles2.find(t => t.includes('E matra'));
-    assert.ok(!cur2.includes('Last:'), 'no last-lesson line before any measured lesson, got: ' + cur2);
-    assert.ok(cur2.includes('Best recorded:'), 'banked line still shown');
+    await page.locator('#alphabet-container .ak-badge[data-key="s"]').hover();
+    await page.waitForTimeout(300);
+    const pop2 = await page.evaluate(() => { const p = document.getElementById('key-popup'); return p && !p.hidden ? p.textContent : ''; });
+    assert.ok(/Last\s+-/.test(pop2), 'no last-lesson pace before any measured lesson, got: ' + pop2);
+    assert.ok(pop2.includes('37.1'), 'recorded best still shown');
 
     assert.deepEqual(errors, []);
     await browser.close();
