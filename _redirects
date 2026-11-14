@@ -1,0 +1,9 @@
+# Hide the unfinished Arena (HiKeymash) page and its film-dialogue data while
+# the code stays in the repo. Approved by Kartik on 2026-11-14 ahead of the
+# AdSense application: copyrighted cinema dialogues must not be publicly
+# served during review. 302 (temporary) so the paths work again once Arena
+# launches and these lines are removed.
+/hikeymash / 302
+/hikeymash.html / 302
+/data/cinema.json / 302
+/data/cinema.js / 302
