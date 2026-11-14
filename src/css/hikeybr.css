@@ -1821,6 +1821,35 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
     border-color: var(--border) !important;
 }
 
+/* Black & White: --accent, --error and --key-active are all white, so any
+   control that pairs them with white text becomes unreadable. Give those
+   specific controls dark text instead; everything else keeps the theme's
+   white-on-black intent. */
+:root[data-theme="blackwhite"] #review-resume-btn {
+    color: #000000;
+}
+:root[data-theme="blackwhite"] .btn-modal.danger {
+    background: var(--error);
+    color: #000000;
+}
+:root[data-theme="blackwhite"] .btn-modal.danger:hover {
+    background: #d4d4d4;
+    color: #000000;
+}
+:root[data-theme="blackwhite"] .brand-icon {
+    background: var(--accent);
+    color: #000000;
+}
+:root[data-theme="blackwhite"] #keyboard-frame .k-key.shift-needed .hi-main,
+:root[data-theme="blackwhite"] #keyboard-frame .k-key.shift-needed.label-key .hi-main {
+    color: #000000;
+}
+:root[data-theme="blackwhite"] #keyboard-frame .k-key.shift-needed .hi-shift {
+    color: #2a2a2a;
+}
+:root[data-theme="blackwhite"] #keyboard-frame .k-key.shift-needed .en-sub {
+    color: #3a3a3a;
+}
 
         /* Profile photo (top corner + Settings > Account preview) */
         .avatar-corner {

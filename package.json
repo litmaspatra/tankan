@@ -4,7 +4,7 @@
   "private": true,
   "description": "Adaptive Hindi typing tutor for the Remington (GAIL) layout, in the spirit of keybr.com",
   "scripts": {
-    "test": "node tests/progression.cjs && node tests/ui.cjs && node tests/hikeymash.cjs && node tests/graphs.cjs && node tests/backup.cjs && node tests/themes-zoom.cjs && node tests/official.cjs && node tests/unlock-banking.cjs && node tests/transfer.cjs && node tests/auth.cjs && node tests/sync.cjs && node tests/avatar.cjs && node tests/moved-banner.cjs && node tests/simplify.cjs && node tests/lastlesson.cjs && node tests/key-history.cjs && node tests/score-help.cjs && node tests/community-model.cjs && node tests/community-auth.cjs && node tests/community-api.cjs && node tests/community-ui.cjs && node tests/modifier-timing.cjs && node tests/sync-identity.cjs"
+    "test": "node tests/progression.cjs && node tests/ui.cjs && node tests/hikeymash.cjs && node tests/graphs.cjs && node tests/backup.cjs && node tests/themes-zoom.cjs && node tests/official.cjs && node tests/unlock-banking.cjs && node tests/transfer.cjs && node tests/auth.cjs && node tests/sync.cjs && node tests/avatar.cjs && node tests/moved-banner.cjs && node tests/simplify.cjs && node tests/lastlesson.cjs && node tests/blackwhite-contrast.cjs && node tests/key-history.cjs && node tests/score-help.cjs && node tests/community-model.cjs && node tests/community-auth.cjs && node tests/community-api.cjs && node tests/community-ui.cjs && node tests/modifier-timing.cjs && node tests/sync-identity.cjs"
   },
   "devDependencies": {
     "playwright": "^1.65.0"
