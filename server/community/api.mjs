@@ -17,15 +17,15 @@ export async function handle(request,env,{auth=authenticate,now=Date.now()}={}){
     // The day boundary is fixed to India time (UTC+5:30, no DST) - the
     // players are Hindi typists, mostly in India.
     const istStart=Math.floor((now+19800000)/86400000)*86400000-19800000;
-    const result=await db.prepare("SELECT display_name,public_id,wpm,accuracy,keys_used FROM (SELECT a.display_name AS display_name,a.public_id AS public_id,l.wpm AS wpm,l.accuracy AS accuracy,l.distinct_keys AS keys_used,l.completed_at AS completed_at,ROW_NUMBER() OVER (PARTITION BY l.uid ORDER BY l.wpm DESC,l.accuracy DESC,l.completed_at DESC) AS rn FROM community_lessons l JOIN community_accounts a ON a.uid=l.uid WHERE a.joined=1 AND l.review_status='accepted' AND l.completed_at>=?) WHERE rn=1 ORDER BY wpm DESC,accuracy DESC,completed_at ASC,public_id ASC LIMIT 20").bind(istStart).all();
+    const result=await db.prepare("SELECT display_name,public_id,wpm,accuracy,keys_used FROM (SELECT a.display_name AS display_name,a.public_id AS public_id,l.wpm AS wpm,l.accuracy AS accuracy,l.distinct_keys AS keys_used,l.completed_at AS completed_at,ROW_NUMBER() OVER (PARTITION BY l.uid ORDER BY l.wpm DESC,l.accuracy DESC,l.completed_at DESC) AS rn FROM community_lessons l JOIN community_accounts a ON a.uid=l.uid WHERE a.joined=1 AND l.review_status='accepted' AND l.accuracy>=95 AND l.completed_at>=?) WHERE rn=1 ORDER BY wpm DESC,accuracy DESC,completed_at ASC,public_id ASC LIMIT 20").bind(istStart).all();
     return json({day:'Asia/Kolkata',maxEntries:20,rows:result.results.map(row=>({displayName:row.display_name,id:row.public_id,wpm:row.wpm,accuracy:row.accuracy,keysUsed:row.keys_used}))});
    }
    if(view==='profile'){
     const id=url.searchParams.get('id');if(!/^[a-f0-9]{32}$/.test(id||''))return json({error:'Public profile not found.'},404);
     const account=await db.prepare('SELECT uid,display_name FROM community_accounts WHERE public_id=? AND joined=1').bind(id).first();
     if(!account)return json({error:'Public profile not found.'},404);
-    const best=await db.prepare("SELECT wpm,accuracy,distinct_keys FROM community_lessons WHERE uid=? AND completed_at>=? AND review_status='accepted' ORDER BY wpm DESC,accuracy DESC,completed_at DESC LIMIT 1").bind(account.uid,cutoff).first();
-    const count=await db.prepare("SELECT COUNT(*) AS n FROM community_lessons WHERE uid=? AND completed_at>=? AND review_status='accepted'").bind(account.uid,cutoff).first();
+    const best=await db.prepare("SELECT wpm,accuracy,distinct_keys FROM community_lessons WHERE uid=? AND completed_at>=? AND review_status='accepted' AND accuracy>=95 ORDER BY wpm DESC,accuracy DESC,completed_at DESC LIMIT 1").bind(account.uid,cutoff).first();
+    const count=await db.prepare("SELECT COUNT(*) AS n FROM community_lessons WHERE uid=? AND completed_at>=? AND review_status='accepted' AND accuracy>=95").bind(account.uid,cutoff).first();
     return json({displayName:account.display_name,best:fields(best),sharedLessons:count.n});
    }
    if(view==='me'){

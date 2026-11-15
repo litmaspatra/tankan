@@ -17,8 +17,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs');const {Database
  assert.equal((await call({action:'sync',lessons:[lesson('lesson_few_keys_1234',40,now,200,9)]})).data.ineligible,1);
  assert.equal((await call({action:'sync',lessons:[lesson('lesson_expired_12345',80,now-15*86400000)]})).data.ineligible,1);
  assert.equal((await call({action:'sync',lessons:[lesson('lesson_sloppy_123456',60,now,200,10,94)]})).data.ineligible,1,'below 95% accuracy must not qualify');
+ // A lesson accepted before the accuracy gate (inserted directly to simulate
+ // the old rules) still does not rank or count: the gate applies on reads too.
+ sql.prepare("INSERT INTO community_lessons(uid,lesson_id,received_at,completed_at,score,wpm,accuracy,chars,distinct_keys,review_status) VALUES(?,?,?,?,?,?,?,?,?,'accepted')").run(uid,'legacy_sloppy_lesson',now,now,99999,99,92.4,300,20);
+ assert.ok((await call(null)).data.rows.every(r=>r.accuracy>=95),'stored sub-95% lessons must not rank');
  assert.equal((await call({action:'sync',lessons:[{id:'legacy_unknown_keys',wpm:40,acc:100,score:9000,ts:now}]})).status,400);
- let p=(await call(null,'?view=profile&id='+publicId)).data;assert.equal(p.sharedLessons,1);assert.equal(p.best.wpm,40);assert.equal(p.best.keysUsed,10);assert.deepEqual(Object.keys(p.best),['wpm','accuracy','keysUsed']);
+ let p=(await call(null,'?view=profile&id='+publicId)).data;assert.equal(p.sharedLessons,1,'sub-95% stored lessons do not count as qualifying');assert.equal(p.best.wpm,40);assert.equal(p.best.keysUsed,10);assert.deepEqual(Object.keys(p.best),['wpm','accuracy','keysUsed']);
  assert.ok(!JSON.stringify(p).includes('user-one'));assert.ok(!JSON.stringify(p).includes('never-public'));
  await call({action:'sync',lessons:[lesson('lesson_lower_score_123',30)]});assert.equal((await call(null)).data.rows[0].wpm,40);
  await call({action:'sync',lessons:[lesson('lesson_higher_score12',50)]});assert.equal((await call(null)).data.rows[0].wpm,50);assert.equal((await call(null)).data.rows.length,1);
