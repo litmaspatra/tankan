@@ -24,10 +24,11 @@ const server = http.createServer((req, res) => {
     const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
     const errors = []; page.on('pageerror', e => errors.push(e.message));
 
-    // The practice page's container: max-width 1100px, 24px side padding.
+    // The practice page's actual content column: #panel-practice sits inside
+    // <main> as an 880px/92% centered column on desktop.
     await page.goto(`http://localhost:${port}/index.html`);
     await page.waitForTimeout(300);
-    const practiceMain = await page.locator('main').boundingBox();
+    const practiceMain = await page.locator('#panel-practice').boundingBox();
 
     for (const name of ['about', 'tips', 'privacy']) {
         await page.goto(`http://localhost:${port}/${name}.html`);
@@ -37,7 +38,7 @@ const server = http.createServer((req, res) => {
         const box = await page.locator('.page').boundingBox();
         assert.ok(box, name + ': .page container exists');
         assert.ok(Math.abs(box.x - practiceMain.x) < 2 && Math.abs(box.width - practiceMain.width) < 2,
-            name + ': same margins as practice page, got ' + JSON.stringify(box) + ' vs ' + JSON.stringify(practiceMain));
+            name + ': same margins as practice content column, got ' + JSON.stringify(box) + ' vs ' + JSON.stringify(practiceMain));
 
         // Boxed Back to Tankan button inside the margins.
         const back = page.locator('.guide-top .back-btn:visible');
@@ -83,6 +84,22 @@ const server = http.createServer((req, res) => {
     const hiBack = page.locator('.guide-top .back-btn[data-lang="hi"]');
     assert.ok(await hiBack.isVisible(), 'tips: Hindi back button shows');
     assert.match(await hiBack.textContent(), /टंकण पर वापस/, 'tips: Hindi back button label');
+
+    // Phone width: the guide column matches the practice column there too
+    // (full width, 12px padding) and the Hindi toggle stays inside it.
+    const mob = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    mob.on('pageerror', e => errors.push('mobile: ' + e.message));
+    await mob.goto(`http://localhost:${port}/index.html`);
+    await mob.waitForTimeout(300);
+    const mobPractice = await mob.locator('#panel-practice').boundingBox();
+    await mob.goto(`http://localhost:${port}/tips.html`);
+    await mob.waitForTimeout(250);
+    const mobPage = await mob.locator('.page').boundingBox();
+    assert.ok(Math.abs(mobPage.x - mobPractice.x) < 2 && Math.abs(mobPage.width - mobPractice.width) < 2,
+        'mobile tips: same margins as practice column, got ' + JSON.stringify(mobPage) + ' vs ' + JSON.stringify(mobPractice));
+    const mobLang = await mob.locator('#lang-toggle').boundingBox();
+    assert.ok(mobLang.x >= mobPage.x && mobLang.x + mobLang.width <= mobPage.x + mobPage.width, 'mobile tips: Hindi toggle inside page margins');
+    await mob.close();
 
     assert.deepStrictEqual(errors, [], 'no page errors: ' + errors.join(' | '));
     await browser.close();

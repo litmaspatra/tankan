@@ -18,11 +18,21 @@ body {
     transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Same container as the practice page's <main> */
+/* Same content column as the practice page: #panel-practice is 880px / 92%
+   centered on desktop, full width with main's 12px padding on phones */
 .page {
-    max-width: 1100px;
+    max-width: 880px;
+    width: 92%;
     margin: 0 auto;
-    padding: 20px 24px 40px;
+    padding: 20px 0 40px;
+}
+
+@media (max-width: 650px) {
+    .page {
+        width: auto;
+        max-width: none;
+        margin: 0 12px;
+    }
 }
 
 /* Top row: boxed Back button on the left, language toggle on the right,
