@@ -405,3 +405,13 @@ header { height: 44px; }
     nav .nav-tab { font-size: 0.66rem !important; }
     nav .nav-tab .nav-icon { font-size: 0.75rem; }
 }
+
+/* The app's header keeps the badge and tab labels on phones (theme.css's
+   generic hides target pages without a wrapping nav); keep them visible so
+   the guide header matches the practice header at every width. */
+@media (max-width: 600px) {
+    .brand-badge { display: block !important; }
+}
+@media (max-width: 420px) {
+    .nav-tab .nav-label { display: inline !important; }
+}

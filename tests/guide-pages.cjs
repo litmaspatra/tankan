@@ -179,6 +179,9 @@ const server = http.createServer((req, res) => {
     const mobBrand = await mob2.locator('header .brand').boundingBox();
     assert.ok(mobNav.y > mobBrand.y, 'mobile tips: tabs wrap to their own row');
     assert.ok(mobNav.width > 350, 'mobile tips: tabs span the header width');
+    // Same as the app on phones: the badge and tab labels stay visible.
+    assert.notStrictEqual(await mob2.locator('header .brand-badge').evaluate(el => getComputedStyle(el).display), 'none', 'mobile tips: brand badge visible');
+    assert.notStrictEqual(await mob2.locator('header nav .nav-tab .nav-label').first().evaluate(el => getComputedStyle(el).display), 'none', 'mobile tips: tab labels visible');
     await mob2.close();
 
     assert.deepStrictEqual(errors, [], 'no page errors: ' + errors.join(' | '));
