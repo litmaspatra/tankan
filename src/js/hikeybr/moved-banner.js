@@ -63,7 +63,7 @@
         '<li>If tankan.in already has some progress, the copy with more keys unlocked wins automatically; it only asks you when both are equally far. The page then reloads with your progress.</li>' +
         '<li>Check the progress arrived (your keys and stats show on tankan.in), then tap the <strong>profile picture</strong> again, choose <strong>Profile</strong>, and tap <strong>Sign in with Google</strong>. Signing in alone does not save anything yet.</li>' +
         '<li>Under the Account card, tankan.in asks <em>Save this device\'s progress to your account?</em> Tap <strong>Save to my account</strong> (<em>Not now</em> keeps it on this device only) and wait for <strong>Saved to your account.</strong></li>' +
-        '<li>If your account already has saved progress, it asks which copy to keep. Nothing is replaced until you choose: <em>Keep this device\'s progress</em> updates the account, <em>Use the account copy</em> replaces this device.</li>' +
+        '<li>If your account already has saved progress, the copy with more keys unlocked wins automatically; it only asks you to choose when both are equally far. Either way the replaced copy is kept aside on this device, so you can bring it back from Settings.</li>' +
         '</ol>' +
         '<div class="moved-note">Nothing is deleted from this old site, so you can try again if a step fails. No pop-up or no luck? Open Settings here, tap <em>Download Backup File</em>, then on tankan.in use <em>Choose Backup File</em> and <em>Import</em>.</div>' +
         '<div class="moved-actions"><a class="moved-go" href="' + NEW_URL + '" target="_blank" rel="noopener">Open tankan.in</a><button type="button" id="moved-close">Close</button></div>' +

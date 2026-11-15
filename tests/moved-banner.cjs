@@ -20,7 +20,7 @@ const path = require('node:path');
     await page.click('#moved-steps-btn');
     assert.ok(await page.locator('#moved-card').isVisible(), 'steps dialog opens');
     const txt = await page.locator('#moved-card').innerText();
-    assert.match(txt, /same browser/i); assert.match(txt, /Bring your progress from the old site/); assert.match(txt, /Sign in with Google/); assert.match(txt, /Save to my account/); assert.match(txt, /Saved to your account/); assert.match(txt, /which copy to keep/);
+    assert.match(txt, /same browser/i); assert.match(txt, /Bring your progress from the old site/); assert.match(txt, /Sign in with Google/); assert.match(txt, /Save to my account/); assert.match(txt, /Saved to your account/); assert.match(txt, /more keys unlocked wins automatically/); assert.match(txt, /kept aside on this device/);
     await page.keyboard.press('Escape');
     assert.ok(!(await page.locator('#moved-card').isVisible()), 'Escape closes steps');
     assert.ok(await page.locator('header').isVisible(), 'app header still visible');
