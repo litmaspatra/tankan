@@ -42,7 +42,7 @@
     const name=document.createElement('td'),button=document.createElement('button');button.className='community-name';button.textContent=row.displayName;button.addEventListener('click',()=>openProfile(row.id,row.displayName));name.append(button);
     const points=document.createElement('td');points.textContent=score(row.score);tr.append(rank,name,points);list.append(tr);
    });
-   status.textContent=data.rows.length?'Top '+data.rows.length+' shared scores.':'No shared scores yet. Sign in, choose a display name and join to take part.';
+   status.textContent=data.rows.length?'Top '+data.rows.length+' scores today (India time).':'No shared scores yet today. The board starts fresh at midnight India time - sign in, choose a display name and join to take part.';
   }catch(e){$('leaderboard-rows').replaceChildren();status.textContent=e.message;}
  }
  async function openProfile(id,name){

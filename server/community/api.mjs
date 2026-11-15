@@ -12,8 +12,13 @@ export async function handle(request,env,{auth=authenticate,now=Date.now()}={}){
   if(request.method==='GET'){
    const view=url.searchParams.get('view')||'rankings';
    if(view==='rankings'){
-    const result=await db.prepare('SELECT a.display_name,a.public_id,b.score FROM community_bests b JOIN community_accounts a ON a.uid=b.uid WHERE a.joined=1 AND b.completed_at>=? ORDER BY b.score DESC,b.completed_at DESC,a.public_id ASC LIMIT 20').bind(cutoff).all();
-    return json({windowDays:14,maxEntries:20,rows:result.results.map(row=>({displayName:row.display_name,id:row.public_id,score:row.score}))});
+    // Daily board: each person's best qualifying lesson of the day, from the
+    // retained lesson summaries (community_bests keeps the 14-day best for the
+    // profile view). The day boundary is fixed to India time (UTC+5:30, no
+    // DST) - the players are Hindi typists, mostly in India.
+    const istStart=Math.floor((now+19800000)/86400000)*86400000-19800000;
+    const result=await db.prepare("SELECT a.display_name,a.public_id,MAX(l.score) AS score FROM community_lessons l JOIN community_accounts a ON a.uid=l.uid WHERE a.joined=1 AND l.review_status='accepted' AND l.completed_at>=? GROUP BY l.uid ORDER BY score DESC,MAX(l.completed_at) DESC,a.public_id ASC LIMIT 20").bind(istStart).all();
+    return json({day:'Asia/Kolkata',maxEntries:20,rows:result.results.map(row=>({displayName:row.display_name,id:row.public_id,score:row.score}))});
    }
    if(view==='profile'){
     const id=url.searchParams.get('id');if(!/^[a-f0-9]{32}$/.test(id||''))return json({error:'Public profile not found.'},404);

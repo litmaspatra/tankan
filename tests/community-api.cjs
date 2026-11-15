@@ -33,5 +33,17 @@ const assert=require('node:assert/strict'),fs=require('node:fs');const {Database
  assert.equal((await call(null,'?view=profile&id='+publicId)).data.displayName,'Renamed User');await call({action:'participation',joined:false});assert.equal((await call(null,'?view=profile&id='+publicId)).status,404);
  assert.equal((await call({action:'participation',joined:true},'',{origin:'https://elsewhere.invalid'})).status,403);
  uid='user-two';assert.equal((await call(null,'?view=me')).data.account.displayName,'Other User');uid=null;assert.equal((await call({action:'profile',displayName:'Attacker Name'})).status,401);assert.equal((await call(null)).status,200);
- console.log('community API ok: real SQLite, opt-in/opt-out, duplicate-name identity/ownership, public allowlist, 50-unit/10-key eligibility, top20, one best/user, expiry, deduplication, invalid/legacy rejection, auth');
+ // Daily board: only lessons from the current India-time day (UTC+5:30, no
+ // DST) rank; yesterday's higher score does not carry over.
+ uid='daily-user';await call({action:'profile',displayName:'Daily Player'});await call({action:'participation',joined:true});
+ now=Date.parse('2026-12-01T18:30:30Z'); // 00:00:30 IST on Dec 2
+ await call({action:'sync',lessons:[lesson('daily_yesterday_hi',60,now-61000)]}); // 23:59:29 IST Dec 1 - yesterday
+ assert.equal((await call(null)).data.rows.length,0,'yesterday (IST) score must not rank today');
+ await call({action:'sync',lessons:[lesson('daily_today_low_12',20,now)]});
+ const daily=(await call(null)).data;assert.equal(daily.rows.length,1);assert.equal(daily.rows[0].score,4000);assert.equal(daily.rows[0].displayName,'Daily Player');
+ assert.equal(daily.day,'Asia/Kolkata');assert.equal(daily.windowDays,undefined);
+ // Same-day lessons keep only the person's best on the board.
+ await call({action:'sync',lessons:[lesson('daily_today_better',30,now)]});
+ assert.equal((await call(null)).data.rows[0].score,6000);assert.equal((await call(null)).data.rows.length,1);
+ console.log('community API ok: real SQLite, opt-in/opt-out, duplicate-name identity/ownership, public allowlist, 50-unit/10-key eligibility, top20, one best/user, expiry, deduplication, invalid/legacy rejection, auth, daily India-time board');
 })().catch(e=>{console.error(e);process.exit(1)});
