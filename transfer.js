@@ -94,6 +94,15 @@
             return;
         }
 
+        if (sent && !applied && d.kind === 'tankan-transfer-kept') {
+            applied = true; // the flow is over; nothing was transferred or marked
+            if (ackExpiry) clearTimeout(ackExpiry);
+            show('tankan.in kept its own progress - it is already further ahead. Nothing was transferred and nothing here changed.', 'ok');
+            doneNoteEl.hidden = false;
+            setTimeout(function () { window.close(); }, 6000);
+            return;
+        }
+
         if (sent && !applied && d.kind === 'tankan-transfer-applied') {
             applied = true;
             if (ackExpiry) clearTimeout(ackExpiry);

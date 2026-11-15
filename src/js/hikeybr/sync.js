@@ -2,11 +2,14 @@
 // auth.js: when signed in, the visitor's progress can be saved to their own
 // account document (progress/{uid}) and restored on another device.
 //
-// Safety rules (Kartik's requirements):
+// Safety rules:
 // - Nothing is uploaded silently on first sign-in: an empty account copy asks
 //   once before this device's progress is bound to the account.
-// - A non-empty account copy is never overwritten silently, and non-empty
-//   local progress is never replaced silently: differences surface a choice.
+// - When both sides hold different progress, the copy with more keys unlocked
+//   wins automatically (the visitor's standing choice); the replaced copy is
+//   stashed locally first (hikeybr_presync_backup). Only equally-far or
+//   unreadable copies still surface an explicit choice - freshness or time
+//   never decide.
 // - Replacing local progress first stashes a full pre-sync snapshot under
 //   hikeybr_presync_backup (restorable via the existing Import flow pattern).
 // - Sign-out stops all syncing and changes nothing locally.
@@ -31,6 +34,17 @@
     const PRESYNC_KEY = 'hikeybr_presync_backup';
 
     const collect = () => window.TANKAN_BACKUP.collect();
+    const STORE_KEY = 'hikeybr_store_v3';
+    // Furthest progress in a saved store, by keys unlocked. null when the
+    // store is missing or unreadable - those cases never auto-resolve.
+    const keysUnlockedOf = text => {
+        try {
+            const s = JSON.parse(text || '{}');
+            if (typeof s.highestUnlocked === 'number') return s.highestUnlocked;
+            if (typeof s.unlockedIndex === 'number') return s.unlockedIndex;
+            return null;
+        } catch (_) { return null; }
+    };
     // localStorage enumeration order is device-specific. Compare named values,
     // not serialized insertion order, or an identical restored account (for
     // example progress + avatar) immediately looks like a new conflict.
@@ -108,7 +122,7 @@
     const showRetry = v => { if (retryBtn) retryBtn.hidden = !v; };
 
     const push = async () => {
-        if (!bound || applying || !store) return;
+        if (!bound || applying || !store) return false;
         pushPending = false;
         const snapshot = localJson();
         const payload = window.TANKAN_BACKUP.buildPayload();
@@ -125,7 +139,7 @@
         }, window.TANKAN_SYNC_SLOW_MS || 15000);
         try {
             await store.write(payload);
-            if (uid !== myUid) return;
+            if (uid !== myUid) return false;
             const now = localJson();
             const newer = now !== snapshot;
             writeState(myUid, { baseDataJson: snapshot, owedLocalJson: newer ? now : null });
@@ -135,8 +149,9 @@
                 setStatus('Saved to your account.');
                 showRetry(false);
             }
+            return true;
         } catch (e) {
-            if (uid !== myUid) return;
+            if (uid !== myUid) return false;
             pushPending = true; // retried on reconnect, on reopen, and on the next change
             writeState(myUid, { owedLocalJson: localJson() });
             setStatus('Could not save to your account - your progress is safe on this device. Tap Retry saving, or it will retry when you are back online.');
@@ -237,7 +252,33 @@
             }
 
             if (!doc || !cloudObj) {
-                if (localEmpty) {
+                // An empty-but-valid account backup holds nothing worth
+                // protecting; only a genuinely unreadable copy gets the
+                // fail-closed treatment below.
+                let cloudEmpty = false;
+                if (doc && !cloudObj) {
+                    try {
+                        const raw = JSON.parse(doc.payload);
+                        cloudEmpty = !!(raw && raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data) && Object.keys(raw.data).length === 0);
+                    } catch (_) {}
+                }
+                if (doc && !cloudObj && !cloudEmpty) {
+                    // The account has a saved copy this device cannot read
+                    // (corrupt, or from a newer app version). It is never
+                    // overwritten silently: the visitor chooses, and
+                    // restoring an unreadable copy is not offered.
+                    bound = false;
+                    if (localEmpty) {
+                        setStatus('Your account has a saved copy this device cannot read - nothing was changed. The account copy is untouched.');
+                    } else {
+                        conflictText.textContent = 'Your account has a saved copy this device cannot read. Save this device\'s progress to your account instead? The unreadable account copy will be replaced.';
+                        useAccountBtn.hidden = true;
+                        useDeviceBtn.hidden = false;
+                        useDeviceBtn.textContent = 'Save this device\'s progress (replace the account copy)';
+                        conflictBox.hidden = false;
+                        setStatus('The account copy cannot be read on this device.');
+                    }
+                } else if (localEmpty) {
                     bound = true; // nothing anywhere yet; first practice saves
                     setStatus('Signed in - your progress will be saved to your account as you practice.');
                 } else {
@@ -250,6 +291,7 @@
                 bound = false;
                 conflictText.textContent = 'Your account has saved progress' + (doc.savedAt ? ' (last saved ' + new Date(doc.savedAt.seconds ? doc.savedAt.seconds * 1000 : doc.savedAt).toLocaleString() + ')' : '') + '. Restore it to this device?';
                 useDeviceBtn.hidden = true;
+                useAccountBtn.hidden = false;
                 useAccountBtn.textContent = 'Restore to this device';
                 conflictBox.hidden = false;
                 setStatus('This device has no progress yet.');
@@ -262,9 +304,33 @@
                 // setup (tens of seconds) the user may close the tab during.
                 push();
             } else {
+                // Auto-resolve by furthest progress: the copy with more keys
+                // unlocked wins, per the visitor's standing choice. The
+                // replaced copy is stashed first (the account copy below, the
+                // device copy inside applyCloud), so nothing is unrecoverable.
+                // Equally-far or unreadable copies still get the choice -
+                // freshness or time never decide.
+                const localKeys = keysUnlockedOf(collect()[STORE_KEY]);
+                const cloudKeys = keysUnlockedOf(cloudObj.data[STORE_KEY]);
+                if (localKeys !== null && cloudKeys !== null && localKeys > cloudKeys) {
+                    bound = true;
+                    try { localStorage.setItem(PRESYNC_KEY, JSON.stringify({ savedAt: new Date().toISOString(), data: cloudObj.data })); window.dispatchEvent(new Event('tankan-stash-updated')); } catch (_) {}
+                    push().then(ok => {
+                        if (ok && uid === user.uid) setStatus('This device is further ahead (' + (localKeys + 1) + ' keys unlocked, the account had ' + (cloudKeys + 1) + ') - saved this device\'s progress to your account.');
+                    });
+                    return;
+                }
+                if (localKeys !== null && cloudKeys !== null && cloudKeys > localKeys) {
+                    setStatus('Your account is further ahead (' + (cloudKeys + 1) + ' keys unlocked, this device has ' + (localKeys + 1) + ') - bringing it to this device.');
+                    applyCloud(cloudObj);
+                    return;
+                }
                 bound = false;
-                conflictText.textContent = 'This device and your account have different progress. Choose which one to keep - the other copy is replaced only when you say so.';
+                conflictText.textContent = (localKeys !== null && cloudKeys !== null)
+                    ? 'This device and your account have different practice but the same keys unlocked (' + (localKeys + 1) + '). Choose which copy to keep - the other is replaced only when you say so.'
+                    : 'This device and your account have different progress. Choose which one to keep - the other copy is replaced only when you say so.';
                 useDeviceBtn.hidden = false;
+                useAccountBtn.hidden = false;
                 useDeviceBtn.textContent = 'Keep this device\'s progress (update the account)';
                 useAccountBtn.textContent = 'Use the account copy here (replace this device)';
                 conflictBox.hidden = false;

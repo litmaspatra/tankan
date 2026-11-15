@@ -100,7 +100,8 @@ const path = require('node:path');
     });
     assert.equal(res5, 'ok', 'empty destination imports directly: ' + res5);
 
-    // 6. Existing progress => the confirm modal gates the replacement.
+    // 6a. Old site strictly further ahead: imports without asking, confirms
+    //     the transfer, and stashes the replaced copy.
     await fresh(); await openSettings();
     await page.evaluate(() => localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 2, highestUnlocked: 2, opts: {}, lessonHistory: [] })));
     const res6 = await page.evaluate(async () => {
@@ -118,20 +119,81 @@ const path = require('node:path');
         await new Promise(r => setTimeout(r, 100));
         window.dispatchEvent(new MessageEvent('message', { data: { kind: 'tankan-transfer-payload', n: nonce, payload }, source: fakePopup, origin: 'https://litmaspatra.github.io' }));
         await new Promise(r => setTimeout(r, 200));
+        if (document.getElementById('import-modal').classList.contains('open')) return 'further-ahead old site should import without the modal';
+        const now = JSON.parse(localStorage.getItem('hikeybr_store_v3'));
+        if (now.highestUnlocked !== 6) return 'further-ahead old-site progress was not imported';
+        const stash = JSON.parse(localStorage.getItem('hikeybr_presync_backup') || 'null');
+        if (!stash || !stash.data || !stash.data.hikeybr_store_v3 || JSON.parse(stash.data.hikeybr_store_v3).highestUnlocked !== 2) return 'replaced copy not stashed for rollback';
+        const acks = posted.filter(x => x.m.kind === 'tankan-transfer-applied');
+        if (acks.length !== 1 || acks[0].m.n !== nonce || acks[0].t !== 'https://litmaspatra.github.io') return 'auto import must confirm the transfer to the old site';
+        return 'ok';
+    });
+    assert.equal(res6, 'ok', 'further-ahead old site imports automatically: ' + res6);
+
+    // 6b. tankan.in strictly further ahead: nothing imported, nothing marked,
+    //     the old site is told its copy was kept.
+    await fresh(); await openSettings();
+    await page.evaluate(() => localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 8, highestUnlocked: 8, opts: {}, lessonHistory: [] })));
+    const res6b = await page.evaluate(async () => {
+        const store = { unlockedIndex: 2, highestUnlocked: 2, opts: {}, lessonHistory: [] };
+        const payload = { app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: new Date().toISOString(), data: { hikeybr_store_v3: JSON.stringify(store) } };
+        let nonce = null;
+        const realOpen = window.open.bind(window);
+        const fakePopup = realOpen('about:blank', '_blank', 'width=10,height=10');
+        const posted = [];
+        fakePopup.postMessage = (m, t) => { posted.push({ m, t }); };
+        window.open = url => { nonce = new URL(url).searchParams.get('n'); return fakePopup; };
+        document.getElementById('bridge-fetch-btn').click();
+        await new Promise(r => setTimeout(r, 150));
+        window.dispatchEvent(new MessageEvent('message', { data: { kind: 'tankan-transfer-ready', n: nonce }, source: fakePopup, origin: 'https://litmaspatra.github.io' }));
+        await new Promise(r => setTimeout(r, 100));
+        window.dispatchEvent(new MessageEvent('message', { data: { kind: 'tankan-transfer-payload', n: nonce, payload }, source: fakePopup, origin: 'https://litmaspatra.github.io' }));
+        await new Promise(r => setTimeout(r, 200));
+        if (JSON.parse(localStorage.getItem('hikeybr_store_v3')).highestUnlocked !== 8) return 'further-ahead tankan.in progress was replaced';
+        if (document.getElementById('import-modal').classList.contains('open')) return 'kept copy should not open the modal';
+        if (posted.some(x => x.m.kind === 'tankan-transfer-applied')) return 'nothing landed, so nothing may be confirmed';
+        const kept = posted.filter(x => x.m.kind === 'tankan-transfer-kept');
+        if (kept.length !== 1 || kept[0].m.n !== nonce || kept[0].t !== 'https://litmaspatra.github.io') return 'old site not told its copy was kept';
+        if (localStorage.getItem('tankan_transfer_done')) return 'kept transfer must not mark the old origin';
+        if (!/already further ahead/.test(document.getElementById('bridge-status').textContent)) return 'status does not explain the kept copy';
+        return 'ok';
+    });
+    assert.equal(res6b, 'ok', 'further-ahead tankan.in keeps its copy: ' + res6b);
+
+    // 6c. Equally far existing progress => the confirm modal still gates the
+    //     replacement, and only the confirm tells the old site it landed.
+    await fresh(); await openSettings();
+    await page.evaluate(() => localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 6, highestUnlocked: 6, opts: {}, lessonHistory: [] })));
+    const res6c = await page.evaluate(async () => {
+        const store = { unlockedIndex: 6, highestUnlocked: 6, opts: {}, lessonHistory: [], marker: 'incoming' };
+        const payload = { app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: new Date().toISOString(), data: { hikeybr_store_v3: JSON.stringify(store) } };
+        let nonce = null;
+        const realOpen = window.open.bind(window);
+        const fakePopup = realOpen('about:blank', '_blank', 'width=10,height=10');
+        const posted = [];
+        fakePopup.postMessage = (m, t) => { posted.push({ m, t }); };
+        window.open = url => { nonce = new URL(url).searchParams.get('n'); return fakePopup; };
+        document.getElementById('bridge-fetch-btn').click();
+        await new Promise(r => setTimeout(r, 150));
+        window.dispatchEvent(new MessageEvent('message', { data: { kind: 'tankan-transfer-ready', n: nonce }, source: fakePopup, origin: 'https://litmaspatra.github.io' }));
+        await new Promise(r => setTimeout(r, 100));
+        window.dispatchEvent(new MessageEvent('message', { data: { kind: 'tankan-transfer-payload', n: nonce, payload }, source: fakePopup, origin: 'https://litmaspatra.github.io' }));
+        await new Promise(r => setTimeout(r, 200));
         const modalOpen = document.getElementById('import-modal').classList.contains('open');
-        const before = JSON.parse(localStorage.getItem('hikeybr_store_v3')).highestUnlocked;
-        if (!modalOpen) return 'existing progress replaced without confirmation';
-        if (before !== 2) return 'progress changed before confirmation';
+        const before = JSON.parse(localStorage.getItem('hikeybr_store_v3')).marker;
+        if (!modalOpen) return 'equally-far copies must still ask';
+        if (before === 'incoming') return 'progress changed before confirmation';
         if (posted.some(x => x.m.kind === 'tankan-transfer-applied')) return 'transfer confirmed before the import landed';
         document.getElementById('import-confirm-btn').click(); // confirm handler reloads the page
         const acks = posted.filter(x => x.m.kind === 'tankan-transfer-applied');
         if (acks.length !== 1 || acks[0].m.n !== nonce || acks[0].t !== 'https://litmaspatra.github.io') return 'confirmed import must tell the old site the transfer landed';
         return 'ok';
     });
-    assert.equal(res6, 'ok', 'existing progress requires confirmation: ' + res6);
+    assert.equal(res6c, 'ok', 'equally-far copies require confirmation: ' + res6c);
 
-    // The confirmed import reloaded the page; settle before driving the popup.
-    await page.goto(url); await page.waitForTimeout(300);
+    // The confirmed import reloaded the page; let that reload finish before
+    // driving the popup (a fresh goto would race it).
+    await page.waitForTimeout(800);
 
     // 7. Sender side: with a real opener + nonce it announces readiness, sends
     //    the saved entries on a validated request, and marks THIS origin only

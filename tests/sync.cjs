@@ -126,14 +126,15 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     page = await newPage();
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => {
-        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 3, marker: 'device' }));
+        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 5, marker: 'device' }));
         localStorage.setItem('__syncDocs', JSON.stringify({
-            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 8, marker: 'account' }) } }), savedAt: { seconds: 1794000000 } }
+            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5, marker: 'account' }) } }), savedAt: { seconds: 1794000000 } }
         }));
     });
     await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
-    assert.ok(await page.locator('#sync-conflict').isVisible(), 'conflict surfaces when both sides differ');
+    assert.ok(await page.locator('#sync-conflict').isVisible(), 'equally-far differing copies still surface the conflict');
+    assert.match(await page.locator('#sync-conflict-text').textContent(), /same keys unlocked/, 'the prompt explains why it is asking');
     await page.click('#sync-use-account');
     await page.waitForTimeout(900);
     let after = await page.evaluate(() => ({ cur: localStorage.getItem('hikeybr_store_v3'), pre: localStorage.getItem('hikeybr_presync_backup') }));
@@ -153,17 +154,71 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     page = await newPage();
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => {
-        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 3, marker: 'device2' }));
+        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 5, marker: 'device2' }));
         localStorage.setItem('__syncDocs', JSON.stringify({
-            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 8, marker: 'account2' }) } }), savedAt: { seconds: 1794000000 } }
+            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5, marker: 'account2' }) } }), savedAt: { seconds: 1794000000 } }
         }));
     });
     await openProfile(page);
     await page.click('#google-signin-btn'); await page.waitForTimeout(400);
     await page.click('#sync-use-device'); await page.waitForTimeout(400);
     assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('"marker":"device2"'), 'device choice updates the account copy');
+    await page.context().close();
+
+    // 5b. Device strictly further ahead: saves to the account without asking,
+    //     stashing the overwritten account copy first.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 8, highestUnlocked: 8, marker: 'device-ahead' }));
+        localStorage.setItem('__syncDocs', JSON.stringify({
+            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 3, highestUnlocked: 3, marker: 'account-behind' }) } }), savedAt: { seconds: 1794000000 } }
+        }));
+    });
+    await openProfile(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(600);
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()), 'device further ahead: no conflict prompt');
+    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('"marker":"device-ahead"'), 'further-ahead device saves to the account automatically');
+    assert.match(await page.locator('#sync-status').textContent(), /further ahead/, 'status explains the automatic choice');
+    let stash = await page.evaluate(() => localStorage.getItem('hikeybr_presync_backup'));
+    assert.ok(stash && stash.includes('account-behind'), 'the overwritten account copy is stashed for rollback');
+    await page.context().close();
+
+    // 5c. Account strictly further ahead: restored without asking, device copy
+    //     stashed by the normal rollback path.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 3, highestUnlocked: 3, marker: 'device-behind' }));
+        localStorage.setItem('__syncDocs', JSON.stringify({
+            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 8, highestUnlocked: 8, marker: 'account-ahead' }) } }), savedAt: { seconds: 1794000000 } }
+        }));
+    });
+    await openProfile(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(1200); // apply + reload
+    assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('"marker":"account-ahead"'), 'further-ahead account restores automatically');
+    stash = await page.evaluate(() => localStorage.getItem('hikeybr_presync_backup'));
+    assert.ok(stash && stash.includes('device-behind'), 'the replaced device copy is stashed for rollback');
+    // The rollback is real: the Settings note appears and restoring goes
+    // through the same confirm modal. Signed out so the max-keys rule does
+    // not immediately replace the restored copy again.
+    await openProfile(page);
+    await page.click('#google-signout-btn'); await page.waitForTimeout(300);
+    await page.click('button.nav-tab[data-target="settings"]'); await page.waitForTimeout(300);
+    assert.ok(await page.locator('#rollback-note').isVisible(), 'rollback note appears for the stashed copy');
+    await page.click('#rollback-restore-btn'); await page.waitForTimeout(300);
+    assert.ok(await page.locator('#import-modal').evaluate(n => n.classList.contains('open')), 'rollback restore asks for confirmation');
+    await page.click('#import-confirm-btn'); await page.waitForTimeout(900); // apply + reload
+    assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('device-behind'), 'rollback restores the stashed copy');
+    await page.context().close();
 
     // 6. Offline honesty: a failed save says so and changes nothing.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'device2' })));
+    await openProfile(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
+    await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
     await page.evaluate(() => {
         window.__syncFail = true;
         localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, marker: 'device2' }));
@@ -211,10 +266,13 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
         window.dispatchEvent(new Event('tankan-progress-changed')); // pending debounce at the moment of the switch
         window.__authSwitch({ uid: 'u2', displayName: 'B User', email: 'b@example.com' });
     });
-    await page.waitForTimeout(800);
-    assert.ok(await page.locator('#sync-conflict').isVisible(), 'A->B switch with different B cloud surfaces the conflict');
+    await page.waitForTimeout(1500); // auto-restore of the further-ahead copy + reload
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()), 'A->B switch where B is further ahead resolves without asking');
+    assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('B-progress'), "B's further-ahead copy replaces A's local progress");
+    const stash8 = await page.evaluate(() => localStorage.getItem('hikeybr_presync_backup'));
+    assert.ok(stash8 && stash8.includes('A-progress'), "A's replaced progress is stashed for rollback");
     const bDoc = await page.evaluate(() => (JSON.parse(localStorage.getItem('__syncDocs') || '{}').u2 || {}).payload || '');
-    assert.ok(bDoc.includes('B-progress') && !bDoc.includes('A-progress'), 'B doc untouched until B chooses');
+    assert.ok(bDoc.includes('B-progress') && !bDoc.includes('A-progress'), 'B doc untouched by the restore');
     await page.context().close();
 
     // 9. Hide flush: an owed push starts immediately when the page hides,
@@ -322,13 +380,39 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
         d.u1 = { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T01:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 20, marker: 'other-device' }) } }), savedAt: { seconds: 1794001000 } };
         localStorage.setItem('__syncDocs', JSON.stringify(d));
     });
+    await page.goto(base); await page.waitForTimeout(1500); // auto-restore of the further-ahead copy + reload
+    await openProfile(page);
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()), '13: further-ahead account copy resolves without asking');
+    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('other-device'), 'other device copy untouched by the restore');
+    assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('other-device'), 'further-ahead account copy restored');
+    const stash13 = await page.evaluate(() => localStorage.getItem('hikeybr_presync_backup'));
+    assert.ok(stash13 && stash13.includes('owed13'), '13: the owed local change survives in the rollback stash');
+    await page.context().close();
+
+    // 13b. The same race with the LOCAL change further ahead: the owed device
+    //      copy wins and saves without asking.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => { localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 20, marker: 'owed13b' })); });
+    await openProfile(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
+    await page.click('#sync-bind-confirm'); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        window.__syncFail = true;
+        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 22, marker: 'owed13b' }));
+        window.dispatchEvent(new Event('tankan-progress-changed'));
+    });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => {
+        window.__syncFail = false;
+        const d = JSON.parse(localStorage.getItem('__syncDocs'));
+        d.u1 = { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T01:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 6, marker: 'other-device-behind' }) } }), savedAt: { seconds: 1794001000 } };
+        localStorage.setItem('__syncDocs', JSON.stringify(d));
+    });
     await page.goto(base); await page.waitForTimeout(900);
     await openProfile(page);
-    assert.ok(await page.locator('#sync-conflict').isVisible(), 'moved account copy surfaces the conflict, not a silent push');
-    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('other-device'), 'other device copy untouched before the user chooses');
-    assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('"unlockedIndex":6'), 'owed local change preserved');
-    await page.click('#sync-use-device'); await page.waitForTimeout(500);
-    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('"unlockedIndex":6'), 'explicit device choice saves the owed change');
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()), '13b: further-ahead device copy resolves without asking');
+    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('"unlockedIndex":22'), '13b: the owed further-ahead change saves to the account');
     await page.context().close();
 
     // 14. Owed state is per-account: B gets no auto-push; returning to A recovers.
@@ -395,10 +479,21 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
 
     // 17. Another device saved different progress: a change during the check must NOT overwrite it; the user chooses.
     page = await newPage();
+    await signedInReload(page, envelope({ hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5, marker: 'other-device' }) }),
+        { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5, marker: 'device-copy' }) }, { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5, marker: 'device-copy' }) });
+    assert.ok(await page.locator('#sync-conflict').isVisible(), '17: equally-far differing copies still ask');
+    assert.ok((await cloudData(page)).hikeybr_store_v3.includes('other-device'), '17: account copy untouched before a choice');
+    await page.context().close();
+
+    // 17b. The same race with the account copy strictly further ahead resolves
+    //      itself: restored, no prompt, the during-check change stashed.
+    page = await newPage();
     await signedInReload(page, envelope({ hikeybr_store_v3: JSON.stringify({ unlockedIndex: 9, marker: 'other-device' }) }),
         { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5 }) }, { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 6 }) });
-    assert.ok(await page.locator('#sync-conflict').isVisible(), '17: differing account copy still asks');
-    assert.ok((await cloudData(page)).hikeybr_store_v3.includes('other-device'), '17: account copy untouched before a choice');
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()), '17b: further-ahead account copy resolves without asking');
+    assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('other-device'), '17b: further-ahead account copy restored');
+    const stash17 = await page.evaluate(() => localStorage.getItem('hikeybr_presync_backup'));
+    assert.ok(stash17 && JSON.parse(stash17).data.hikeybr_store_v3.includes('"unlockedIndex":6'), '17b: the during-check change survives in the rollback stash');
     await page.context().close();
 
     // 18. Account holds an empty backup (e.g. after removing the only item) and the device has data: asks, never auto-pushes.
@@ -445,7 +540,7 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     await page.evaluate(() => {
         window.__syncFail = false;
         const d = JSON.parse(localStorage.getItem('__syncDocs'));
-        d.u1 = { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T01:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 30, marker: 'other-device20' }) } }), savedAt: { seconds: 1794002000 } };
+        d.u1 = { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T01:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 8, marker: 'other-device20' }) } }), savedAt: { seconds: 1794002000 } };
         localStorage.setItem('__syncDocs', JSON.stringify(d));
     });
     await page.click('#sync-retry'); await page.waitForTimeout(700);
@@ -489,7 +584,30 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     assert.ok(!(await readCloud(page)), '22: retry did not auto-bind or upload');
     await page.context().close();
 
+    // 23. Unreadable progress on BOTH sides fails closed: a choice, nothing
+    //     automatic, nothing overwritten.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        localStorage.setItem('hikeybr_store_v3', 'not-json{');
+        localStorage.setItem('hikeybr_avatar_u_u1', JSON.stringify({ kind: 'preset', preset: 'smuggrin' }));
+        localStorage.setItem('__syncDocs', JSON.stringify({
+            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: 'also-not-json{' } }), savedAt: { seconds: 1794000000 } }
+        }));
+    });
+    await openProfile(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(500);
+    assert.ok(await page.locator('#sync-conflict').isVisible(), '23: unreadable copies surface the choice');
+    assert.ok(await page.locator('#sync-use-account').isHidden(), '23: no restore of an unreadable account copy');
+    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3 === 'also-not-json{', '23: account copy untouched');
+    assert.equal(await page.evaluate(() => localStorage.getItem('hikeybr_store_v3')), 'not-json{', '23: local copy untouched');
+    // The one offered action is saving the device copy over the unreadable
+    // account copy - and only on an explicit click.
+    await page.click('#sync-use-device'); await page.waitForTimeout(400);
+    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3 === 'not-json{', '23: explicit choice saves the device copy');
+    await page.context().close();
+
     await browser.close();
     server.close();
-    console.log('PASS tests/sync.cjs (22 scenarios)');
+    console.log('PASS tests/sync.cjs (26 scenarios)');
 })().catch(e => { console.error('FAIL tests/sync.cjs:', e.message); server.close(); process.exit(1); });

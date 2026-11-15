@@ -60,7 +60,7 @@
         '<li>Tap <strong>Open tankan.in</strong> below. It opens in a new tab of this browser.</li>' +
         '<li>On tankan.in open the <strong>Settings</strong> tab and scroll to <strong>Bring your progress from the old site</strong>. Tap that button.</li>' +
         '<li>A small window opens for a moment and closes by itself. If your browser blocks pop-ups, allow them for tankan.in and tap the button again.</li>' +
-        '<li>If tankan.in already has some progress, it asks before replacing it. Confirm, and the page reloads with your progress.</li>' +
+        '<li>If tankan.in already has some progress, the copy with more keys unlocked wins automatically; it only asks you when both are equally far. The page then reloads with your progress.</li>' +
         '<li>Check the progress arrived (your keys and stats show on tankan.in), then open the <strong>Profile</strong> tab and tap <strong>Sign in with Google</strong>. Signing in alone does not save anything yet.</li>' +
         '<li>Under the Account card, tankan.in asks <em>Save this device\'s progress to your account?</em> Tap <strong>Save to my account</strong> (<em>Not now</em> keeps it on this device only) and wait for <strong>Saved to your account.</strong></li>' +
         '<li>If your account already has saved progress, it asks which copy to keep. Nothing is replaced until you choose: <em>Keep this device\'s progress</em> updates the account, <em>Use the account copy</em> replaces this device.</li>' +

@@ -103,20 +103,22 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     const kept=JSON.parse(shared.payload).data;assert.equal(JSON.parse(kept.hikeybr_store_v3).bestScore,800);
     await phone.context().close();await laptop.context().close();
 
-    // Genuine difference stays a choice. Restore account, retain rollback,
-    // hide successful replacement on this device and subsequent reload.
-    shared=envelope({hikeybr_avatar_u_u1:avatar,hikeybr_store_v3:progress(12)});
+    // Genuine difference at the SAME furthest progress stays a choice.
+    // Restore account, retain rollback, hide successful replacement on this
+    // device and subsequent reload.
+    const tweaked=(n,score)=>{const p=JSON.parse(progress(n));p.bestScore=score;return JSON.stringify(p);};
+    shared=envelope({hikeybr_avatar_u_u1:avatar,hikeybr_store_v3:tweaked(8,999)});
     phone=await device(390);await seed(phone,8);await status(phone,'differs');assert.ok(await phone.locator('#sync-conflict').isVisible());const before=shared.payload;
     await phone.click('#sync-use-account');await phone.waitForLoadState('domcontentloaded');await status(phone,'Saved');await openProfile(phone);await hidden(phone);
     let local=await phone.evaluate(()=>({current:JSON.parse(localStorage.getItem('hikeybr_store_v3')),rollback:JSON.parse(localStorage.getItem('hikeybr_presync_backup')).data}));
-    assert.equal(local.current.bestScore,1200);assert.equal(JSON.parse(local.rollback.hikeybr_store_v3).bestScore,800);
+    assert.equal(local.current.bestScore,999);assert.equal(JSON.parse(local.rollback.hikeybr_store_v3).bestScore,800);
     await phone.reload();await status(phone,'Saved');await hidden(phone);
     await openProfile(phone);await phone.locator('#sync-status').scrollIntoViewIfNeeded();await phone.screenshot({animations:'disabled',fullPage:false,path:path.join(process.env.TANKAN_SCREENSHOTS||require('node:os').tmpdir(),'tankan-sync-after-restore-phone.png')});
 
     // The other device's differing progress is NOT silently pulled/replaced.
-    laptop=await device();await seed(laptop,7);await status(laptop,'differs');assert.equal(JSON.parse(await laptop.evaluate(()=>localStorage.getItem('hikeybr_store_v3'))).bestScore,700);
+    laptop=await device();await laptop.goto(base);await laptop.evaluate(({raw,avatar})=>{localStorage.setItem('hikeybr_store_v3',raw);localStorage.setItem('hikeybr_avatar_u_u1',avatar);},{raw:tweaked(8,700),avatar});await openProfile(laptop);await laptop.click('#google-signin-btn');await status(laptop,'differs');assert.equal(JSON.parse(await laptop.evaluate(()=>localStorage.getItem('hikeybr_store_v3'))).bestScore,700);
     await laptop.click('#sync-use-device');await status(laptop,'Saved');await hidden(laptop);assert.equal(JSON.parse(JSON.parse(shared.payload).data.hikeybr_store_v3).bestScore,700);
-    assert.equal(JSON.parse(await phone.evaluate(()=>localStorage.getItem('hikeybr_store_v3'))).bestScore,1200);
+    assert.equal(JSON.parse(await phone.evaluate(()=>localStorage.getItem('hikeybr_store_v3'))).bestScore,999);
     await laptop.reload();await status(laptop,'Saved');await hidden(laptop);
     await openProfile(laptop);await laptop.locator('#sync-status').scrollIntoViewIfNeeded();await laptop.screenshot({animations:'disabled',path:path.join(process.env.TANKAN_SCREENSHOTS||require('node:os').tmpdir(),'tankan-sync-after-update-desktop.png')});
     await phone.reload();await openProfile(phone);await status(phone,'differs');assert.ok(await phone.locator('#sync-conflict').isVisible(),'a newer genuine other-device change still needs consent');

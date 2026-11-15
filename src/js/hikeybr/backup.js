@@ -172,6 +172,30 @@
             });
             importBtn.addEventListener('click', () => startImport(codeIn.value));
 
+            // Replaced copies are stashed by sync and by automatic transfers
+            // under hikeybr_presync_backup (one slot: the most recently
+            // replaced copy). Surface it so the rollback is real; restoring
+            // goes through the same confirm modal as any other import.
+            const rollbackNote = $('rollback-note'), rollbackBtn = $('rollback-restore-btn');
+            const showRollback = () => {
+                if (!rollbackNote || !rollbackBtn) return;
+                let stash = null;
+                try { stash = JSON.parse(localStorage.getItem('hikeybr_presync_backup') || 'null'); } catch (_) {}
+                if (!stash || !stash.data || !Object.keys(stash.data).length) { rollbackNote.hidden = true; rollbackBtn.hidden = true; return; }
+                const when = stash.savedAt ? new Date(stash.savedAt) : null;
+                rollbackNote.textContent = 'A copy replaced during sync or transfer is kept on this device' + (when && !isNaN(when) ? ' (from ' + when.toLocaleString() + ')' : '') + '.';
+                rollbackNote.hidden = false;
+                rollbackBtn.hidden = false;
+            };
+            if (rollbackBtn) rollbackBtn.addEventListener('click', () => {
+                let stash = null;
+                try { stash = JSON.parse(localStorage.getItem('hikeybr_presync_backup') || 'null'); } catch (_) {}
+                if (!stash || !stash.data) { setStatus(importStatus, 'The kept copy is not readable.', false); return; }
+                startImport(JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: stash.savedAt || new Date().toISOString(), data: stash.data }));
+            });
+            window.addEventListener('tankan-stash-updated', showRollback);
+            showRollback();
+
             const closeModal = () => { modal.classList.remove('open'); pendingBackup = null; bridgeAck = null; };
             cancelBtn.addEventListener('click', closeModal);
             modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
@@ -267,8 +291,43 @@
                                     const k = localStorage.key(i);
                                     if (PREFIXES.some(p => k.startsWith(p))) { hasExisting = true; break; }
                                 }
+                                // The copy with more keys unlocked wins without
+                                // asking (the visitor's standing choice);
+                                // equally-far or unreadable copies still get
+                                // the replace confirmation below.
+                                const keysOf = text => { try { const s = JSON.parse(text || '{}'); return typeof s.highestUnlocked === 'number' ? s.highestUnlocked : (typeof s.unlockedIndex === 'number' ? s.unlockedIndex : null); } catch (_) { return null; } };
+                                const currentKeys = keysOf(localStorage.getItem('hikeybr_store_v3'));
+                                const incomingKeys = keysOf(d.payload.data && d.payload.data.hikeybr_store_v3);
+                                if (hasExisting && currentKeys !== null && incomingKeys !== null && incomingKeys > currentKeys) {
+                                    // The old site's copy is further ahead: bring it over,
+                                    // stashing the replaced copy for rollback first.
+                                    try {
+                                        const prior = {};
+                                        for (let i = 0; i < localStorage.length; i++) {
+                                            const k = localStorage.key(i);
+                                            if (PREFIXES.some(p => k.startsWith(p))) prior[k] = localStorage.getItem(k);
+                                        }
+                                        applyBackupData(d.payload);
+                                        try { localStorage.setItem('hikeybr_presync_backup', JSON.stringify({ savedAt: new Date().toISOString(), data: prior })); } catch (_) {}
+                                        ack();
+                                        setStatus(bridgeStatus, 'The old site was further ahead (' + (incomingKeys + 1) + ' keys unlocked, this device had ' + (currentKeys + 1) + ') - progress brought over. Reloading...', true);
+                                        setTimeout(() => location.reload(), 1200);
+                                    } catch (_) {
+                                        setStatus(bridgeStatus, 'This device refused the import (storage full or blocked). Nothing was changed.', false);
+                                    }
+                                    return;
+                                }
+                                if (hasExisting && currentKeys !== null && incomingKeys !== null && incomingKeys < currentKeys) {
+                                    // tankan.in is already further ahead: keep it, import
+                                    // nothing, and mark nothing - the old site keeps
+                                    // offering the transfer.
+                                    try { if (!popup.closed) popup.postMessage({ kind: 'tankan-transfer-kept', n: nonce }, OLD_ORIGIN); } catch (_) {}
+                                    try { popup.close(); } catch (_) {}
+                                    setStatus(bridgeStatus, 'tankan.in is already further ahead (' + (currentKeys + 1) + ' keys unlocked, the old site has ' + (incomingKeys + 1) + ') - kept this copy; nothing was replaced.', true);
+                                    return;
+                                }
                                 if (hasExisting) {
-                                    // Replacing real progress always asks first.
+                                    // Equally far or unreadable: the visitor chooses.
                                     bridgeAck = ack;
                                     startImport(JSON.stringify(d.payload));
                                     setStatus(bridgeStatus, 'Progress received - confirm the replacement to finish.', true);
