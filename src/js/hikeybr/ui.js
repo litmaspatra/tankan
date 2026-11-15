@@ -225,6 +225,18 @@
             document.querySelector('.nav-tab[data-target="practice"]').click();
         });
 
+        // Deep links from the static guide pages (index.html#profile,
+        // #settings, #leaderboard): open the matching panel directly.
+        const openHashPanel = () => {
+            const hashPanel = (location.hash || '').slice(1);
+            if (['profile', 'settings', 'leaderboard'].includes(hashPanel)) {
+                const hashTab = document.querySelector(`.nav-tab[data-target="${hashPanel}"]`);
+                if (hashTab) hashTab.click();
+            }
+        };
+        openHashPanel();
+        window.addEventListener('hashchange', openHashPanel);
+
         // Speed Goal Selector
         el.speedGoalSelect.addEventListener('change', (e) => {
             targetSpeedGoal = parseInt(e.target.value, 10);
