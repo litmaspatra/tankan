@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About - टंकण</title>
+<meta name="description" content="टंकण (tankan.in) is a free website for learning Hindi typing: keys unlock one by one, every lesson measures speed and accuracy, and practice uses real Hindi words.">
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.65; color: #1f2430; }
+  h1 { font-size: 1.5rem; } h2 { font-size: 1.05rem; margin-top: 1.6em; }
+  a { color: #2563eb; } .muted { color: #666; font-size: 0.85rem; }
+  #lang-toggle { position: fixed; top: 12px; right: 12px; z-index: 50; padding: 6px 14px; font-size: 13px; font-family: inherit; border: 1px solid #c3b89f; border-radius: 999px; background: #fffdf7; color: #4a4232; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+  nav.site { font-size: 0.9rem; margin-bottom: 1.2em; }
+  footer { margin-top: 2.5em; font-size: 0.85rem; color: #666; border-top: 1px solid #e3ddd0; padding-top: 1em; }
+</style>
+</head>
+<body>
+<button id="lang-toggle" type="button" aria-label="हिंदी में पढ़ें">हिंदी</button>
+
+<div id="content-en" lang="en">
+<nav class="site"><a href="index.html">&larr; टंकण</a></nav>
+<h1>About टंकण</h1>
+<p>टंकण (tankan.in) is a free website for learning Hindi typing. It is built for anyone who wants to type Hindi quickly and correctly - for office work, for studies, or for their own writing. No exam syllabus, no certificate: just the skill, learnt properly.</p>
+<h2>How it works</h2>
+<p>Keys unlock one by one, in an order that builds good finger habits from the very first lesson. Every finished lesson reports both speed (WPM) and accuracy, and the next key opens only when your accuracy shows you are ready for it. Practice uses real Hindi words, so the patterns your fingers learn are the ones you will actually type.</p>
+<p>टंकण is free to use. Questions, suggestions or problems: write to <a href="mailto:tankanapp@gmail.com">tankanapp@gmail.com</a>.</p>
+<footer>
+Read next: <a href="tips.html">7 tips to improve your Hindi typing</a> &bull; <a href="index.html">Back to टंकण</a>
+</footer>
+</div>
+
+<div id="content-hi" lang="hi" hidden>
+<nav class="site"><a href="index.html">&larr; टंकण</a></nav>
+<h1>टंकण के बारे में</h1>
+<p>टंकण (tankan.in) हिंदी टाइपिंग सीखने की एक निःशुल्क वेबसाइट है। ये हर उस इंसान के लिए बनी है जो हिंदी में तेज़ और सही टाइप करना चाहता है - दफ़्तर के काम के लिए, पढ़ाई के लिए, या अपनी लेखनी के लिए। कोई परीक्षा-पाठ्यक्रम नहीं, कोई सर्टिफ़िकेट नहीं: सिर्फ़ हुनर, ठीक ढंग से सीखा हुआ।</p>
+<h2>कैसे काम करता है</h2>
+<p>चाबियाँ एक-एक करके खुलती हैं, ऐसे क्रम में जो पहले पाठ से ही सही उंगली-आदतें बनाता है। हर पूरा पाठ रफ़्तार (WPM) और शुद्धता दोनों बताता है, और अगली चाबी तभी खुलती है जब आपकी शुद्धता दिखाए कि आप तैयार हैं। अभ्यास असली हिंदी शब्दों से होता है, ताकि उंगलियाँ वही पैटर्न सीखें जो असल में टाइप होंगे।</p>
+<p>टंकण निःशुल्क है। सवाल, सुझाव या कोई दिक़्क़त: <a href="mailto:tankanapp@gmail.com">tankanapp@gmail.com</a> पर लिखें।</p>
+<footer>
+आगे पढ़ें: <a href="tips.html">हिंदी टाइपिंग सुधारने के 7 सूत्र</a> &bull; <a href="index.html">टंकण पर वापस</a>
+</footer>
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById('lang-toggle');
+  var en = document.getElementById('content-en');
+  var hi = document.getElementById('content-hi');
+  var TITLES = {
+    en: 'About - टंकण',
+    hi: 'टंकण के बारे में - टंकण'
+  };
+  var DESCS = {
+    en: 'टंकण (tankan.in) is a free website for learning Hindi typing: keys unlock one by one, every lesson measures speed and accuracy, and practice uses real Hindi words.',
+    hi: 'टंकण (tankan.in) हिंदी टाइपिंग सीखने की एक निःशुल्क वेबसाइट है: चाबियाँ एक-एक करके खुलती हैं, हर पाठ रफ़्तार और शुद्धता नापता है, और अभ्यास असली हिंदी शब्दों से होता है।'
+  };
+  function apply(lang) {
+    var isHi = lang === 'hi';
+    en.hidden = isHi;
+    hi.hidden = !isHi;
+    btn.textContent = isHi ? 'EN' : 'हिंदी';
+    btn.setAttribute('aria-label', isHi ? 'Read in English' : 'हिंदी में पढ़ें');
+    document.documentElement.lang = isHi ? 'hi' : 'en';
+    document.title = TITLES[lang];
+    var m = document.querySelector('meta[name="description"]');
+    if (m) m.setAttribute('content', DESCS[lang]);
+    try { localStorage.setItem('tankan-guide-lang', lang); } catch (e) {}
+  }
+  btn.addEventListener('click', function () {
+    apply(hi.hidden ? 'hi' : 'en');
+  });
+  var start = 'en';
+  try { start = localStorage.getItem('tankan-guide-lang') === 'hi' ? 'hi' : 'en'; } catch (e) {}
+  if (/hi/.test(location.hash)) start = 'hi';
+  apply(start);
+})();
+</script>
+</body>
+</html>
