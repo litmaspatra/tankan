@@ -16,7 +16,9 @@
 </style>
 </head>
 <body>
-<button id="lang-toggle" type="button" aria-label="हिंदी में पढ़ें">हिंदी</button>
+<button id="lang-toggle" type="button" aria-label="हिंदी में पढ़ें"
+  data-title-en="7 tips to improve your Hindi typing - टंकण" data-title-hi="हिंदी टाइपिंग सुधारने के 7 सूत्र - टंकण"
+  data-desc-en="Seven practical habits for learning Hindi typing: accuracy first, fixed finger positions, daily practice, word patterns, punctuation and a weekly measure." data-desc-hi="हिंदी टाइपिंग सीखने की सात व्यावहारिक आदतें: शुद्धता, उंगलियों का स्थान, रोज़ अभ्यास, शब्द-पैटर्न, विराम-चिह्न और हफ़्तेवार नाप।">हिंदी</button>
 
 <div id="content-en" lang="en">
 <nav class="site"><a href="index.html">&larr; टंकण</a></nav>
@@ -122,39 +124,6 @@ Read next: <a href="about.html">About टंकण</a> &bull; <a href="index.htm
 </footer>
 </div>
 
-<script>
-(function () {
-  var btn = document.getElementById('lang-toggle');
-  var en = document.getElementById('content-en');
-  var hi = document.getElementById('content-hi');
-  var TITLES = {
-    en: '7 tips to improve your Hindi typing - टंकण',
-    hi: 'हिंदी टाइपिंग सुधारने के 7 सूत्र - टंकण'
-  };
-  var DESCS = {
-    en: 'Seven practical habits for learning Hindi typing: accuracy first, fixed finger positions, daily practice, word patterns, punctuation and a weekly measure.',
-    hi: 'हिंदी टाइपिंग सीखने की सात व्यावहारिक आदतें: शुद्धता, उंगलियों का स्थान, रोज़ अभ्यास, शब्द-पैटर्न, विराम-चिह्न और हफ़्तेवार नाप।'
-  };
-  function apply(lang) {
-    var isHi = lang === 'hi';
-    en.hidden = isHi;
-    hi.hidden = !isHi;
-    btn.textContent = isHi ? 'EN' : 'हिंदी';
-    btn.setAttribute('aria-label', isHi ? 'Read in English' : 'हिंदी में पढ़ें');
-    document.documentElement.lang = isHi ? 'hi' : 'en';
-    document.title = TITLES[lang];
-    var m = document.querySelector('meta[name="description"]');
-    if (m) m.setAttribute('content', DESCS[lang]);
-    try { localStorage.setItem('tankan-guide-lang', lang); } catch (e) {}
-  }
-  btn.addEventListener('click', function () {
-    apply(hi.hidden ? 'hi' : 'en');
-  });
-  var start = 'en';
-  try { start = localStorage.getItem('tankan-guide-lang') === 'hi' ? 'hi' : 'en'; } catch (e) {}
-  if (/hi/.test(location.hash)) start = 'hi';
-  apply(start);
-})();
-</script>
+<script src="guide-lang.js" defer></script>
 </body>
 </html>
