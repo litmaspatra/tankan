@@ -9,7 +9,7 @@ const path = require('node:path');
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     const url = 'file://' + path.resolve(__dirname, '../index.html');
     const fresh = async () => { await page.goto(url); await page.evaluate(() => localStorage.clear()); await page.reload(); await page.waitForTimeout(300); };
-    const openSettings = async () => { await page.click('button.nav-tab[data-target="settings"]'); await page.waitForTimeout(250); };
+    const openSettings = async () => { await page.click('#avatar-corner'); await page.click('button.nav-tab[data-target="settings"]'); await page.waitForTimeout(250); };
 
     // 1. The bridge button is offered away from the old site, and transfer.html
     //    without an opener/nonce refuses politely instead of doing anything.

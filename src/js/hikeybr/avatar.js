@@ -128,8 +128,11 @@
     const apply = user => {
         currentUser = user;
         const resolved = resolve(user);
-        corner.hidden = resolved.kind === 'none';
-        if (!corner.hidden) paintInto(img, initial, resolved);
+        // The corner is always shown: it opens the header menu (profile,
+        // settings, tips, about, themes), which must be reachable signed
+        // out too. A signed-out visitor gets the default ट initial.
+        corner.hidden = false;
+        paintInto(img, initial, resolved);
         if (previewImg) paintInto(previewImg, previewInitial, resolved);
         const customShown = resolved.kind === 'upload' || resolved.kind === 'preset';
         if (removeBtn) removeBtn.hidden = !customShown;
@@ -239,26 +242,22 @@
 
     // Header circle: tap enlarges the photo; with no photo it still opens
     // Profile > Account as before.
-    corner.addEventListener('click', () => {
-        const resolved = resolve(currentUser);
-        if (resolved && resolved.src) { openLightbox(resolved.src, { hint: 'Change photo in Settings > Account.' }); return; }
-        const tab = document.querySelector('button.nav-tab[data-target="profile"]');
-        if (tab) tab.click();
-    });
+    // The corner click belongs to the header menu (nav-menu.js). The photo
+    // lightbox stays available from the Settings preview below.
     const previewBox = $('avatar-preview');
     if (previewBox) previewBox.addEventListener('click', () => {
         const resolved = resolve(currentUser);
         if (resolved && resolved.src) openLightbox(resolved.src);
     });
 
-    // Auth wiring: hide signed out; isolate per-account keys on every
-    // signed-in state before anything can sweep them into a payload.
+    // Auth wiring: isolate per-account keys on every signed-in state before
+    // anything can sweep them into a payload. The corner never hides.
     const clientPromise = window.__tankanAuthClient;
-    if (!clientPromise) { corner.hidden = true; return; }
+    if (!clientPromise) { apply(null); return; }
     clientPromise.then(client => client.onAuth(user => {
         if (user && user.uid) isolateFor(user.uid);
         apply(user);
-    })).catch(() => { corner.hidden = true; });
+    })).catch(() => apply(null));
 
     // Broken image (expired URL, blocked host): fall back to the initial.
     img.addEventListener('error', () => {

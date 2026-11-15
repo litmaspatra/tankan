@@ -19,7 +19,7 @@ const server = http.createServer((req, res) => {
     fs.createReadStream(file).pipe(res);
 });
 
-const openProfile = async page => { await page.click('button.nav-tab[data-target="profile"]'); await page.waitForTimeout(250); };
+const openProfile = async page => { await page.click('#avatar-corner'); await page.click('button.nav-tab[data-target="profile"]'); await page.waitForTimeout(250); };
 
 (async () => {
     await new Promise(r => server.listen(0, 'localhost', r));

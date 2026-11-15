@@ -11,7 +11,7 @@
     <link rel="preload" href="./fonts/DevLys-040-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-021-Italic.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-070-Bold.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261114a">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261115c">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/css/keyboard.css?v=20261114a">
 </head>
@@ -31,22 +31,36 @@
             <button class="nav-tab active" data-target="practice" title="Practice">
                 <span class="nav-icon">⌨️</span><span class="nav-label"> Practice</span>
             </button>
-            <button class="nav-tab" data-target="profile" title="Profile">
-                <span class="nav-icon">📊</span><span class="nav-label"> Profile</span>
-            </button>
-            <button class="nav-tab" data-target="settings" title="Settings">
-                <span class="nav-icon">⚙️</span><span class="nav-label"> Settings</span>
-            </button>
             <button class="nav-tab" data-target="leaderboard" title="Leaderboard">
                 <span class="nav-icon">🏆</span><span class="nav-label"> Leaderboard</span>
             </button>
         </nav>
 
         <div class="header-actions">
-            <button class="avatar-corner" id="avatar-corner" title="Profile photo - tap to enlarge; change in Settings" hidden>
-                <img id="avatar-img" alt="Profile photo" referrerpolicy="no-referrer" hidden>
-                <span id="avatar-initial"></span>
-            </button>
+            <div class="avatar-wrap">
+                <button class="avatar-corner" id="avatar-corner" title="Menu - profile, settings, tips, about, themes" aria-haspopup="true">
+                    <img id="avatar-img" alt="Profile photo" referrerpolicy="no-referrer" hidden>
+                    <span id="avatar-initial">ट</span>
+                </button>
+                <div class="avatar-menu" id="avatar-menu" hidden>
+                    <button class="menu-item nav-tab" data-target="profile" title="Profile">
+                        <span class="nav-icon">📊</span><span class="nav-label"> Profile</span>
+                    </button>
+                    <button class="menu-item nav-tab" data-target="settings" title="Settings">
+                        <span class="nav-icon">⚙️</span><span class="nav-label"> Settings</span>
+                    </button>
+                    <a class="menu-item" href="tips.html">
+                        <span class="nav-icon">★</span><span class="nav-label"> Tips</span>
+                    </a>
+                    <a class="menu-item" href="about.html">
+                        <span class="nav-icon">ℹ️</span><span class="nav-label"> About</span>
+                    </a>
+                    <div class="menu-themes">
+                        <div class="menu-themes-label">Theme</div>
+                        <div class="menu-themes-row" id="menu-theme-row"></div>
+                    </div>
+                </div>
+            </div>
             <button class="btn-icon active" id="sound-toggle-btn" title="Sound on / off" aria-label="Sound on / off">
                 <span id="sound-icon">🔊</span>
             </button>
@@ -620,7 +634,7 @@
     <script src="src/js/hikeybr/lessons.js?v=20261114a"></script>
     <script src="src/js/hikeybr/display.js?v=20261114a"></script>
     <script src="src/js/hikeybr/input.js?v=20261114a"></script>
-    <script src="src/js/hikeybr/ui.js?v=20261114a"></script>
+    <script src="src/js/hikeybr/ui.js?v=20261115c"></script>
     <script src="src/js/hikeybr/backup.js?v=20261115c"></script>
     <script src="src/js/hikeybr/auth.js?v=20261114a"></script>
     <script src="src/js/hikeybr/sync.js?v=20261115b"></script>
@@ -635,8 +649,9 @@
             <p class="avatar-lightbox-hint" id="avatar-lightbox-hint"></p>
         </div>
     </div>
-    <script src="src/js/hikeybr/avatar.js?v=20261114a"></script>
-    <script src="src/js/hikeybr/moved-banner.js?v=20261115b"></script>
+    <script src="src/js/hikeybr/avatar.js?v=20261115c"></script>
+    <script src="src/js/hikeybr/nav-menu.js?v=20261115c"></script>
+    <script src="src/js/hikeybr/moved-banner.js?v=20261115c"></script>
     <script src="src/js/hikeybr/init.js?v=20261114a"></script>
 </body>
 </html>

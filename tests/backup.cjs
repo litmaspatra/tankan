@@ -20,7 +20,7 @@ const path = require('node:path');
             localStorage.setItem('hikeymash_history_v1', '[]');
         }, STORE);
         await page.reload();
-        await page.click('button.nav-tab[data-target="settings"]');
+        await page.click('#avatar-corner'); await page.click('button.nav-tab[data-target="settings"]');
     };
     await seed();
 
@@ -45,7 +45,7 @@ const path = require('node:path');
     // 2. Round trip: wipe the device, import the code, progress returns.
     await page.evaluate(() => localStorage.clear());
     await page.reload();
-    await page.click('button.nav-tab[data-target="settings"]');
+    await page.click('#avatar-corner'); await page.click('button.nav-tab[data-target="settings"]');
     await page.evaluate(()=>document.querySelectorAll('details.backup-advanced').forEach(d=>d.open=true));
     await page.fill('#backup-code-input', code);
     await page.click('#backup-import-btn');
@@ -70,7 +70,7 @@ const path = require('node:path');
     // 3. Cancel path: valid code, user backs out, nothing changes.
     await page.evaluate(() => { localStorage.clear(); localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 4, highestUnlocked: 4 })); });
     await page.reload();
-    await page.click('button.nav-tab[data-target="settings"]');
+    await page.click('#avatar-corner'); await page.click('button.nav-tab[data-target="settings"]');
     await page.evaluate(()=>document.querySelectorAll('details.backup-advanced').forEach(d=>d.open=true));
     await page.fill('#backup-code-input', code);
     await page.click('#backup-import-btn');

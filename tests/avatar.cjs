@@ -20,7 +20,7 @@ const PIXEL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS
 const A = { uid: 'uid-aaa', displayName: 'Asha', email: 'a@example.com', photoURL: PIXEL };
 const B = { uid: 'uid-bbb', displayName: 'Bhanu', email: 'b@example.com', photoURL: 'https://lh3.googleusercontent.com/a/b' };
 
-const openProfile = async page => { await page.click('button.nav-tab[data-target="profile"]'); await page.waitForTimeout(250); };
+const openProfile = async page => { await page.click('#avatar-corner'); await page.click('button.nav-tab[data-target="profile"]'); await page.waitForTimeout(250); };
 
 (async () => {
     await new Promise(r => server.listen(0, 'localhost', r));
@@ -44,8 +44,10 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     await page.goto(base);
     await page.waitForTimeout(400);
 
-    // 1. Signed out: header avatar hidden, nothing stored.
-    assert.ok(await page.locator('#avatar-corner').isHidden(), 'signed out: header avatar hidden');
+    // 1. Signed out: the header corner stays visible with the default initial
+    //    (it opens the header menu); nothing stored.
+    assert.ok(await page.locator('#avatar-corner').isVisible(), 'signed out: header corner visible as the menu entry');
+    assert.strictEqual(await page.locator('#avatar-initial').textContent(), 'ट', 'signed out: default initial');
 
     // 2. Sign in as A: header shows A's Google photo by default.
     await page.evaluate(u => window.__setAuthUser(u), A);
@@ -117,15 +119,14 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     assert.ok(await page.locator('#avatar-remove').isVisible(), 'remove offered with a preset');
     assert.ok(await page.locator('#avatar-use-google').isVisible(), 'google button offered to switch back');
 
-    // 7b. Header photo tap enlarges the current avatar (no Use button), Esc closes.
+    // 7b. Header corner tap opens the header menu (not the lightbox), Esc closes.
     await page.click('#avatar-corner');
     await page.waitForTimeout(150);
-    assert.ok(await page.locator('#avatar-lightbox').isVisible(), 'tapping the header photo enlarges it');
-    assert.ok((await page.locator('#avatar-lightbox-img').getAttribute('src')).endsWith('assets/avatars/dumbstruck.webp'), 'header tap shows the current avatar');
-    assert.ok(await page.locator('#avatar-lightbox-use').isHidden(), 'plain viewing has no Use button');
+    assert.ok(await page.locator('#avatar-menu').isVisible(), 'tapping the header corner opens the menu');
+    assert.ok(await page.locator('#avatar-lightbox').isHidden(), 'header tap no longer opens the lightbox');
     await page.keyboard.press('Escape');
     await page.waitForTimeout(100);
-    assert.ok(await page.locator('#avatar-lightbox').isHidden(), 'Esc closes the lightbox');
+    assert.ok(await page.locator('#avatar-menu').isHidden(), 'Esc closes the menu');
     // Settings preview tap enlarges too, backdrop click closes.
     await openProfile(page);
     await page.click('#avatar-preview');
@@ -156,10 +157,11 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     assert.strictEqual(fellThrough, 'google', 'unknown preset falls back to the Google photo');
     await page.evaluate(u => localStorage.removeItem('hikeybr_avatar_u_' + u), A.uid);
 
-    // 11. Sign out: header avatar hidden, no custom key touched.
+    // 11. Sign out: header corner back to the default initial, no custom key touched.
     await page.evaluate(() => window.__setAuthUser(null));
     await page.waitForTimeout(200);
-    assert.ok(await page.locator('#avatar-corner').isHidden(), 'signed out again: hidden');
+    assert.ok(await page.locator('#avatar-corner').isVisible(), 'signed out again: corner still the menu entry');
+    assert.strictEqual(await page.locator('#avatar-initial').textContent(), 'ट', 'signed out again: default initial');
 
     // 8. Budget guard: oversized uploads rejected by wouldFit.
     const fits = await page.evaluate(u => {

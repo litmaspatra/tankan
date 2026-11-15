@@ -14,7 +14,7 @@ const server = http.createServer((req, res) => {
     res.setHeader('Content-Type', MIME[path.extname(file)] || 'application/octet-stream');
     fs.createReadStream(file).pipe(res);
 });
-const openProfile = async page => { await page.click('button.nav-tab[data-target="profile"]'); await page.waitForTimeout(250); };
+const openProfile = async page => { await page.click('#avatar-corner'); await page.click('button.nav-tab[data-target="profile"]'); await page.waitForTimeout(250); };
 
 (async () => {
     await new Promise(r => server.listen(0, 'localhost', r));
@@ -204,7 +204,7 @@ const openProfile = async page => { await page.click('button.nav-tab[data-target
     // not immediately replace the restored copy again.
     await openProfile(page);
     await page.click('#google-signout-btn'); await page.waitForTimeout(300);
-    await page.click('button.nav-tab[data-target="settings"]'); await page.waitForTimeout(300);
+    await page.click('#avatar-corner'); await page.click('button.nav-tab[data-target="settings"]'); await page.waitForTimeout(300);
     assert.ok(await page.locator('#rollback-note').isVisible(), 'rollback note appears for the stashed copy');
     await page.click('#rollback-restore-btn'); await page.waitForTimeout(300);
     assert.ok(await page.locator('#import-modal').evaluate(n => n.classList.contains('open')), 'rollback restore asks for confirmation');

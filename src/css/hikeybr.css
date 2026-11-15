@@ -1876,6 +1876,101 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
 
         .avatar-corner:hover { border-color: var(--accent); }
 
+        /* Header menu under the profile picture */
+        .avatar-wrap {
+            position: relative;
+            display: flex;
+        }
+
+        .avatar-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 200px;
+            max-width: 92vw;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+            padding: 6px;
+            z-index: 400;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .avatar-menu[hidden] { display: none; }
+
+        .avatar-menu .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 9px 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: left;
+        }
+
+        .avatar-menu .menu-item:hover {
+            color: var(--text);
+            background: var(--surface-hover);
+        }
+
+        .avatar-menu .menu-item.nav-tab.active {
+            color: var(--accent);
+            background: var(--accent-soft);
+        }
+
+        .menu-themes {
+            border-top: 1px solid var(--border-subtle, var(--border));
+            margin-top: 4px;
+            padding: 8px 12px 10px;
+        }
+
+        .menu-themes-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .menu-themes-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .theme-swatch {
+            padding: 5px 9px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            cursor: pointer;
+        }
+
+        .theme-swatch:hover {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+
+        .theme-swatch.active {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+
         .avatar-corner img {
             width: 100%;
             height: 100%;

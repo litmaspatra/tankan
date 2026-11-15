@@ -59,7 +59,7 @@ const path = require('node:path');
     assert.ok(status.includes('banked best 37.1 / 40 WPM'), 'status keeps the banked figure, got: ' + status);
 
     // Profile key popup: Last lesson, Smoothed and Banked are separate rows.
-    await page.click('button.nav-tab[data-target="profile"]');
+    await page.click('#avatar-corner'); await page.click('button.nav-tab[data-target="profile"]');
     await page.waitForTimeout(400);
     const row = page.locator('#profile-table-body tr[data-key="s"]');
     await row.hover();

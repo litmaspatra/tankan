@@ -70,7 +70,7 @@ function ratio(fg, bg) {
     assert.ok(st && ratio(st.color, st.background) >= 4.5, `resume button readable (ratio ${st && ratio(st.color, st.background).toFixed(2)})`);
 
     // Danger button (Reset Progress) on the profile tab.
-    await page.click('button.nav-tab[data-target="profile"]');
+    await page.click('#avatar-corner'); await page.click('button.nav-tab[data-target="profile"]');
     await page.waitForTimeout(400);
     st = await styles('#reset-settings-btn');
     assert.ok(st && ratio(st.color, st.background) >= 4.5, `danger button readable (ratio ${st && ratio(st.color, st.background).toFixed(2)})`);

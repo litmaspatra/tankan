@@ -54,7 +54,7 @@ const path = require('node:path');
     };
     await page.evaluate(s => { localStorage.clear(); localStorage.setItem('hikeybr_store_v3', JSON.stringify(s)); }, seed);
     await page.reload();
-    await page.click('.nav-tab[data-target="profile"]');
+    await page.click('#avatar-corner'); await page.click('.nav-tab[data-target="profile"]');
 
     const prof = await page.evaluate(() => ({
         allTiles: document.getElementById('prof-tiles-all').textContent,
@@ -96,7 +96,7 @@ const path = require('node:path');
     const oldSeed = { unlockedIndex: 3, highestUnlocked: 3, lessonHistory: lessons.slice(0, 5), accuracyStreak: 2 };
     await page.evaluate(s => { localStorage.clear(); localStorage.setItem('hikeybr_store_v3', JSON.stringify(s)); }, oldSeed);
     await page.reload();
-    await page.click('.nav-tab[data-target="profile"]');
+    await page.click('#avatar-corner'); await page.click('.nav-tab[data-target="profile"]');
     const mig = await page.evaluate(() => ({
         tiles: document.getElementById('prof-tiles-all').textContent,
         daily: HiKeybr.dailyStats,
@@ -110,7 +110,7 @@ const path = require('node:path');
     // 5. Empty profile gets honest empty states, not fake charts.
     await page.evaluate(() => localStorage.clear());
     await page.reload();
-    await page.click('.nav-tab[data-target="profile"]');
+    await page.click('#avatar-corner'); await page.click('.nav-tab[data-target="profile"]');
     const empty = await page.evaluate(() => ({
         speed: document.getElementById('chart-speed').textContent,
         cal: document.getElementById('chart-calendar').textContent
