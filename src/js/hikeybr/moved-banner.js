@@ -9,6 +9,10 @@
     var q = new URLSearchParams(location.search);
     var force = q.get('movedbanner') === '1'; // test hook for file:// and previews
     if (location.hostname !== OLD_HOST && !force) return;
+    // A confirmed transfer marks this origin (the transfer tab sets it only
+    // after tankan.in confirms the import landed). From then on, visiting the
+    // old address goes straight to the new one instead of showing the banner.
+    try { if (localStorage.getItem('tankan_transfer_done') === '1') { location.replace(NEW_URL); return; } } catch (_) {}
     try { if (sessionStorage.getItem('tankan_moved_dismissed') === '1') return; } catch (_) {}
 
     var css = document.createElement('style');

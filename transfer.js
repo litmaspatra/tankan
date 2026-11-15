@@ -40,47 +40,69 @@
     }
     show('Connected to tankan.in. Waiting for the go-ahead...');
 
-    var done = false;
+    var sent = false, applied = false, ackExpiry = null;
     var expiry = setTimeout(function () {
-        if (!done) show('The connection expired. Close this tab and try the button again.', 'err');
+        if (!sent) show('The connection expired. Close this tab and try the button again.', 'err');
     }, 60000);
 
     window.addEventListener('message', function (event) {
-        if (done) return;
-        // Request must come from the very window that opened us, from an
+        // Every message must come from the very window that opened us, from an
         // allowed destination origin, and carry our one-time nonce.
         if (event.source !== window.opener) return;
         if (ALLOWED_DESTINATIONS.indexOf(event.origin) === -1) return;
         var d = event.data || {};
-        if (d.kind !== 'tankan-transfer-send' || d.n !== nonce) return;
-        done = true;
-        clearTimeout(expiry);
+        if (d.n !== nonce) return;
 
-        var data = {}, count = 0;
-        for (var i = 0; i < localStorage.length; i++) {
-            var k = localStorage.key(i);
-            for (var p = 0; p < PREFIXES.length; p++) {
-                if (k.indexOf(PREFIXES[p]) === 0) { data[k] = localStorage.getItem(k); count++; break; }
+        if (!sent && d.kind === 'tankan-transfer-send') {
+            sent = true;
+            clearTimeout(expiry);
+
+            var data = {}, count = 0;
+            for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                for (var p = 0; p < PREFIXES.length; p++) {
+                    if (k.indexOf(PREFIXES[p]) === 0) { data[k] = localStorage.getItem(k); count++; break; }
+                }
             }
-        }
-        var target = event.origin; // reply only to the validated origin
-        if (!count) {
-            window.opener.postMessage({ kind: 'tankan-transfer-empty', n: nonce }, target);
-            show('No saved progress found on the old site in this browser.', 'err');
-            doneNoteEl.hidden = false;
-            setTimeout(function () { window.close(); }, 4000);
+            var target = event.origin; // reply only to the validated origin
+            if (!count) {
+                window.opener.postMessage({ kind: 'tankan-transfer-empty', n: nonce }, target);
+                show('No saved progress found on the old site in this browser.', 'err');
+                doneNoteEl.hidden = false;
+                setTimeout(function () { window.close(); }, 4000);
+                return;
+            }
+            var payload = {
+                app: 'tankan',
+                kind: 'tankan-progress-backup',
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                data: data
+            };
+            window.opener.postMessage({ kind: 'tankan-transfer-payload', n: nonce, payload: payload }, target);
+            show('Progress sent to tankan.in (' + count + ' saved entries). Waiting for tankan.in to finish...', 'ok');
+            // tankan.in confirms only after the import has actually landed
+            // there (including its replace confirmation). If the visitor
+            // cancels there instead, nothing is marked and the old site
+            // keeps offering the transfer.
+            ackExpiry = setTimeout(function () {
+                if (!applied) {
+                    show('tankan.in has not confirmed the transfer yet. If you cancelled the import there, close this tab - nothing was marked or changed here.', 'err');
+                    doneNoteEl.hidden = false;
+                }
+            }, 300000);
             return;
         }
-        var payload = {
-            app: 'tankan',
-            kind: 'tankan-progress-backup',
-            version: 1,
-            exportedAt: new Date().toISOString(),
-            data: data
-        };
-        window.opener.postMessage({ kind: 'tankan-transfer-payload', n: nonce, payload: payload }, target);
-        show('Progress sent to tankan.in (' + count + ' saved entries). Nothing was changed on the old site.', 'ok');
-        doneNoteEl.hidden = false;
-        setTimeout(function () { window.close(); }, 800);
+
+        if (sent && !applied && d.kind === 'tankan-transfer-applied') {
+            applied = true;
+            if (ackExpiry) clearTimeout(ackExpiry);
+            // The transfer is confirmed done: mark THIS origin so future
+            // visits to the old address go straight to tankan.in.
+            try { localStorage.setItem('tankan_transfer_done', '1'); } catch (_) {}
+            show('Transfer complete - your progress is on tankan.in. From now on the old address takes you straight there.', 'ok');
+            doneNoteEl.hidden = false;
+            setTimeout(function () { window.close(); }, 3000);
+        }
     });
 })();

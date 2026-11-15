@@ -29,6 +29,18 @@ const path = require('node:path');
     await page.goto(base + '?movedbanner=1'); await page.waitForTimeout(300);
     assert.equal(await page.locator('#moved-bar').count(), 0, 'stays hidden for the session');
     assert.equal(await page.evaluate(() => JSON.stringify(Object.entries(localStorage))), before, 'localStorage untouched');
+    // Confirmed-transfer marker: the old address goes straight to tankan.in;
+    // away from the old address the marker changes nothing.
+    await page.goto(base); await page.evaluate(() => localStorage.setItem('tankan_transfer_done', '1'));
+    await page.goto(base); await page.waitForTimeout(300);
+    assert.ok(!page.url().startsWith('https://tankan.in'), 'no redirect away from the old address');
+    await page.context().route('https://tankan.in/**', route => route.fulfill({ status: 200, contentType: 'text/html', body: '<html><title>tankan.in</title></html>' }));
+    await page.goto(base + '?movedbanner=1');
+    await page.waitForTimeout(500);
+    assert.equal(page.url(), 'https://tankan.in/', 'transferred visitor is redirected to tankan.in');
+    assert.equal(await page.locator('#moved-bar').count(), 0, 'no banner on the redirect path');
+    await page.context().unroute('https://tankan.in/**');
+    await page.evaluate(() => localStorage.removeItem('tankan_transfer_done')).catch(() => {});
     assert.deepEqual(errors, []);
     await browser.close();
     console.log('moved-banner: ok');

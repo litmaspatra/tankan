@@ -172,7 +172,7 @@
             });
             importBtn.addEventListener('click', () => startImport(codeIn.value));
 
-            const closeModal = () => { modal.classList.remove('open'); pendingBackup = null; };
+            const closeModal = () => { modal.classList.remove('open'); pendingBackup = null; bridgeAck = null; };
             cancelBtn.addEventListener('click', closeModal);
             modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
@@ -191,11 +191,18 @@
             // versioned backup envelope used by export/import.
             window.TANKAN_BACKUP = { collect: collectKeys, validate, apply: applyBackupData, buildPayload };
 
+            // Set only while a progress transfer from the old site awaits the
+            // replace confirmation. Calling it tells the old site's transfer
+            // tab that the import truly landed, so the old address can start
+            // redirecting. Cancelling the confirm never calls it.
+            let bridgeAck = null;
+
             confirmBtn.addEventListener('click', () => {
                 if (!pendingBackup) { closeModal(); return; }
                 try {
                     applyBackupData(pendingBackup);
                     modal.classList.remove('open');
+                    if (bridgeAck) { bridgeAck(); bridgeAck = null; }
                     location.reload();
                 } catch (_) {
                     modal.classList.remove('open');
@@ -245,7 +252,16 @@
                                     setStatus(bridgeStatus, 'The old site sent something unreadable. Nothing was changed.', false);
                                     return;
                                 }
-                                cleanup();
+                                // The popup stays open until the import has
+                                // actually landed here; only then is it told
+                                // the transfer succeeded. The no-answer timer
+                                // and message listener have done their job.
+                                if (timer) { clearTimeout(timer); timer = null; }
+                                window.removeEventListener('message', onMsg);
+                                const ack = () => {
+                                    try { if (!popup.closed) popup.postMessage({ kind: 'tankan-transfer-applied', n: nonce }, OLD_ORIGIN); } catch (_) {}
+                                    try { popup.close(); } catch (_) {}
+                                };
                                 let hasExisting = false;
                                 for (let i = 0; i < localStorage.length; i++) {
                                     const k = localStorage.key(i);
@@ -253,11 +269,13 @@
                                 }
                                 if (hasExisting) {
                                     // Replacing real progress always asks first.
+                                    bridgeAck = ack;
                                     startImport(JSON.stringify(d.payload));
                                     setStatus(bridgeStatus, 'Progress received - confirm the replacement to finish.', true);
                                 } else {
                                     try {
                                         applyBackupData(d.payload);
+                                        ack();
                                         setStatus(bridgeStatus, 'Progress brought over from the old site - reloading...', true);
                                         setTimeout(() => location.reload(), 900);
                                     } catch (_) {
