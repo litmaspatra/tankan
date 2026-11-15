@@ -3,7 +3,7 @@ import {validateDisplayName,validateLesson} from './model.mjs';
 const AGE=14*86400000;
 const HEADERS={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'};
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:HEADERS});
-const fields=row=>row?{score:row.score,wpm:row.wpm,accuracy:row.accuracy}:null;
+const fields=row=>row?{wpm:row.wpm,accuracy:row.accuracy,keysUsed:row.keys_used??row.distinct_keys}:null;
 const plain=x=>x&&typeof x==='object'&&!Array.isArray(x);
 export async function handle(request,env,{auth=authenticate,now=Date.now()}={}){
  if(!env?.COMMUNITY_DB)return json({error:'Community setup is not complete yet.'},503);
@@ -12,19 +12,19 @@ export async function handle(request,env,{auth=authenticate,now=Date.now()}={}){
   if(request.method==='GET'){
    const view=url.searchParams.get('view')||'rankings';
    if(view==='rankings'){
-    // Daily board: each person's best qualifying lesson of the day, from the
-    // retained lesson summaries (community_bests keeps the 14-day best for the
-    // profile view). The day boundary is fixed to India time (UTC+5:30, no
-    // DST) - the players are Hindi typists, mostly in India.
+    // Daily board: each person's best qualifying lesson of the day, ranked by
+    // speed (WPM), ties broken by accuracy and then by who got there first.
+    // The day boundary is fixed to India time (UTC+5:30, no DST) - the
+    // players are Hindi typists, mostly in India.
     const istStart=Math.floor((now+19800000)/86400000)*86400000-19800000;
-    const result=await db.prepare("SELECT a.display_name,a.public_id,MAX(l.score) AS score FROM community_lessons l JOIN community_accounts a ON a.uid=l.uid WHERE a.joined=1 AND l.review_status='accepted' AND l.completed_at>=? GROUP BY l.uid ORDER BY score DESC,MAX(l.completed_at) DESC,a.public_id ASC LIMIT 20").bind(istStart).all();
-    return json({day:'Asia/Kolkata',maxEntries:20,rows:result.results.map(row=>({displayName:row.display_name,id:row.public_id,score:row.score}))});
+    const result=await db.prepare("SELECT display_name,public_id,wpm,accuracy,keys_used FROM (SELECT a.display_name AS display_name,a.public_id AS public_id,l.wpm AS wpm,l.accuracy AS accuracy,l.distinct_keys AS keys_used,l.completed_at AS completed_at,ROW_NUMBER() OVER (PARTITION BY l.uid ORDER BY l.wpm DESC,l.accuracy DESC,l.completed_at DESC) AS rn FROM community_lessons l JOIN community_accounts a ON a.uid=l.uid WHERE a.joined=1 AND l.review_status='accepted' AND l.completed_at>=?) WHERE rn=1 ORDER BY wpm DESC,accuracy DESC,completed_at ASC,public_id ASC LIMIT 20").bind(istStart).all();
+    return json({day:'Asia/Kolkata',maxEntries:20,rows:result.results.map(row=>({displayName:row.display_name,id:row.public_id,wpm:row.wpm,accuracy:row.accuracy,keysUsed:row.keys_used}))});
    }
    if(view==='profile'){
     const id=url.searchParams.get('id');if(!/^[a-f0-9]{32}$/.test(id||''))return json({error:'Public profile not found.'},404);
     const account=await db.prepare('SELECT uid,display_name FROM community_accounts WHERE public_id=? AND joined=1').bind(id).first();
     if(!account)return json({error:'Public profile not found.'},404);
-    const best=await db.prepare('SELECT score,wpm,accuracy FROM community_bests WHERE uid=? AND completed_at>=?').bind(account.uid,cutoff).first();
+    const best=await db.prepare("SELECT wpm,accuracy,distinct_keys FROM community_lessons WHERE uid=? AND completed_at>=? AND review_status='accepted' ORDER BY wpm DESC,accuracy DESC,completed_at DESC LIMIT 1").bind(account.uid,cutoff).first();
     const count=await db.prepare("SELECT COUNT(*) AS n FROM community_lessons WHERE uid=? AND completed_at>=? AND review_status='accepted'").bind(account.uid,cutoff).first();
     return json({displayName:account.display_name,best:fields(best),sharedLessons:count.n});
    }
@@ -65,16 +65,15 @@ export async function handle(request,env,{auth=authenticate,now=Date.now()}={}){
   for(const value of body.lessons){
    const lesson=validateLesson(value);
    if(lesson.ts>now+60000)throw Error('Invalid saved lesson date.');
-   if(lesson.ts<cutoff||lesson.chars<50||lesson.distinctKeys<10){ineligible++;continue;}
+   // A qualifying lesson meets the app's own clean-lesson standard: 95%+
+   // accuracy, at least 50 correct input units and 10 different keys.
+   if(lesson.ts<cutoff||lesson.acc<95||lesson.chars<50||lesson.distinctKeys<10){ineligible++;continue;}
    const existing=await db.prepare('SELECT lesson_id FROM community_lessons WHERE uid=? AND lesson_id=?').bind(uid,lesson.id).first();
    if(!existing&&!lessons.some(l=>l.id===lesson.id))lessons.push(lesson);
   }
   const statements=[];
   for(const lesson of lessons){
    statements.push(db.prepare("INSERT OR IGNORE INTO community_lessons(uid,lesson_id,received_at,completed_at,score,wpm,accuracy,chars,distinct_keys,review_status,review_reason) VALUES(?,?,?,?,?,?,?,?,?,'accepted',NULL)").bind(uid,lesson.id,now,Math.min(now,lesson.ts),lesson.score,lesson.wpm,lesson.acc,lesson.chars,lesson.distinctKeys));
-   // Reads the stored row, so racing duplicates cannot substitute other
-   // totals for the already stored lesson. Batch is a D1 transaction.
-   statements.push(db.prepare("INSERT INTO community_bests(uid,lesson_id,completed_at,score,wpm,accuracy) SELECT uid,lesson_id,completed_at,score,wpm,accuracy FROM community_lessons WHERE uid=? AND lesson_id=? AND review_status='accepted' ON CONFLICT(uid) DO UPDATE SET lesson_id=excluded.lesson_id,completed_at=excluded.completed_at,score=excluded.score,wpm=excluded.wpm,accuracy=excluded.accuracy WHERE excluded.score>=community_bests.score OR community_bests.completed_at<?").bind(uid,lesson.id,cutoff));
   }
   // Active users have expired private summaries cleaned up. Rankings
   // are filtered on every read, so expiry needs no external paid scheduler.

@@ -31,7 +31,6 @@
   try{const data=await api(null,'?view=me');if(version!==authVersion)return;account=data.account;render();message(data.pending?`${data.pending} result(s) are waiting for review.`:'');}
   catch(e){if(version===authVersion)message(e.message);}
  }
- const score=value=>Number(value||0).toLocaleString();
  async function loadRankings(){
   const status=$('leaderboard-status');status.textContent='Loading scores…';
   try{
@@ -40,9 +39,12 @@
    data.rows.forEach((row,index)=>{const tr=document.createElement('tr');
     const rank=document.createElement('td');rank.textContent=String(index+1);
     const name=document.createElement('td'),button=document.createElement('button');button.className='community-name';button.textContent=row.displayName;button.addEventListener('click',()=>openProfile(row.id,row.displayName));name.append(button);
-    const points=document.createElement('td');points.textContent=score(row.score);tr.append(rank,name,points);list.append(tr);
+    const wpm=document.createElement('td');wpm.textContent=Number(row.wpm||0).toFixed(1);
+    const acc=document.createElement('td');acc.textContent=Number(row.accuracy||0).toFixed(1)+'%';
+    const keys=document.createElement('td');keys.textContent=String(row.keysUsed||0);
+    tr.append(rank,name,wpm,acc,keys);list.append(tr);
    });
-   status.textContent=data.rows.length?'Top '+data.rows.length+' scores today (India time).':'No shared scores yet today. The board starts fresh at midnight India time - sign in, choose a display name and join to take part.';
+   status.textContent=data.rows.length?'Top '+data.rows.length+' speeds today (India time).':'No qualifying lessons shared yet today. The board starts fresh at midnight India time - sign in, choose a display name and join to take part.';
   }catch(e){$('leaderboard-rows').replaceChildren();status.textContent=e.message;}
  }
  async function openProfile(id,name){
@@ -52,7 +54,7 @@
    const body=$('community-profile-body');
    const row=data.best;
    const title=document.createElement('h4');title.textContent='Best qualifying lesson - last 14 days';
-   const summary=document.createElement('p');summary.textContent=row?score(row.score)+` points · ${row.wpm.toFixed(1)} WPM · ${row.accuracy.toFixed(1)}% accuracy`:'No current qualifying score.';body.append(title,summary);
+   const summary=document.createElement('p');summary.textContent=row?`${row.wpm.toFixed(1)} WPM · ${row.accuracy.toFixed(1)}% accuracy · ${row.keysUsed} keys used`:'No current qualifying lesson.';body.append(title,summary);
    const count=document.createElement('p');count.textContent=data.sharedLessons+' qualifying shared lesson(s) in the last 14 days.';body.append(count);
   }catch(e){if(version===profileVersion)$('community-profile-body').textContent=e.message;}
  }
@@ -85,17 +87,17 @@
   try{
    // This is an explicit per-device upload, not an automatic sign-in effect.
    const stored=JSON.parse(localStorage.getItem('hikeybr_store_v3')||'{}');
-   const rows=(stored.lessonHistory||[]).filter(r=>r&&Number.isInteger(r.distinctKeys)&&r.distinctKeys>=10&&r.chars>=50&&r.ts>=Date.now()-14*86400000&&Number.isFinite(r.score)&&r.score>=0&&Number.isFinite(r.wpm)&&Number.isFinite(r.acc));
+   const rows=(stored.lessonHistory||[]).filter(r=>r&&Number.isInteger(r.distinctKeys)&&r.distinctKeys>=10&&r.chars>=50&&r.acc>=95&&r.ts>=Date.now()-14*86400000&&Number.isFinite(r.score)&&r.score>=0&&Number.isFinite(r.wpm)&&Number.isFinite(r.acc));
    const lessons=await Promise.all(rows.map(serialise));
    for(let start=0;start<lessons.length;start+=10){if(version!==authVersion)return;await api({action:'sync',lessons:lessons.slice(start,start+10)},'',owner);}
    if(version!==authVersion)return;
-   if(version!==authVersion)return;message(lessons.length?'Eligible saved results shared.':'No eligible saved results from the last 14 days. Older records without key-variety metadata stay in personal history.');await loadRankings();
+   if(version!==authVersion)return;message(lessons.length?'Eligible saved results shared.':'No eligible saved results from the last 14 days (95%+ accuracy, 50+ correct units, 10+ different keys). Older records without key-variety metadata stay in personal history.');await loadRankings();
   }catch(e){if(version===authVersion)message('Could not finish sharing: '+e.message+' Your private progress is unchanged. You can retry safely.');}finally{busy=false;}
  }
  $('community-share-history').addEventListener('click',shareHistory);
  window.addEventListener('tankan-lesson-completed',async event=>{
   if(!user||!account?.joined)return;const owner=user,version=authVersion;
-  try{const lesson=await serialise(event.detail);if(version!==authVersion)return;const result=await api({action:'sync',lessons:[lesson]},'',owner);if(version!==authVersion)return;message(result.pending?'Your new result is waiting for review.':result.ineligible?'Lesson saved privately. Ranking needs at least 50 correct input units and 10 different keys.':'Latest qualifying lesson shared.');}
+  try{const lesson=await serialise(event.detail);if(version!==authVersion)return;const result=await api({action:'sync',lessons:[lesson]},'',owner);if(version!==authVersion)return;message(result.pending?'Your new result is waiting for review.':result.ineligible?'Lesson saved privately. Ranking needs 95%+ accuracy, at least 50 correct input units and 10 different keys.':'Latest qualifying lesson shared.');}
   catch(e){if(version===authVersion)message('Latest lesson has not been shared. Your saved lesson is safe; use Share saved results to retry.');}
  });
  $('leaderboard-refresh').addEventListener('click',loadRankings);
