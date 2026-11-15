@@ -2114,3 +2114,5 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
 
 .community-consent[hidden]{display:none!important}
 @media(max-width:650px){header nav button.nav-tab{flex:1 1 0!important;min-width:0!important;font-size:.67rem!important;padding:8px 2px!important}header nav button .nav-icon{font-size:.75rem}}
+
+.mobile-notice{display:block;font-size:.85rem;line-height:1.45;color:var(--text);background:var(--accent-soft);border:1px solid var(--border);border-radius:6px;padding:8px 12px;width:100%}

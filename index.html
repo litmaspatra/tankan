@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>टंकण - Hindi Remington (GAIL) Adaptive Typing Tutor</title>
+    <meta name="description" content="Learn Hindi typing free on टंकण (tankan.in): Remington GAIL lessons that unlock key by key, with speed and accuracy measured in every lesson, and practice on real Hindi words.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,7 +12,7 @@
     <link rel="preload" href="./fonts/DevLys-040-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-021-Italic.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-070-Bold.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261115d">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261115e">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/css/keyboard.css?v=20261114a">
 </head>
@@ -143,12 +144,13 @@
                     <div class="ls-row"><label>Play sounds</label><span class="ls-radios" id="opt-sounds"><label><input type="radio" name="snd" value="none"> No sounds</label><label><input type="radio" name="snd" value="error"> Error sounds only</label><label><input type="radio" name="snd" value="key"> Key sounds only</label><label><input type="radio" name="snd" value="all"> All sounds</label></span></div>
                     <div class="ls-row"><label for="opt-volume">Volume</label><input type="range" id="opt-volume" min="5" max="100" step="5" value="70"><span class="ls-val" id="opt-volume-val">70%</span></div>
                     <div class="ls-row"><label for="opt-theme">Sound theme</label><select class="ctrl-select" id="opt-theme"><option value="mechanical">Mechanical keyboard</option><option value="typewriter">Typewriter</option><option value="soft">Soft</option><option value="click">Click</option><option value="retro">Retro beep</option><option value="thock">Thock</option></select></div>
+                    <p class="ls-note" id="save-backup-note">Your progress saves in this browser automatically. Sign in with Google and it also syncs to your account on its own. For a manual backup, open the top-corner menu &gt; Settings &gt; Export progress &gt; Download Backup File.</p>
                 </div>
             </details>
             <button type="button" id="focus-toggle" class="focus-toggle" title="Focus mode: show only the typing text" aria-label="Toggle focus mode">⛶</button>
             </div>
 
-<div class="practice-live"><span class="mobile-notice">Use a physical keyboard for Remington practice.</span></div>
+<div class="practice-live"><span class="mobile-notice">On a phone? Feel free to look around - typing practice itself needs a physical keyboard.</span></div>
             <div class="insight-row" style="font-size:.75rem;color:var(--text-dim)"><span>Lesson completion: <strong id="lesson-completion-pct">0%</strong></span><div class="goal-track"><div class="goal-fill" id="lesson-completion-fill"></div></div></div>
             <!-- Keybr Speed-Maintenance & Confidence Card -->
             <div class="target-card">
