@@ -156,7 +156,7 @@
                     return;
                 }
                 pendingBackup = obj;
-                modalText.textContent = `Backup from ${describeBackup(obj)}. This replaces the progress saved on this device - it cannot be undone.`;
+                modalText.textContent = `Backup from ${describeBackup(obj)}. This replaces the progress saved on this device - the replaced copy is kept on this device and can be restored from Settings.`;
                 modal.classList.add('open');
             };
 
@@ -183,7 +183,7 @@
                 try { stash = JSON.parse(localStorage.getItem('hikeybr_presync_backup') || 'null'); } catch (_) {}
                 if (!stash || !stash.data || !Object.keys(stash.data).length) { rollbackNote.hidden = true; rollbackBtn.hidden = true; return; }
                 const when = stash.savedAt ? new Date(stash.savedAt) : null;
-                rollbackNote.textContent = 'A copy replaced during sync or transfer is kept on this device' + (when && !isNaN(when) ? ' (from ' + when.toLocaleString() + ')' : '') + '.';
+                rollbackNote.textContent = 'A copy replaced during sync, transfer or import is kept on this device' + (when && !isNaN(when) ? ' (from ' + when.toLocaleString() + ')' : '') + '.';
                 rollbackNote.hidden = false;
                 rollbackBtn.hidden = false;
             };
@@ -196,7 +196,17 @@
             window.addEventListener('tankan-stash-updated', showRollback);
             showRollback();
 
-            const closeModal = () => { modal.classList.remove('open'); pendingBackup = null; bridgeAck = null; };
+            const closeModal = () => {
+                modal.classList.remove('open');
+                pendingBackup = null;
+                bridgeAck = null;
+                // A cancelled transfer must not leave the 'confirm to finish'
+                // instruction standing: there is nothing left to finish.
+                if (bridgePending) {
+                    bridgePending = false;
+                    setStatus(bridgeStatus, 'Transfer cancelled - nothing was changed. The old site keeps offering the transfer.', false);
+                }
+            };
             cancelBtn.addEventListener('click', closeModal);
             modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
@@ -220,17 +230,30 @@
             // tab that the import truly landed, so the old address can start
             // redirecting. Cancelling the confirm never calls it.
             let bridgeAck = null;
+            let bridgePending = false; // the confirm modal is showing a transfer payload
 
             confirmBtn.addEventListener('click', () => {
                 if (!pendingBackup) { closeModal(); return; }
                 try {
+                    // Stash what is about to be replaced (one slot, like sync
+                    // and automatic transfers) so every replace is undoable
+                    // from Settings.
+                    const prior = collectKeys();
                     applyBackupData(pendingBackup);
+                    if (Object.keys(prior).length) {
+                        try { localStorage.setItem('hikeybr_presync_backup', JSON.stringify({ savedAt: new Date().toISOString(), data: prior })); } catch (_) {}
+                    }
                     modal.classList.remove('open');
                     if (bridgeAck) { bridgeAck(); bridgeAck = null; }
+                    bridgePending = false;
                     location.reload();
                 } catch (_) {
                     modal.classList.remove('open');
                     pendingBackup = null;
+                    if (bridgePending) {
+                        bridgePending = false;
+                        setStatus(bridgeStatus, 'The transfer could not be completed - nothing was changed.', false);
+                    }
                     setStatus(importStatus, 'This device refused the import (storage full or blocked). Nothing was changed.', false);
                 }
             });
@@ -329,6 +352,7 @@
                                 if (hasExisting) {
                                     // Equally far or unreadable: the visitor chooses.
                                     bridgeAck = ack;
+                                    bridgePending = true;
                                     startImport(JSON.stringify(d.payload));
                                     setStatus(bridgeStatus, 'Progress received - confirm the replacement to finish.', true);
                                 } else {

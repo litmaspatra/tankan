@@ -195,6 +195,42 @@ const path = require('node:path');
     // driving the popup (a fresh goto would race it).
     await page.waitForTimeout(800);
 
+    // The confirmed replace stashed the replaced copy for rollback.
+    const stash6c = await page.evaluate(() => JSON.parse(localStorage.getItem('hikeybr_presync_backup') || 'null'));
+    assert.ok(stash6c && stash6c.data && JSON.parse(stash6c.data.hikeybr_store_v3).marker !== 'incoming', 'confirmed replace stashes the replaced copy');
+
+    // 6d. Cancelling the tie modal keeps both copies, marks nothing, stashes
+    //     nothing, and clears the 'confirm to finish' instruction.
+    await fresh(); await openSettings();
+    await page.evaluate(() => localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 6, highestUnlocked: 6, opts: {}, lessonHistory: [], marker: 'current' })));
+    const res6d = await page.evaluate(async () => {
+        const store = { unlockedIndex: 6, highestUnlocked: 6, opts: {}, lessonHistory: [], marker: 'incoming' };
+        const payload = { app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: new Date().toISOString(), data: { hikeybr_store_v3: JSON.stringify(store) } };
+        let nonce = null;
+        const realOpen = window.open.bind(window);
+        const fakePopup = realOpen('about:blank', '_blank', 'width=10,height=10');
+        const posted = [];
+        fakePopup.postMessage = (m, t) => { posted.push({ m, t }); };
+        window.open = url => { nonce = new URL(url).searchParams.get('n'); return fakePopup; };
+        document.getElementById('bridge-fetch-btn').click();
+        await new Promise(r => setTimeout(r, 150));
+        window.dispatchEvent(new MessageEvent('message', { data: { kind: 'tankan-transfer-ready', n: nonce }, source: fakePopup, origin: 'https://litmaspatra.github.io' }));
+        await new Promise(r => setTimeout(r, 100));
+        window.dispatchEvent(new MessageEvent('message', { data: { kind: 'tankan-transfer-payload', n: nonce, payload }, source: fakePopup, origin: 'https://litmaspatra.github.io' }));
+        await new Promise(r => setTimeout(r, 200));
+        if (!document.getElementById('import-modal').classList.contains('open')) return 'tie must ask';
+        document.getElementById('import-cancel-btn').click();
+        await new Promise(r => setTimeout(r, 100));
+        window.open = realOpen; // no reload follows a cancel - restore for later tests
+        if (JSON.parse(localStorage.getItem('hikeybr_store_v3')).marker !== 'current') return 'cancel changed the progress';
+        if (localStorage.getItem('hikeybr_presync_backup')) return 'cancel stashed a copy it did not replace';
+        if (posted.some(x => x.m.kind === 'tankan-transfer-applied')) return 'cancel confirmed the transfer';
+        const bs = document.getElementById('bridge-status').textContent;
+        if (!/cancel/i.test(bs)) return 'cancel must replace the confirm-to-finish instruction, got: ' + bs;
+        return 'ok';
+    });
+    assert.equal(res6d, 'ok', 'tie cancel keeps everything and says so: ' + res6d);
+
     // 7. Sender side: with a real opener + nonce it announces readiness, sends
     //    the saved entries on a validated request, and marks THIS origin only
     //    after the destination confirms the import landed.
