@@ -1,30 +1,50 @@
-// Header menu under the profile picture: Profile and Settings panels, the
-// public Tips and About pages, and a theme picker that mirrors the Settings
-// select exactly. The corner always renders (signed out included), so public
-// information and themes are reachable without an account.
+// Header menus: the profile-picture corner opens Profile, Settings and the
+// public Tips and About pages; a separate Theme button next to the sound
+// toggle opens a dropdown that mirrors the Settings select exactly. Both
+// corners always render (signed out included), so public information and
+// themes are reachable without an account.
 (function () {
     const $ = id => document.getElementById(id);
     const corner = $('avatar-corner');
     const menu = $('avatar-menu');
-    if (!corner || !menu) return; // not on this page
+    const themeBtn = $('theme-menu-btn');
+    const themeMenu = $('theme-menu');
 
-    const close = () => { menu.hidden = true; };
-    corner.addEventListener('click', e => {
-        e.stopPropagation();
-        menu.hidden = !menu.hidden;
-    });
+    const closeMenu = () => { if (menu) menu.hidden = true; };
+    const closeThemes = () => { if (themeMenu) themeMenu.hidden = true; };
+
+    if (corner && menu) {
+        corner.addEventListener('click', e => {
+            e.stopPropagation();
+            const open = menu.hidden;
+            closeThemes();
+            menu.hidden = !open;
+        });
+        // Panel entries close the menu after switching; the panel logic itself
+        // lives in ui.js against the same .nav-tab[data-target] contract.
+        menu.querySelectorAll('.nav-tab[data-target]').forEach(b => b.addEventListener('click', closeMenu));
+    }
+
+    if (themeBtn && themeMenu) {
+        themeBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            const open = themeMenu.hidden;
+            closeMenu();
+            themeMenu.hidden = !open;
+        });
+    }
+
     document.addEventListener('click', e => {
-        if (!menu.hidden && !menu.contains(e.target) && !corner.contains(e.target)) close();
+        if (menu && !menu.hidden && !menu.contains(e.target) && !(corner && corner.contains(e.target))) closeMenu();
+        if (themeMenu && !themeMenu.hidden && !themeMenu.contains(e.target) && !(themeBtn && themeBtn.contains(e.target))) closeThemes();
     });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
-    // Panel entries close the menu after switching; the panel logic itself
-    // lives in ui.js against the same .nav-tab[data-target] contract.
-    menu.querySelectorAll('.nav-tab[data-target]').forEach(b => b.addEventListener('click', close));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeMenu(); closeThemes(); } });
 
-    // Theme swatches: every pick goes through the Settings select's own
+    // Theme dropdown: every pick goes through the Settings select's own
     // change event, so persistence, the data-theme attribute and the
     // select's value can never drift apart. Names and values mirror the
-    // select's options.
+    // select's options. The list stays open so themes can be sampled
+    // back to back; the active theme is marked.
     const row = $('menu-theme-row');
     const select = $('theme-select');
     if (row && select) {
@@ -35,9 +55,8 @@
         Array.from(select.options).forEach(opt => {
             const b = document.createElement('button');
             b.type = 'button';
-            b.className = 'theme-swatch';
+            b.className = 'menu-item theme-choice';
             b.dataset.theme = opt.value;
-            b.title = opt.textContent;
             b.textContent = opt.textContent;
             b.addEventListener('click', () => {
                 select.value = opt.value;

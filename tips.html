@@ -1,27 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>7 tips to improve your Hindi typing - टंकण</title>
 <meta name="description" content="Seven practical habits for learning Hindi typing: accuracy first, fixed finger positions, daily practice, word patterns, punctuation and a weekly measure.">
-<style>
-  body { font-family: system-ui, -apple-system, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.65; color: #1f2430; }
-  h1 { font-size: 1.5rem; } h2 { font-size: 1.05rem; margin-top: 1.6em; }
-  a { color: #2563eb; } .muted { color: #666; font-size: 0.85rem; }
-  .lead { font-weight: 600; }
-  #lang-toggle { position: fixed; top: 12px; right: 12px; z-index: 50; padding: 6px 14px; font-size: 13px; font-family: inherit; border: 1px solid #c3b89f; border-radius: 999px; background: #fffdf7; color: #4a4232; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-  nav.site { font-size: 0.9rem; margin-bottom: 1.2em; }
-  footer { margin-top: 2.5em; font-size: 0.85rem; color: #666; border-top: 1px solid #e3ddd0; padding-top: 1em; }
-</style>
+<script src="guide-theme.js?v=20261115d"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="src/css/theme.css?v=20261115d">
+<link rel="stylesheet" href="src/css/guide.css?v=20261115d">
 </head>
 <body>
-<button id="lang-toggle" type="button" aria-label="हिंदी में पढ़ें"
+<div class="page">
+
+<div class="guide-top">
+<a class="btn-box back-btn" href="index.html" data-lang="en">&larr; Back to Tankan</a>
+<a class="btn-box back-btn" href="index.html" data-lang="hi" hidden>&larr; टंकण पर वापस</a>
+<button id="lang-toggle" class="btn-box" type="button" aria-label="हिंदी में पढ़ें"
   data-title-en="7 tips to improve your Hindi typing - टंकण" data-title-hi="हिंदी टाइपिंग सुधारने के 7 सूत्र - टंकण"
   data-desc-en="Seven practical habits for learning Hindi typing: accuracy first, fixed finger positions, daily practice, word patterns, punctuation and a weekly measure." data-desc-hi="हिंदी टाइपिंग सीखने की सात व्यावहारिक आदतें: शुद्धता, उंगलियों का स्थान, रोज़ अभ्यास, शब्द-पैटर्न, विराम-चिह्न और हफ़्तेवार नाप।">हिंदी</button>
+</div>
 
 <div id="content-en" lang="en">
-<nav class="site"><a href="index.html">&larr; टंकण</a></nav>
 <h1>7 tips to improve your Hindi typing</h1>
 <p>Speed in Hindi typing comes from habits, not just quick fingers. Whether you type for office work, studies, or your own writing, these seven habits work for every learner. Each tip comes with how to practise it, the mistake that usually gets in the way, and where टंकण helps build it.</p>
 
@@ -67,13 +69,12 @@
 <p><span class="lead">Common mistake:</span> Judging progress by feel. Feelings lag reality in both directions.</p>
 <p><span class="lead">In टंकण:</span> Every finished lesson reports its WPM and accuracy, so your weekly check is always one lesson away.</p>
 
-<footer>
+<footer class="guide-footer">
 Read next: <a href="about.html">About टंकण</a> &bull; <a href="index.html">Back to टंकण</a>
 </footer>
 </div>
 
 <div id="content-hi" lang="hi" hidden>
-<nav class="site"><a href="index.html">&larr; टंकण</a></nav>
 <h1>हिंदी टाइपिंग सुधारने के 7 सूत्र</h1>
 <p>हिंदी टाइपिंग में रफ़्तार सिर्फ़ उंगलियों की चाल से नहीं, सही आदतों से आती है। चाहे दफ़्तर का काम हो, पढ़ाई या अपना लेखन, ये सात आदतें हर सीखने वाले के काम आएंगी। हर सूत्र के साथ अभ्यास का तरीका, वो आम गलती जो रुकावट डालती है, और टंकण का कौन-सा हिस्सा वो आदत बनाता है, ये भी दिया है।</p>
 
@@ -119,11 +120,12 @@ Read next: <a href="about.html">About टंकण</a> &bull; <a href="index.htm
 <p><span class="lead">आम गलती:</span> प्रगति का अंदाज़ा महसूस से लगाना। महसूस असलियत से दोनों ओर पीछे रहता है।</p>
 <p><span class="lead">टंकण में:</span> हर पूरा पाठ अपनी WPM और शुद्धता बताता है, इसलिए हफ़्ते की जाँच हमेशा एक पाठ की दूरी पर है।</p>
 
-<footer>
+<footer class="guide-footer">
 आगे पढ़ें: <a href="about.html">टंकण के बारे में</a> &bull; <a href="index.html">टंकण पर वापस</a>
 </footer>
 </div>
 
+</div>
 <script src="guide-lang.js" defer></script>
 </body>
 </html>

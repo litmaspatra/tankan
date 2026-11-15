@@ -1,0 +1,95 @@
+/* ═══════════════════════════════════════════════════════════
+   STATIC GUIDE PAGES (about.html, tips.html, privacy.html, transfer.html)
+   Same container, margins, fonts and theme palettes as the practice page.
+   Requires src/css/theme.css (palettes) and guide-theme.js (data-theme).
+   ═══════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', 'Noto Sans Devanagari', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    line-height: 1.65;
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Same container as the practice page's <main> */
+.page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 24px 40px;
+}
+
+/* Top row: boxed Back button on the left, language toggle on the right,
+   both inside the page margins */
+.guide-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 1.4em;
+}
+
+.btn-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.btn-box:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    background: var(--surface-hover);
+}
+
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.05rem; margin-top: 1.6em; }
+a { color: var(--accent); }
+.muted { color: var(--text-dim); font-size: 0.85rem; }
+.lead { font-weight: 600; }
+
+.guide-footer {
+    margin-top: 2.5em;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border-subtle, var(--border));
+    padding-top: 1em;
+}
+
+/* Transfer bridge card (transfer.html) */
+.transfer-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.transfer-card {
+    max-width: 26rem;
+    margin: 1rem;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.transfer-card h1 { font-size: 1.05rem; margin: 0 0 .6rem; }
+.transfer-card p { font-size: .9rem; line-height: 1.5; margin: .4rem 0; }
+#transfer-status { font-weight: 600; }
+.ok { color: var(--correct); }
+.err { color: var(--error); }

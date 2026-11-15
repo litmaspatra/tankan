@@ -11,6 +11,9 @@
     var isHi = lang === 'hi';
     en.hidden = isHi;
     hi.hidden = !isHi;
+    document.querySelectorAll('[data-lang]').forEach(function (el) {
+      el.hidden = el.getAttribute('data-lang') !== lang;
+    });
     btn.textContent = isHi ? 'EN' : 'हिंदी';
     btn.setAttribute('aria-label', isHi ? 'Read in English' : 'हिंदी में पढ़ें');
     document.documentElement.lang = isHi ? 'hi' : 'en';

@@ -1,7 +1,8 @@
-// Header menu: Practice + Leaderboard are the only top-level tabs; the
-// profile-picture corner opens a menu with Profile, Settings, Tips, About and
-// a theme picker that mirrors the Settings select. Everything must work
-// signed out, on desktop and on a phone-width viewport.
+// Header menus: Practice + Leaderboard are the only top-level tabs; the
+// profile-picture corner opens a menu with Profile, Settings, Tips and About;
+// a separate Theme button beside the sound toggle opens a dropdown that
+// mirrors the Settings select. Everything must work signed out, on desktop
+// and on a phone-width viewport.
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const http = require('node:http');
@@ -39,23 +40,34 @@ const server = http.createServer((req, res) => {
     const topTabs = await page.evaluate(() => Array.from(document.querySelectorAll('nav > .nav-tab')).map(b => b.dataset.target));
     assert.deepStrictEqual(topTabs, ['practice', 'leaderboard'], 'top-level tabs are Practice + Leaderboard, got: ' + topTabs.join(','));
 
-    // 2. Signed out: the corner shows and opens the menu with every entry.
+    // 2. Signed out: the corner shows and opens the menu with every entry,
+    //    and the menu no longer carries the theme picker.
     assert.ok(await page.locator('#avatar-corner').isVisible(), 'corner visible signed out');
     await page.click('#avatar-corner');
     await page.waitForTimeout(150);
     assert.ok(await page.locator('#avatar-menu').isVisible(), 'menu opens');
     const entries = await page.evaluate(() => Array.from(document.querySelectorAll('#avatar-menu .menu-item')).map(el => el.textContent.trim()));
     ['Profile', 'Settings', 'Tips', 'About'].forEach(name => assert.ok(entries.some(e => e.includes(name)), 'menu has ' + name + ', got: ' + entries.join('|')));
-    assert.strictEqual(await page.locator('#menu-theme-row .theme-swatch').count(), 8, 'all eight themes pickable without Settings');
+    assert.strictEqual(await page.locator('#avatar-menu #menu-theme-row').count(), 0, 'theme picker is not inside the profile menu');
     const links = await page.evaluate(() => Array.from(document.querySelectorAll('#avatar-menu a.menu-item')).map(a => a.getAttribute('href')).sort());
     assert.deepStrictEqual(links, ['about.html', 'tips.html'], 'Tips and About link to the real pages');
 
-    // 3. Theme picking works signed out, syncs the Settings select, persists.
-    await page.click('.theme-swatch[data-theme="forest"]');
+    // 3. The Theme button sits beside the sound toggle and opens a dropdown
+    //    with all eight themes; picking one works signed out, syncs the
+    //    Settings select and persists.
+    assert.ok(await page.locator('#theme-menu-btn').isVisible(), 'theme button visible signed out');
+    const order = await page.evaluate(() => Array.from(document.querySelectorAll('.header-actions > *')).map(el => el.id || el.className));
+    assert.ok(order.indexOf('theme-wrap') > -1 && order.indexOf('theme-wrap') < order.indexOf('sound-toggle-btn'), 'theme button next to sound toggle, got: ' + order.join(','));
+    await page.click('#theme-menu-btn');
+    await page.waitForTimeout(150);
+    assert.ok(await page.locator('#theme-menu').isVisible(), 'theme dropdown opens');
+    assert.ok(await page.locator('#avatar-menu').isHidden(), 'opening themes closes the profile menu');
+    assert.strictEqual(await page.locator('#menu-theme-row .theme-choice').count(), 8, 'all eight themes pickable without Settings');
+    await page.click('.theme-choice[data-theme="forest"]');
     await page.waitForTimeout(200);
     assert.strictEqual(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'forest', 'theme applied');
     assert.strictEqual(await page.locator('#theme-select').inputValue(), 'forest', 'Settings select stays in sync');
-    assert.ok(await page.locator('.theme-swatch[data-theme="forest"]').evaluate(el => el.classList.contains('active')), 'active swatch marked');
+    assert.ok(await page.locator('.theme-choice[data-theme="forest"]').evaluate(el => el.classList.contains('active')), 'active theme marked');
     await page.reload();
     await page.waitForTimeout(400);
     assert.strictEqual(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'forest', 'theme persists across reload');
@@ -70,14 +82,19 @@ const server = http.createServer((req, res) => {
     assert.ok(await page.locator('#panel-profile').evaluate(el => el.classList.contains('active')), 'profile panel active');
     assert.ok(await page.locator('#google-signin-btn').isVisible(), 'sign-in reachable from the menu path');
 
-    // 5. Outside click closes the menu.
+    // 5. Outside click closes both menus.
     await page.click('#avatar-corner');
     await page.waitForTimeout(150);
     await page.mouse.click(60, 500);
     await page.waitForTimeout(100);
-    assert.ok(await page.locator('#avatar-menu').isHidden(), 'outside click closes the menu');
+    assert.ok(await page.locator('#avatar-menu').isHidden(), 'outside click closes the profile menu');
+    await page.click('#theme-menu-btn');
+    await page.waitForTimeout(150);
+    await page.mouse.click(60, 500);
+    await page.waitForTimeout(100);
+    assert.ok(await page.locator('#theme-menu').isHidden(), 'outside click closes the theme dropdown');
 
-    // 6. Phone width: the menu opens fully inside the viewport.
+    // 6. Phone width: both menus open fully inside the viewport.
     const mob = await browser.newPage({ viewport: { width: 390, height: 844 } });
     mob.on('pageerror', e => errors.push('mobile: ' + e.message));
     await mob.goto(base);
@@ -87,7 +104,12 @@ const server = http.createServer((req, res) => {
     assert.ok(await mob.locator('#avatar-menu').isVisible(), 'mobile: menu opens');
     const box = await mob.locator('#avatar-menu').boundingBox();
     assert.ok(box && box.x >= 0 && box.x + box.width <= 390, 'mobile: menu inside the viewport, got ' + JSON.stringify(box));
-    await mob.click('.theme-swatch[data-theme="sunshine"]');
+    await mob.click('#theme-menu-btn');
+    await mob.waitForTimeout(150);
+    assert.ok(await mob.locator('#theme-menu').isVisible(), 'mobile: theme dropdown opens');
+    const tbox = await mob.locator('#theme-menu').boundingBox();
+    assert.ok(tbox && tbox.x >= 0 && tbox.x + tbox.width <= 390, 'mobile: theme dropdown inside the viewport, got ' + JSON.stringify(tbox));
+    await mob.click('.theme-choice[data-theme="sunshine"]');
     await mob.waitForTimeout(200);
     assert.strictEqual(await mob.evaluate(() => document.documentElement.getAttribute('data-theme')), 'sunshine', 'mobile: theme picks');
 

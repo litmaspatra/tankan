@@ -11,7 +11,7 @@
     <link rel="preload" href="./fonts/DevLys-040-Bold.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-021-Italic.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="./fonts/KrutiDev-070-Bold.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261115c">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261115d">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/css/keyboard.css?v=20261114a">
 </head>
@@ -38,7 +38,7 @@
 
         <div class="header-actions">
             <div class="avatar-wrap">
-                <button class="avatar-corner" id="avatar-corner" title="Menu - profile, settings, tips, about, themes" aria-haspopup="true">
+                <button class="avatar-corner" id="avatar-corner" title="Menu - profile, settings, tips, about" aria-haspopup="true">
                     <img id="avatar-img" alt="Profile photo" referrerpolicy="no-referrer" hidden>
                     <span id="avatar-initial">ट</span>
                 </button>
@@ -55,10 +55,15 @@
                     <a class="menu-item" href="about.html">
                         <span class="nav-icon">ℹ️</span><span class="nav-label"> About</span>
                     </a>
-                    <div class="menu-themes">
-                        <div class="menu-themes-label">Theme</div>
-                        <div class="menu-themes-row" id="menu-theme-row"></div>
-                    </div>
+                </div>
+            </div>
+            <div class="theme-wrap">
+                <button class="btn-icon" id="theme-menu-btn" title="Theme" aria-haspopup="true" aria-label="Theme">
+                    <span class="theme-dot" aria-hidden="true"></span>
+                </button>
+                <div class="avatar-menu theme-menu" id="theme-menu" hidden>
+                    <div class="menu-themes-label">Theme</div>
+                    <div class="menu-theme-list" id="menu-theme-row"></div>
                 </div>
             </div>
             <button class="btn-icon active" id="sound-toggle-btn" title="Sound on / off" aria-label="Sound on / off">
@@ -650,7 +655,7 @@
         </div>
     </div>
     <script src="src/js/hikeybr/avatar.js?v=20261115c"></script>
-    <script src="src/js/hikeybr/nav-menu.js?v=20261115c"></script>
+    <script src="src/js/hikeybr/nav-menu.js?v=20261115d"></script>
     <script src="src/js/hikeybr/moved-banner.js?v=20261115c"></script>
     <script src="src/js/hikeybr/init.js?v=20261114a"></script>
 </body>

@@ -1928,10 +1928,24 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
             background: var(--accent-soft);
         }
 
-        .menu-themes {
-            border-top: 1px solid var(--border-subtle, var(--border));
-            margin-top: 4px;
-            padding: 8px 12px 10px;
+        /* Theme dropdown: its own button beside the sound toggle */
+        .theme-wrap {
+            position: relative;
+            display: flex;
+        }
+
+        /* Half accent / half text dot: renders on every device, no emoji font
+           needed, and it previews the current palette */
+        .theme-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50% !important;
+            background: linear-gradient(135deg, var(--accent) 50%, var(--text-dim) 50%);
+            display: inline-block;
+        }
+
+        .theme-menu {
+            min-width: 170px;
         }
 
         .menu-themes-label {
@@ -1940,35 +1954,27 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
             text-transform: uppercase;
             letter-spacing: 0.06em;
             color: var(--text-dim);
-            margin-bottom: 6px;
+            padding: 6px 12px 4px;
         }
 
-        .menu-themes-row {
+        .menu-theme-list {
             display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
+            flex-direction: column;
+            gap: 2px;
         }
 
-        .theme-swatch {
-            padding: 5px 9px;
-            font-size: 0.72rem;
-            font-weight: 600;
-            color: var(--text-dim);
-            background: transparent;
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            cursor: pointer;
+        .theme-choice {
+            justify-content: space-between;
         }
 
-        .theme-swatch:hover {
-            color: var(--text);
-            border-color: var(--accent);
-        }
-
-        .theme-swatch.active {
+        .theme-choice.active {
             color: var(--accent);
-            border-color: var(--accent);
             background: var(--accent-soft);
+        }
+
+        .theme-choice.active::after {
+            content: "✓";
+            font-weight: 700;
         }
 
         .avatar-corner img {
