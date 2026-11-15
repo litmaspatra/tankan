@@ -102,5 +102,8 @@
  });
  $('leaderboard-refresh').addEventListener('click',loadRankings);
  document.querySelector('[data-target="leaderboard"]').addEventListener('click',loadRankings);
+ // Deep link (index.html#leaderboard): the panel may already be active before
+ // this script wired the tab click, so load on arrival too.
+ if(document.getElementById('panel-leaderboard')?.classList.contains('active'))loadRankings();
  const ready=window.__tankanAuthClient;if(ready)ready.then(client=>client.onAuth(value=>{authVersion++;user=value;account=null;render();message('');if(value)loadAccount();})).catch(()=>{});
 })();
