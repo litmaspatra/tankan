@@ -16,7 +16,9 @@ window.TankanLegacyRenderer=(()=>{
    const prior=text.slice(Math.max(0,j-3),j);
    // Upper vowel marks and reph already occupy the normal bindu height.
    // Keep the original low placement for ordinary consonant+bindu pairs.
-   if(/[sShWZ]$/.test(prior)||/f[^\s]$/.test(prior)||/f[^\s]k$/.test(prior))map.set(j,'cv37');
+   if(/W$/.test(prior))map.set(j,'cv40');
+   else if(/[ShZ]$/.test(prior))map.set(j,'cv39');
+   else if(/s$/.test(prior)||/f[^\s]$/.test(prior)||/f[^\s]k$/.test(prior))map.set(j,'cv37');
   }
   // Keep all three input units visible as pieces of Mukta's native ञ्ज outline.
   for(const match of text.matchAll(/Hkk¥~tk/g)) {
