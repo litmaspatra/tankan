@@ -48,6 +48,8 @@
             }
             if (keyString !== expected) {
                 previousAttemptWrong=true;
+                missedPositions.add(cursorIndex);
+                updateDisplay();
                 sound.error();
                 sessionErrors++;
                 totalErrorsCount++;

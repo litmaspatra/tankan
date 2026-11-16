@@ -109,7 +109,7 @@
             else if (e.code === 'Minus') pressed = (e.shiftKey||e.key==='_') ? '_' : '-';
 
             const expectedByte=targetKrutiText[cursorIndex];
-            const alias=ALT_CODES_CATALOG.find(x=>unicodeToKrutiDev(x.glyph)===expectedByte&&x.gail.length>1);
+            const alias=ALT_CODES_CATALOG.find(x=>unicodeToKrutiDev(x.glyph,{noAlt:false})===expectedByte&&x.gail.length>1);
             if(alias&&(practiceAlias||pressed===alias.gail[0])){
                 e.preventDefault();practiceAlias+=pressed;
                 if(practiceAlias===alias.gail){practiceAlias='';handleKeystroke(expectedByte);}
@@ -139,7 +139,7 @@
                 // कर्त्तव्य's dedicated त्त् target uses one Alt+0217 byte.
                 // Keep existing Alt aliases unchanged for all other targets.
                 const krutiSeq = code === '0217' && targetKrutiText[cursorIndex] === 'Ù'
-                    ? 'Ù' : unicodeToKrutiDev(char);
+                    ? 'Ù' : unicodeToKrutiDev(char,{noAlt:false});
                 // One Alt-code glyph is ONE input unit (see Settings > How
                 // measurements work). Run each expected byte through the
                 // normal path so the cursor, error blocking, display and
@@ -312,6 +312,12 @@
         $id('opt-punct').oninput=e=>{opts.punct=parseInt(e.target.value,10);$id('opt-punct-val').textContent=opts.punct+'%';};
         $id('opt-punct').onchange=()=>{applyOpts(true);refocus();};
         ['opt-removepunct','opt-removepunct2'].forEach(id=>$id(id).onchange=e=>{opts.removePunct=e.target.checked;applyOpts(true);});
+        $id('opt-no-alt').onchange=e=>{
+            opts.noAltCodes=e.target.checked;
+            encodedWordBank=null;eligibleWordCache.clear();
+            Object.keys(bookWordCache).forEach(k=>delete bookWordCache[k]);
+            saveStorage();syncSettingsUI();regenerateLesson({keepText:true});refocus();
+        };
         $id('opt-stop').onchange=e=>{opts.stopOnError=e.target.checked;applyOpts(false);};
         $id('opt-skip').onchange=e=>{opts.spaceSkips=e.target.checked;applyOpts(false);};
         $id('opt-cursor').onchange=e=>{opts.cursorHighlight=e.target.checked;applyOpts(false);};

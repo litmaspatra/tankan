@@ -2,7 +2,16 @@
 
         // 4.5 UNICODE TO KRUTIDEV ENGINE & HINT SYSTEM
         // ─────────────────────────────────────────────────────────────
-        function unicodeToKrutiDev(text) {
+        function approximateAltBytes(text) {
+            // Optional practice substitutions, not equivalent Unicode spellings.
+            // Keep explicit user's sequences separate from normal-mode mapping.
+            return text.replace(/Ùk/g, 'Rr').replace(/[¡ÅØÝë¶¥·ª«Ù]/g, ch => ({
+                '¡':'Wa', 'Å':'m', 'Ø':'dz', 'Ý':'Qz', 'ë':'gz', '¶':'Q~',
+                '¥':'u', '·':'v', 'ª':'z', '«':'=~', 'Ù':'RR'
+            })[ch]);
+        }
+
+        function unicodeToKrutiDev(text, {noAlt=opts.noAltCodes}={}) {
             let s = text;
 
             // Nukta + halant conjuncts (ज़् etc.) have no KrutiDev
@@ -131,13 +140,13 @@
                 s = s.split(k).join(v);
             }
 
-            return s;
+            return noAlt ? approximateAltBytes(s) : s;
         }
 
         // Reverse lookup for Alt-byte hint system (Bug 1c)
         const KRUTI_BYTE_HINTS = {};
         for (const [code, glyph] of Object.entries(KRUTIDEV_ALT_CODES)) {
-            const seq = unicodeToKrutiDev(glyph);
+            const seq = unicodeToKrutiDev(glyph, {noAlt:false});
             if (seq.length === 1 && seq.charCodeAt(0) >= 128) {
                 KRUTI_BYTE_HINTS[seq] = { glyph, code };
             }

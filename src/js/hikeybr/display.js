@@ -2,12 +2,12 @@
 
         // 9. DISPLAY & CURSOR UPDATER (KRUTIDEV 010 ENGINE)
         // ─────────────────────────────────────────────────────────────
-        const rakarPrototypeActive=()=>window.TankanLegacyRenderer.enabled(displayFont);
+        const rakarPrototypeActive=()=>FONT_REGISTRY[displayFont]?.encoding!=='unicode';
         function renderLessonFont() {
             const font=FONT_REGISTRY[displayFont]||FONT_REGISTRY.krutidev;
-            el.textStreamContainer.style.fontFamily=rakarPrototypeActive()?"'TankanRemington'":`'${font.family}', 'Noto Sans Devanagari', sans-serif`;
+            el.textStreamContainer.style.fontFamily=`'${font.family}', 'Noto Sans Devanagari', sans-serif`;
             if(font.encoding!=='unicode'){
-                window.TankanLegacyRenderer.stream([el.textCorrect,el.textCurrent,el.textRemaining],targetKrutiText,cursorIndex,displayFont);return;
+                window.TankanLegacyRenderer.stream([el.textCorrect,el.textCurrent,el.textRemaining],targetKrutiText,cursorIndex,displayFont,missedPositions);return;
             }
             // Split at grapheme-cluster boundaries only: Indic shaping never crosses
             // a cluster, so the exact cluster being typed (base + its matra) is
@@ -89,7 +89,7 @@
                 const altCode = GLYPH_TO_ALT_CODE[hint.hindiChar];
                 if (altCode) {
                     const catalogRow = ALT_CODES_CATALOG.find(x => x.glyph === hint.hindiChar);
-                    el.liveHintDetail.textContent = (hint.detail ? '(' + hint.detail + ') ' : '') + '• Alt + ' + altCode + ' on Numpad' + (catalogRow ? ' • ' + catalogRow.gail : '');
+                    el.liveHintDetail.textContent = (hint.detail ? '(' + hint.detail + ') ' : '') + '• Alt + ' + altCode + ' on Numpad' + (catalogRow?.gail ? ' • ' + catalogRow.gail : '');
                 }
             } else {
                 el.liveHintKey.textContent = '✓';
@@ -138,12 +138,13 @@
             }
         }
 
-        function regenerateLesson() {
+        function regenerateLesson({keepText=false}={}) {
+            missedPositions = new Set();
             lessonCompleted = false;
             pausedAt=null;pausedTotal=0;lessonEndedAt=null;
             pendingUnlockIndex = null;
             lessonKeyTimes = {}; measurementEvents=[]; previousAttemptWrong=false; lessonActiveSeconds = 0; activityAt = null;
-            currentLessonText = generateLessonText();
+            if(!keepText)currentLessonText = generateLessonText();
             targetKrutiText = unicodeToKrutiDev(currentLessonText);
             cursorIndex = 0;
             rawKeys = [];practiceAlias='';

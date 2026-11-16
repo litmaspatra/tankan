@@ -2144,3 +2144,7 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
 
 /* A small extra gap between words, without spacing apart conjunct bytes. */
 .text-stream-container { word-spacing: 0.09em; }
+
+/* Keep missed positions red until the lesson is restarted. */
+.text-stream-container .typing-error { color: var(--error) !important; }
+.text-current .typing-error { background-color: var(--error-bg); }

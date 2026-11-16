@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261116-fonts-restored">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261116-input4">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/css/keyboard.css?v=20261114a">
 
@@ -131,6 +131,8 @@
                     <p class="ls-note" id="text-source-note"></p>
 
                     <h4>Typing options</h4>
+                    <label class="ls-check"><input type="checkbox" id="opt-no-alt"> No Alt codes (approximate forms)</label>
+                    <p class="ls-note" id="no-alt-note">Uses regular keys in place of supported Alt-code letters. ऊ becomes उ; ञ becomes न; ऽ becomes अ. Source text is unchanged. Switching restarts this lesson.</p>
                     <label class="ls-check"><input type="checkbox" id="opt-stop"> Stop cursor on error</label>
                     <label class="ls-check"><input type="checkbox" id="opt-skip"> Space skips words</label>
                     <label class="ls-check"><input type="checkbox" id="opt-cursor"> Highlight the current character (cursor)</label>
@@ -624,22 +626,22 @@
         <p>"Best" is your highest lesson score. Lesson length and key variety affect the score, so it is not a like-for-like speed rating. It does not unlock keys.</p>
         <button type="button" id="score-help-close">Got it</button>
     </dialog>
-    <script src="data/books/nirmala.js?v=20261114a"></script>
+    <script src="data/books/nirmala.js?v=20261116-input4"></script>
     <script src="data/books/godan.js?v=20261114a"></script>
     <script src="books.js?v=20261116-font3"></script>
     <script src="data/essays.js?v=20261114a"></script>
-    <script src="src/js/hikeybr/progression.js?v=20261114a"></script>
-    <script src="src/js/hikeybr/state.js?v=20261116-fonts-restored"></script>
+    <script src="src/js/hikeybr/progression.js?v=20261116-input4"></script>
+    <script src="src/js/hikeybr/state.js?v=20261116-input4"></script>
     <script src="src/js/hikeybr/audio.js?v=20261114a"></script>
     <script src="src/js/hikeybr/storage.js?v=20261116-fonts-restored"></script>
-    <script src="src/js/hikeybr/engine.js?v=20261116-font3"></script>
+    <script src="src/js/hikeybr/engine.js?v=20261116-input4"></script>
     <script src="src/js/hikeybr/keyboard.js?v=20261114a"></script>
     <script src="src/js/hikeybr/adaptive.js?v=20261114a"></script>
-    <script src="src/js/hikeybr/lessons.js?v=20261116-font3"></script>
-    <script src="src/js/shared/legacy-renderer.js?v=20261116-fonts-restored"></script>
-    <script src="src/js/hikeybr/display.js?v=20261116-font3"></script>
-    <script src="src/js/hikeybr/input.js?v=20261114a"></script>
-    <script src="src/js/hikeybr/ui.js?v=20261116-fonts-restored"></script>
+    <script src="src/js/hikeybr/lessons.js?v=20261116-input4"></script>
+    <script src="src/js/shared/legacy-renderer.js?v=20261116-input4"></script>
+    <script src="src/js/hikeybr/display.js?v=20261116-input4"></script>
+    <script src="src/js/hikeybr/input.js?v=20261116-input4"></script>
+    <script src="src/js/hikeybr/ui.js?v=20261116-input4"></script>
     <script src="src/js/hikeybr/backup.js?v=20261115c"></script>
     <script src="src/js/hikeybr/auth.js?v=20261114a"></script>
     <script src="src/js/hikeybr/sync.js?v=20261115b"></script>

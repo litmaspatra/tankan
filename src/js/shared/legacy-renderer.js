@@ -26,18 +26,17 @@ window.TankanLegacyRenderer=(()=>{
   }
   return map;
  }
- function glyph(text,index,map){const feature=map.get(index);if(!feature)return document.createTextNode(text[index]);const node=document.createElement('span');node.textContent=text[index];node.style.fontFeatureSettings='"'+feature+'" 1';return node;}
- function stream(nodes,text,cursor,key){
-  if(!enabled(key)){states.delete(nodes[0]);return false;}
+ function glyph(text,index,map,errors){const feature=map.get(index),error=errors?.has(index);if(!feature&&!error)return document.createTextNode(text[index]);const node=document.createElement('span');node.textContent=text[index];if(feature)node.style.fontFeatureSettings='"'+feature+'" 1';if(error)node.className='typing-error';return node;}
+ function stream(nodes,text,cursor,key,errors){
   const state=states.get(nodes[0]);
-  if(state?.text===text){
+  if(state?.text===text&&state.key===key&&state.errors===errors&&state.errorCount===(errors?.size||0)){
    if(cursor===state.cursor)return true;
    if(cursor===state.cursor+1){if(nodes[1].firstChild)nodes[0].append(nodes[1].firstChild);if(nodes[2].firstChild)nodes[1].append(nodes[2].firstChild);state.cursor=cursor;return true;}
    if(cursor===state.cursor-1){if(nodes[1].firstChild)nodes[2].prepend(nodes[1].firstChild);if(nodes[0].lastChild)nodes[1].append(nodes[0].lastChild);state.cursor=cursor;return true;}
   }
-  const map=features(text),frags=nodes.map(()=>document.createDocumentFragment());
-  for(let j=0;j<text.length;j++)frags[j<cursor?0:j===cursor?1:2].append(glyph(text,j,map));
-  nodes.forEach((node,i)=>node.replaceChildren(frags[i]));states.set(nodes[0],{text,cursor});return true;
+  const map=enabled(key)?features(text):new Map(),frags=nodes.map(()=>document.createDocumentFragment());
+  for(let j=0;j<text.length;j++)frags[j<cursor?0:j===cursor?1:2].append(glyph(text,j,map,errors));
+  nodes.forEach((node,i)=>node.replaceChildren(frags[i]));states.set(nodes[0],{text,cursor,key,errors,errorCount:errors?.size||0});return true;
  }
  function partial(node,text,end,key){if(!enabled(key))return false;const map=features(text),frag=document.createDocumentFragment();for(let j=0;j<end;j++)frag.append(glyph(text,j,map));node.replaceChildren(frag);return true;}
  let readiness;

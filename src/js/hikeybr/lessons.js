@@ -12,7 +12,7 @@
         }
         // Paragraphs of typable words (Unicode) for a book, honoring "remove punctuation".
         function bookParagraphs(book){
-            const key=book.id+(opts.removePunct?':np':':p')+(book.id==='custom'?':'+opts.customText.length:'');
+            const key=book.id+(opts.noAltCodes?':noalt':':alt')+(opts.removePunct?':np':':p')+(book.id==='custom'?':'+opts.customText.length:'');
             if(bookWordCache[key])return bookWordCache[key];
             const out=[];
             for(const line of book.lines){
@@ -106,6 +106,8 @@
             $('opt-repeat').value=opts.repeat;$('opt-repeat-val').textContent=opts.repeat;
             $('opt-punct').value=opts.punct;$('opt-punct-val').textContent=opts.punct+'%';
             $('opt-removepunct').checked=$('opt-removepunct2').checked=!!opts.removePunct;
+            $('opt-no-alt').checked=!!opts.noAltCodes;
+            $('no-alt-note').hidden=!opts.noAltCodes;
             $('opt-stop').checked=!!opts.stopOnError;$('opt-skip').checked=!!opts.spaceSkips;
             $('opt-cursor').checked=opts.cursorHighlight!==false;
             const osw=$('opt-slow-words');if(osw){osw.checked=!!opts.slowWords;const sc=$('slow-words-count');if(sc)sc.textContent=slowOfficialPool().length;}

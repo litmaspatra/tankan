@@ -235,8 +235,8 @@
             { glyph: 'क़', code: '0209', gail: 'd+',   desc: 'Ka + nukta',         sample: 'क़दम, क़ानून' },
             { glyph: 'र्', code: '0184', gail: 'Z',    desc: 'Reph (typed AFTER consonant)', sample: 'दर्द, कर्म' },
             { glyph: 'झ', code: '0180', gail: '>',     desc: 'Jha (Shift + .)',    sample: 'झरना, झील' },
-            { glyph: 'ऊ', code: '0197', gail: 'mw',    desc: 'Badi Oo vowel',      sample: 'ऊन, ऊँट' },
-            { glyph: 'ँ', code: '0161', gail: 'A',     desc: 'Chandrabindu (Shift + A)', sample: 'चाँद, माँ' },
+            { glyph: 'ऊ', code: '0197', gail: '',    desc: 'Badi Oo vowel',      sample: 'ऊन, ऊँट' },
+            { glyph: 'ँ', code: '0161', gail: '',      desc: 'Chandrabindu (Alt code)', sample: 'चाँद, माँ' },
             { glyph: 'फ्', code: '0182', gail: 'Q~',   desc: 'Half-Pha',           sample: 'half-फ forms' },
             { glyph: 'ञ', code: '0165', gail: '',      desc: 'Nya consonant (Alt only)', sample: 'पाञ्चाल, कुञ्ज' },
             { glyph: 'ऽ', code: '0183', gail: '',      desc: 'Avagraha (Alt only)', sample: 'सोऽहम्' }

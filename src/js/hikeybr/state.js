@@ -14,11 +14,12 @@
         let targetKeyBuffer = []; // Rolling sliding window of recent hits on target key
         let targetSpeedGoal = 25; // WPM required to advance
         let textSource='words', bookPos={};
-        const DEFAULT_OPTS={strict:false,repeat:1,punct:0,removePunct:false,stopOnError:true,cursorHighlight:true,spaceSkips:false,soundMode:'all',volume:70,soundTheme:'mechanical',lastBook:'',lastEssay:'',customText:'',textSize:32,kbScale:1,slowWords:false};
+        const DEFAULT_OPTS={strict:false,repeat:1,punct:0,removePunct:false,stopOnError:true,cursorHighlight:true,spaceSkips:false,noAltCodes:false,soundMode:'all',volume:70,soundTheme:'mechanical',lastBook:'',lastEssay:'',customText:'',textSize:32,kbScale:1,slowWords:false};
         let opts=Object.assign({},DEFAULT_OPTS);
         let currentLessonText = ''; // Continuous string of ~25 words
         let targetKrutiText = ''; // Keystroke sequence in KrutiDev 010 mapping
         let cursorIndex = 0; // Current typing position in targetKrutiText
+        let missedPositions = new Set();
         let rawKeys = []; // Array of physical keys typed for current lesson
         let lastKeystrokeTime = null;
         // Only actual, currently-down Shift presses since the previous text
