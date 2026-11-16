@@ -24,7 +24,11 @@
                     if(/[\u0900-\u097f]/.test(seq)||!seq.length)continue;
                     ws.push(w);
                 }
-                if(ws.length)out.push(ws);
+                if(ws.length){
+                    // Keep source endings even when punctuation is hidden in practice.
+                    ws.endsSentence = /[।॥.!?][\s"'”’»\)\]]*$/.test(line.trim());
+                    out.push(ws);
+                }
             }
             return bookWordCache[key]=out;
         }
@@ -38,10 +42,16 @@
             if(!paras.length)return '';
             let pos=Number.isInteger(bookPos[book.id])?((bookPos[book.id]%paras.length)+paras.length)%paras.length:0;
             const out=[];let n=0,used=0;
-            while(out.length<count&&used<paras.length){
-                out.push(...paras[(pos+n)%paras.length]);n++;used++;
+            // Whole paragraphs are the resume unit. Never truncate one and then
+            // advance past its unseen tail. If a source line is incomplete,
+            // include the following line through a complete sentence ending.
+            const continuous = book.id !== 'custom';
+            let ended = false;
+            while((out.length<count||(continuous&&!ended))&&used<(continuous?paras.length-pos:paras.length)){
+                const paragraph=paras[(pos+n)%paras.length];
+                out.push(...paragraph);ended=paragraph.endsSentence;n++;used++;
             }
-            if(out.length>count*2)out.length=count*2;
+            if(!continuous&&out.length>count*2)out.length=count*2;
             bookPos[book.id]=(pos+n)%paras.length;
             lastLessonParaStart=pos;
             const st=document.getElementById('word-pool-status');

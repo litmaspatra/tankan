@@ -11,6 +11,17 @@ window.TankanLegacyRenderer=(()=>{
    const raw=variants[text.slice(end-2,end)]?text.slice(end-2,end):text[end-1],feature=variants[raw];
    if(feature)for(let k=end-raw.length;k<=j;k++)map.set(k,feature);
   }
+  for(let j=0;j<text.length;j++){
+   if(text[j]!=='a')continue;
+   const prior=text.slice(Math.max(0,j-3),j);
+   // Upper vowel marks and reph already occupy the normal bindu height.
+   // Keep the original low placement for ordinary consonant+bindu pairs.
+   if(/[sShWZ]$/.test(prior)||/f[^\s]$/.test(prior)||/f[^\s]k$/.test(prior))map.set(j,'cv37');
+  }
+  // Keep all three input units visible as pieces of Mukta's native ञ्ज outline.
+  for(const match of text.matchAll(/Hkk¥~tk/g)) {
+   for(let j=match.index+3;j<=match.index+5;j++)map.set(j,'cv38');
+  }
   return map;
  }
  function glyph(text,index,map){const feature=map.get(index);if(!feature)return document.createTextNode(text[index]);const node=document.createElement('span');node.textContent=text[index];node.style.fontFeatureSettings='"'+feature+'" 1';return node;}

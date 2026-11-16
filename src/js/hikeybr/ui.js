@@ -136,7 +136,10 @@
 
             const char = KRUTIDEV_ALT_CODES[code];
             if (char) {
-                const krutiSeq = unicodeToKrutiDev(char);
+                // कर्त्तव्य's dedicated त्त् target uses one Alt+0217 byte.
+                // Keep existing Alt aliases unchanged for all other targets.
+                const krutiSeq = code === '0217' && targetKrutiText[cursorIndex] === 'Ù'
+                    ? 'Ù' : unicodeToKrutiDev(char);
                 // One Alt-code glyph is ONE input unit (see Settings > How
                 // measurements work). Run each expected byte through the
                 // normal path so the cursor, error blocking, display and

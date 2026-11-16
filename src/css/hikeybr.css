@@ -2098,3 +2098,6 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
     height: 4.9em !important;
     flex: 0 0 auto;
 }
+
+/* A small extra gap between words, without spacing apart conjunct bytes. */
+.text-stream-container { word-spacing: 0.09em; }

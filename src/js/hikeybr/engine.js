@@ -30,6 +30,10 @@
             };
             s = s.replace(/[,\.?;:!()\[\]{}\-–—…॰॥"'“”‘’]/g, ch => PUNCT_TO_KRUTI[ch] || '');
 
+            // Preserve this reported source word and its Alt+0217 त्त conjunct.
+            // Apply after punctuation conversion, before generic reph movement.
+            s = s.replace(/(?<![\u0900-\u097F])कर्त्तव्य(?![\u0900-\u097F])/g, 'dÙkZO;');
+
             // 1. Reph reordering: र् + consonant (+ matras) -> consonant (+ matras) + Z
             s = s.replace(/\u0930\u094D([\u0915-\u0939](\u093E|\u093F|\u0940|\u0941|\u0942|\u0947|\u0948|\u094B|\u094C|\u0902)?)/g, '$1Z');
 
@@ -214,6 +218,8 @@
         };
 
         function getKrutiKeystrokeHint(expected, prev) {
+            // This reported word uses the dedicated त्त् byte, not the R,r alias.
+            if(expected === 'Ù') return {physicalKey:null,keyLabel:'Alt + 0217',hindiChar:'त्त्',detail:'Hold Alt, type 0217 on the numpad, release Alt',isShifted:false};
             // Check Alt-byte hint first (Bug 1c)
             if (KRUTI_BYTE_HINTS[expected]) {
                 const { glyph, code } = KRUTI_BYTE_HINTS[expected];
