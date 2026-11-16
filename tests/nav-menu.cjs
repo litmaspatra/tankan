@@ -80,6 +80,14 @@ const server = http.createServer((req, res) => {
     await page.waitForTimeout(400);
     assert.strictEqual(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'forest', 'theme persists across reload');
 
+    await page.click('#theme-menu-btn');
+    const themeLines = await page.locator('.theme-choice').evaluateAll(items => items.map(item => {
+        const range = document.createRange(); range.selectNodeContents(item);
+        return { lines: range.getClientRects().length, overflow: item.scrollWidth > item.clientWidth };
+    }));
+    assert.ok(themeLines.every(row => row.lines === 1 && !row.overflow), 'theme names stay on one line with room for selection check');
+    await page.click('#theme-menu-btn');
+
     // 4. Profile entry switches panels, closes the menu, and the sign-in
     //    affordance is right there for a signed-out visitor.
     await page.click('#avatar-corner');

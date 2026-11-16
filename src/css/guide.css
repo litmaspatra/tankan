@@ -285,8 +285,7 @@ nav {
 .avatar-menu[hidden] { display: none; }
 
 .avatar-menu .menu-item {
-    display: grid;
-            grid-template-columns: 20px minmax(0, 1fr);
+    display: flex;
     align-items: center;
     gap: 8px;
     width: 100%;
@@ -422,3 +421,8 @@ header { height: 44px; }
 /* Emoji glyphs have different natural widths: reserve the same icon column. */
 #avatar-menu .menu-item .nav-icon { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; line-height: 1; }
 #avatar-menu .menu-item .nav-label { display: block; min-width: 0; }
+
+/* Only the profile menu needs icon/label columns; themes are a single label. */
+#avatar-menu .menu-item { display: grid; grid-template-columns: 20px minmax(0, 1fr); }
+.theme-menu .theme-choice { display: flex; flex-wrap: nowrap; white-space: nowrap; gap: 12px; }
+.theme-choice.active::after { flex: 0 0 auto; }
