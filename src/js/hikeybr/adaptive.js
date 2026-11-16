@@ -394,18 +394,17 @@
         function updateInsights() {
             const put=(id,text)=>{const n=document.getElementById(id);if(n)n.textContent=text;};
             const last=lessonHistory.at(-1);
-            const elapsed=sessionStartTime?lessonElapsed()/60000:0;
-            // A brand-new session has too little data for a meaningful speed:
-            // a few fast keystrokes inside the first seconds otherwise flash
-            // absurd readings (thousands of WPM). Show the last finished
-            // lesson's speed until 8s and 12+ accepted keystrokes are in.
-            const sessionWarmed=sessionStartTime&&elapsed>=8/60&&sessionCorrect>=12;
-            const liveSpeed=sessionWarmed?sessionCorrect/5/elapsed:(last?last.wpm:0);
-            const liveAcc=sessionCorrect+sessionErrors?sessionCorrect/(sessionCorrect+sessionErrors)*100:(last?last.acc:100);
-            el.metricWpm.textContent=Math.max(0,liveSpeed).toFixed(1);
-            el.metricAccuracy.textContent=Math.round(liveAcc);
-            put('metric-wpm-label',sessionWarmed?'Speed (this lesson)':last?'Speed (last lesson)':'Speed');
-            put('metric-accuracy-label',sessionCorrect+sessionErrors?'Accuracy (this lesson)':last?'Accuracy (last lesson)':'Accuracy');
+            // Keep these cards tied to completed results, including while typing.
+            // Each completed lesson has equal weight; unfinished input never enters it.
+            const recent=lessonHistory.slice(-10);
+            const mean=key=>recent.length?recent.reduce((sum,result)=>sum+result[key],0)/recent.length:null;
+            el.metricWpm.textContent=last?Math.max(0,last.wpm).toFixed(1):'–';
+            el.metricAccuracy.textContent=last?last.acc.toFixed(1):'–';
+            put('metric-wpm-label','Speed · last lesson');
+            put('metric-accuracy-label','Accuracy · last lesson');
+            put('metric-wpm-avg',recent.length?mean('wpm').toFixed(1):'–');
+            put('metric-accuracy-avg',recent.length?mean('acc').toFixed(1):'–');
+            put('stats-average-scope',recent.length?'Averages: '+recent.length+' completed lesson'+(recent.length===1?'':'s')+' (latest 10 maximum). Unfinished lesson excluded.':'Averages: latest 10 completed lessons. Complete a lesson to see your results.');
             el.metricScore.textContent=Math.round(last?last.score||0:0).toLocaleString();
             put('metric-score-best','best: '+Math.round(bestScore).toLocaleString());
             put('p-streak',accuracyStreak?accuracyStreak+' lesson(s) at 95%+ accuracy'+(bestStreak>accuracyStreak?' (best '+bestStreak+')':''):'No accuracy streaks.');

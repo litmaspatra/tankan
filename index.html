@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261116-green-cursor">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261116-stats-cards">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/css/keyboard.css?v=20261114a">
 
@@ -192,18 +192,20 @@
                 <span style="font-size:0.72rem; color:var(--text-dim);">(Type the shown key sequence or Alt code)</span>
             </div>
 
-            <!-- keybr-style metrics strip: the live lesson metrics live in practice -->
+            <!-- Completed-lesson cards, with averages over the latest ten results. -->
             <div class="stats-strip">
                 <div class="stat-card">
-                    <span class="s-label" id="metric-wpm-label">Speed</span>
-                    <div class="s-value"><span id="metric-wpm">0.0</span><span class="s-unit">wpm</span></div>
+                    <span class="s-label" id="metric-wpm-label">Speed · last lesson</span>
+                    <div class="s-value"><span id="metric-wpm">–</span><span class="s-unit">wpm</span></div>
+                    <span class="s-sub">Average <strong id="metric-wpm-avg">–</strong> wpm</span>
                 </div>
                 <div class="stat-card">
-                    <span class="s-label" id="metric-accuracy-label">Accuracy</span>
-                    <div class="s-value"><span id="metric-accuracy">100</span><span class="s-unit">%</span></div>
+                    <span class="s-label" id="metric-accuracy-label">Accuracy · last lesson</span>
+                    <div class="s-value"><span id="metric-accuracy">–</span><span class="s-unit">%</span></div>
+                    <span class="s-sub">Average <strong id="metric-accuracy-avg">–</strong>%</span>
                 </div>
                 <div class="stat-card" id="score-stat-card">
-                    <span class="s-label">Score</span>
+                    <span class="s-label">Score · last lesson</span>
                     <button type="button" id="score-help-btn" aria-label="How is the score calculated?" aria-haspopup="dialog">?</button>
                     <div class="s-value" id="metric-score">0</div>
                     <span class="s-sub" id="metric-score-best">best: 0</span>
@@ -218,6 +220,8 @@
                     <span class="s-sub" id="metric-book-title"></span>
                 </div>
             </div>
+
+            <p class="stats-average-scope" id="stats-average-scope">Averages: latest 10 completed lessons. Unfinished lesson excluded.</p>
 
             <!-- keybr KeySetRow analog: per-key progression with live speed bars -->
             <div class="alphabet-strip">
@@ -632,7 +636,7 @@
     <script src="src/js/hikeybr/storage.js?v=20261116-fonts-restored"></script>
     <script src="src/js/hikeybr/engine.js?v=20261116-input4"></script>
     <script src="src/js/hikeybr/keyboard.js?v=20261114a"></script>
-    <script src="src/js/hikeybr/adaptive.js?v=20261116-live-readiness"></script>
+    <script src="src/js/hikeybr/adaptive.js?v=20261116-stats-cards"></script>
     <script src="src/js/hikeybr/lessons.js?v=20261116-input4"></script>
     <script src="src/js/shared/legacy-renderer.js?v=20261116-input4"></script>
     <script src="src/js/hikeybr/display.js?v=20261116-live-readiness"></script>

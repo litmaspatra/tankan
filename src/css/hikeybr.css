@@ -2173,3 +2173,12 @@ html:not(.cur-off) #text-current {
     color: #991b1b !important;
     background: #fee2e2 !important;
 }
+
+/* Completed-result cards: explicit averages without a duplicate results row. */
+#panel-practice > .stats-strip .stat-card { padding: 8px 12px; gap: 3px; }
+#panel-practice > .stats-strip .s-label { font-size: .65rem; }
+#panel-practice > .stats-strip .s-value { font-size: 1.35rem; }
+#panel-practice > .stats-strip .s-sub { font-size: .72rem; color: var(--text-dim); }
+#panel-practice > .stats-strip .s-sub strong { color: var(--text); font-weight: 600; }
+.stats-average-scope { margin: -3px 0 7px; font-size: .64rem; line-height: 1.4; color: var(--text-dim); }
+@media(max-width:650px) { #panel-practice > .stats-strip .stat-card { padding: 6px 8px; } #panel-practice > .stats-strip .s-label { font-size: .58rem; } #panel-practice > .stats-strip .s-value { font-size: 1.1rem; } #panel-practice > .stats-strip .s-sub { font-size: .65rem; } }
