@@ -43,19 +43,8 @@
         let previousAttemptWrong=false, measurementEvents = [], displayFont = 'krutidev', altEntryStartedAt = null;
         // Gate font switches on real load so legacy-encoded text never flashes
         // as Latin gibberish while a .ttf is still downloading.
-        const FONT_LOAD_PROMISES = {};
-        function ensureFontLoaded(key) {
-            const f = FONT_REGISTRY[key];
-            if (!f || f.family === 'KrutiDev010' || f.family === 'DevLys010Web' || !document.fonts || !document.fonts.load) return Promise.resolve();
-            if (!FONT_LOAD_PROMISES[key]) {
-                FONT_LOAD_PROMISES[key] = Promise.all([
-                    document.fonts.load('32px "' + f.family + '"'),
-                    document.fonts.load('700 32px "' + f.family + '"')
-                ]).catch(() => {});
-            }
-            return FONT_LOAD_PROMISES[key];
-        }
-        const FONT_REGISTRY = {krutidev:{label:'KrutiDev 010',encoding:'krutidev',family:'KrutiDev010'},devlys010:{label:'DevLys 010',encoding:'krutidev-compatible',family:'DevLys010Web'},devlys040:{label:'DevLys 040',encoding:'krutidev-compatible',family:'DevLys040'},devlys040bold:{label:'DevLys 040 Bold',encoding:'krutidev-compatible',family:'DevLys040Bold'},krutidev021:{label:'KrutiDev 021 Italic',encoding:'krutidev',family:'KrutiDev021'},krutidev070:{label:'KrutiDev 070 Bold',encoding:'krutidev',family:'KrutiDev070'}};
+        function ensureFontLoaded(key) {return window.TankanLegacyRenderer.ready();}
+        const FONT_REGISTRY = {krutidev:{label:'टंकण',encoding:'krutidev',family:'TankanRemington'}};
         let audioCtx = null;
         let altCodeBuffer = '';
         let altCodeActive = false;

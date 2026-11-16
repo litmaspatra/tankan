@@ -155,6 +155,7 @@
             '"': { hi: 'ष्', name: 'Half-Shha', detail: "Shift + ' then complete with 'k'", key: "'", shift: true },
             ".": { hi: 'ण्', name: 'Half-Nna', detail: "Press . then complete with 'k'", key: '.', shift: false },
             "f": { hi: 'ि', name: 'Chhoti I matra', detail: 'Typed BEFORE consonant', key: 'f', shift: false },
+            "z": { hi: '्र', name: 'Rakar', detail: 'Rakar after consonant', key: 'z', shift: false },
             "Z": { hi: 'र्', name: 'Reph', detail: 'Shift + Z (typed AFTER consonant)', key: 'z', shift: true },
             " ": { hi: '␣', name: 'Space', detail: 'Space between words', key: ' ', shift: false },
             "d": { hi: 'क', name: 'Ka', detail: 'Left Middle', key: 'd', shift: false },

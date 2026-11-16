@@ -4,13 +4,9 @@
         // ─────────────────────────────────────────────────────────────
         initKeyPopup();
         renderVirtualKeyboard();
-        Object.keys(FONT_REGISTRY).forEach(ensureFontLoaded);
+
         loadStorage();
-        if (displayFont === 'krutidev' || displayFont === 'devlys010') {
-            document.documentElement.dataset.fontReady = '1';
-        } else {
-            ensureFontLoaded(displayFont).then(() => { document.documentElement.dataset.fontReady = '1'; });
-        }
+        ensureFontLoaded(displayFont).catch(() => {});
         applyDisplayPreferences();
         populateTextSources();
         populateJumpSelect();

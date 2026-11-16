@@ -2,10 +2,13 @@
 
         // 9. DISPLAY & CURSOR UPDATER (KRUTIDEV 010 ENGINE)
         // ─────────────────────────────────────────────────────────────
+        const rakarPrototypeActive=()=>window.TankanLegacyRenderer.enabled(displayFont);
         function renderLessonFont() {
             const font=FONT_REGISTRY[displayFont]||FONT_REGISTRY.krutidev;
-            el.textStreamContainer.style.fontFamily=`'${font.family}', 'Noto Sans Devanagari', sans-serif`;
-            if(font.encoding!=='unicode')return;
+            el.textStreamContainer.style.fontFamily=rakarPrototypeActive()?"'TankanRemington'":`'${font.family}', 'Noto Sans Devanagari', sans-serif`;
+            if(font.encoding!=='unicode'){
+                window.TankanLegacyRenderer.stream([el.textCorrect,el.textCurrent,el.textRemaining],targetKrutiText,cursorIndex,displayFont);return;
+            }
             // Split at grapheme-cluster boundaries only: Indic shaping never crosses
             // a cluster, so the exact cluster being typed (base + its matra) is
             // highlighted without breaking glyphs in any Unicode font (Mangal, Noto).
@@ -35,7 +38,7 @@
 
             // 1. Correct portion: KrutiDev font renders complete green Hindi glyphs!
             // When a half-letter like "'" (श्) is typed, ONLY the half-letter is sliced in textCorrect!
-            el.textCorrect.textContent = targetKrutiText.substring(0, cursorIndex);
+            if(!rakarPrototypeActive())el.textCorrect.textContent = targetKrutiText.substring(0, cursorIndex);
 
             // 2. Error portion is always empty because cursor never advances on error
             if (el.textError) el.textError.textContent = '';
@@ -45,13 +48,13 @@
             if (document.getElementById('live-hint-for')) document.getElementById('live-hint-for').textContent = cursorIndex < targetKrutiText.length ? ' for ' : ' ';
             if (cursorIndex < targetKrutiText.length) {
                 const currChar = targetKrutiText.charAt(cursorIndex);
-                el.textCurrent.textContent = currChar;
+                if(!rakarPrototypeActive())el.textCurrent.textContent = currChar;
                 el.textCurrent.className = 'text-current' + (currChar === ' ' ? ' space-cursor' : '');
-                el.textRemaining.textContent = targetKrutiText.substring(cursorIndex + 1);
+                if(!rakarPrototypeActive())el.textRemaining.textContent = targetKrutiText.substring(cursorIndex + 1);
             } else {
-                el.textCurrent.textContent = '';
+                if(!rakarPrototypeActive())el.textCurrent.textContent = '';
                 el.textCurrent.className = 'text-current';
-                el.textRemaining.textContent = '';
+                if(!rakarPrototypeActive())el.textRemaining.textContent = '';
             }
 
             renderLessonFont();

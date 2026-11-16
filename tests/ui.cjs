@@ -129,14 +129,11 @@ const path = require('node:path');
     //     matras/half letters could not highlight per keystroke). Per-byte
     //     highlighting reassembles the lesson byte stream in any listed font.
     const fontOptions = await page.$$eval('#opt-font option', os => os.map(o => o.value));
-    assert.ok(fontOptions.includes('devlys010'), 'DevLys 010 is offered');
-    assert.ok(fontOptions.includes('devlys040'), 'DevLys 040 is offered');
-    assert.ok(fontOptions.includes('devlys040bold'), 'DevLys 040 Bold is offered');
-    assert.ok(fontOptions.includes('krutidev021') && fontOptions.includes('krutidev070'), 'extra KrutiDev styles are offered');
+    assert.deepEqual(fontOptions,['krutidev'],'only Tankan Remington is offered');
     for (const removed of ['noto', 'serif', 'mangal']) assert.ok(!fontOptions.includes(removed), removed + ' removed from the picker');
     await page.evaluate(() => {
         const s = document.getElementById('opt-font');
-        s.value = 'devlys040';
+        s.value = 'krutidev';
         s.dispatchEvent(new Event('change'));
     });
     await page.waitForTimeout(150);
