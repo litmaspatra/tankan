@@ -2116,3 +2116,21 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
 @media(max-width:650px){header nav button.nav-tab{flex:1 1 0!important;min-width:0!important;font-size:.67rem!important;padding:8px 2px!important}header nav button .nav-icon{font-size:.75rem}}
 
 .mobile-notice{display:block;font-size:.85rem;line-height:1.45;color:var(--text);background:var(--accent-soft);border:1px solid var(--border);border-radius:6px;padding:8px 12px;width:100%}
+
+/* Keep lesson geometry stable when a key, space or Alt hint changes.
+   Reserve two hint lines; unusually long instructions remain scrollable. */
+.live-hint-strip {
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
+    flex: 0 0 44px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-content: center;
+}
+/* Focus mode used content-sized height, so wrapping could resize its text box. */
+.typing-canvas.focus-canvas .text-stream-container {
+    height: 4.9em !important;
+    flex: 0 0 auto;
+}
