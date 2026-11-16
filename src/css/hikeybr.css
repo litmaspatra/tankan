@@ -1909,12 +1909,15 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
         .avatar-menu[hidden] { display: none; }
 
         .avatar-menu .menu-item {
-            display: flex;
+            display: grid;
+            grid-template-columns: 20px minmax(0, 1fr);
             align-items: center;
             gap: 8px;
             width: 100%;
             padding: 9px 12px;
             font-size: 0.85rem;
+            line-height: 1.4;
+            font-family: inherit;
             font-weight: 600;
             color: var(--text-dim);
             background: transparent;
@@ -2148,3 +2151,7 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
 /* Keep missed positions red until the lesson is restarted. */
 .text-stream-container .typing-error { color: var(--error) !important; }
 .text-current .typing-error { background-color: var(--error-bg); }
+
+/* Emoji glyphs have different natural widths: reserve the same icon column. */
+#avatar-menu .menu-item .nav-icon { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; line-height: 1; }
+#avatar-menu .menu-item .nav-label { display: block; min-width: 0; }

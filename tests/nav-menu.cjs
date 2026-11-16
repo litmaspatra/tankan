@@ -52,6 +52,14 @@ const server = http.createServer((req, res) => {
     const links = await page.evaluate(() => Array.from(document.querySelectorAll('#avatar-menu a.menu-item')).map(a => a.getAttribute('href')).sort());
     assert.deepStrictEqual(links, ['about.html', 'tips.html'], 'Tips and About link to the real pages');
 
+    const aligned = await page.locator('#avatar-menu .menu-item').evaluateAll(items => items.map(item => {
+        const icon = item.querySelector('.nav-icon').getBoundingClientRect();
+        const label = item.querySelector('.nav-label').getBoundingClientRect();
+        return { iconX: icon.x, labelX: label.x, width: icon.width,
+            centerDelta: Math.abs(icon.y + icon.height / 2 - label.y - label.height / 2) };
+    }));
+    assert.ok(aligned.every(row => row.iconX === aligned[0].iconX && row.labelX === aligned[0].labelX && row.width === 20 && row.centerDelta < .1), 'all menu icons and labels share aligned columns and vertical centers');
+
     // 3. The Theme button sits beside the sound toggle and opens a dropdown
     //    with all eight themes; picking one works signed out, syncs the
     //    Settings select and persists.
