@@ -376,7 +376,7 @@
             const requested=e.target.value;
             await ensureFontLoaded(requested);
             document.documentElement.dataset.fontReady='1';
-            displayFont=requested;if(document.getElementById('display-font-select'))document.getElementById('display-font-select').value=displayFont;saveStorage();applyDisplayPreferences();regenerateLesson();
+            displayFont=requested;if(document.getElementById('display-font-select'))document.getElementById('display-font-select').value=displayFont;saveStorage();applyDisplayPreferences();updateDisplay();
         };
         $id('opt-text-size').oninput=e=>{opts.textSize=parseInt(e.target.value,10)||32;$id('opt-text-size-val').textContent=opts.textSize+'px';applyPracticeTextPrefs();saveStorage();};
         /* Wheel zoom like keybr: the wheel over the typing text (and over the on-screen

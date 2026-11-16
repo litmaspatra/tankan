@@ -129,7 +129,7 @@ const path = require('node:path');
     //     matras/half letters could not highlight per keystroke). Per-byte
     //     highlighting reassembles the lesson byte stream in any listed font.
     const fontOptions = await page.$$eval('#opt-font option', os => os.map(o => o.value));
-    assert.deepEqual(fontOptions,['krutidev'],'only Tankan Remington is offered');
+    assert.deepEqual(fontOptions,['krutidev','devlys010','devlys040','devlys040bold','krutidev021','krutidev070','tankan'],'original fonts and optional Tankan are offered');
     for (const removed of ['noto', 'serif', 'mangal']) assert.ok(!fontOptions.includes(removed), removed + ' removed from the picker');
     await page.evaluate(() => {
         const s = document.getElementById('opt-font');

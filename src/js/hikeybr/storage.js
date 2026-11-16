@@ -42,7 +42,7 @@
                 targetSpeedGoal, textSource, bookPos, opts, wordsPerLesson:el.wordsSelect&&el.wordsSelect.value,
                 totalTypedCount,
                 totalErrorsCount,
-                keyStats, wordStats, lessonHistory, keyLearning, dailyPractice, accuracyStreak, dailyGoalMinutes, lessonStyle, keyFont, displayFont, measurementVersion:2,
+                keyStats, wordStats, lessonHistory, keyLearning, dailyPractice, accuracyStreak, dailyGoalMinutes, lessonStyle, keyFont, displayFont, fontChoiceVersion:2, measurementVersion:2,
                 dailyStats, totalLessons, totalPracticeSeconds, bestLessonWpm, bestLessonAcc, bestStreak, bestScore,
                 theme: currentTheme,
                 soundEnabled,
@@ -119,7 +119,7 @@
                 dailyGoalMinutes = [10,15,30,45,60].includes(data.dailyGoalMinutes) ? data.dailyGoalMinutes : 30;
                 lessonStyle = ['classic','bold','spaced','large'].includes(data.lessonStyle) ? data.lessonStyle : 'classic';
                 keyFont = ['sans','serif','system'].includes(data.keyFont) ? data.keyFont : 'sans';
-                displayFont = FONT_REGISTRY[data.displayFont] ? data.displayFont : 'krutidev';
+                displayFont = data.fontChoiceVersion===2 && FONT_REGISTRY[data.displayFont] ? data.displayFont : 'devlys040bold';
                 applyDisplayPreferences();
                 if (data.theme) {
                     currentTheme = data.theme;
