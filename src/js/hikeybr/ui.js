@@ -274,11 +274,23 @@
         document.querySelectorAll('.ls-tab').forEach(t=>t.addEventListener('click',()=>{
             const tab=t.dataset.lstab;
             const books=window.HIKEYBR_BOOKS||[];
+            const previousSource=textSource;
             if(tab==='words')textSource='words';
             else if(tab==='books'){const lb=findBook(opts.lastBook);textSource=(lb&&lb.kind!=='essay')?opts.lastBook:((books.find(b=>b.kind!=='essay')||{}).id)||'words';}
             else if(tab==='essays'){const le=findBook(opts.lastEssay);textSource=(le&&le.kind==='essay')?opts.lastEssay:((books.find(b=>b.kind==='essay')||{}).id)||'words';}
             else if(tab==='official')textSource='official';
             else textSource=opts.customText.trim()?'custom':'words';
+            // Opening the selected mode is navigation, not a new lesson.
+            const nextForceTab=(tab==='custom'&&!opts.customText.trim())?'custom':null;
+            if((tab==='books'||tab==='essays')&&textSource===previousSource){
+                forceTab=nextForceTab;syncSettingsUI();
+                if(forceTab)$id('custom-text').focus({preventScroll:true});else refocus();
+                return;
+            }
+            // Generation reserves the next paragraph. Keep the unfinished
+            // paragraph available when leaving a book/essay via the mode tabs.
+            const previousBook=findBook(previousSource);
+            if(previousBook&&!lessonCompleted)bookPos[previousBook.id]=lastLessonParaStart;
             if(tab!=='official'){officialFallbackNote='';officialFallbackAt=-1;}
             forceTab=(tab==='custom'&&!opts.customText.trim())?'custom':null;
             saveStorage();syncSettingsUI();regenerateLesson();

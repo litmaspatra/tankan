@@ -10,6 +10,7 @@
     const themeBtn = $('theme-menu-btn');
     const themeMenu = $('theme-menu');
 
+    let paintThemes = () => {};
     const closeMenu = () => { if (menu) menu.hidden = true; };
     const closeThemes = () => { if (themeMenu) themeMenu.hidden = true; };
 
@@ -29,6 +30,7 @@
         themeBtn.addEventListener('click', e => {
             e.stopPropagation();
             const open = themeMenu.hidden;
+            paintThemes();
             closeMenu();
             themeMenu.hidden = !open;
         });
@@ -65,7 +67,10 @@
             });
             row.appendChild(b);
         });
+        paintThemes = paint;
         select.addEventListener('change', paint);
+        // Storage/account restore runs after this menu is built.
+        new MutationObserver(paint).observe(document.documentElement, {attributes:true,attributeFilter:['data-theme']});
         paint();
     }
 })();
