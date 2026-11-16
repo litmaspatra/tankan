@@ -70,6 +70,41 @@
             return {pct,ready,samples,minimum:10,starterReady,bank,recentAccuracy,strictOk,measuredBest:isFinite(measuredBest)?measuredBest:null};
         }
 
+        // Pure measurement reader shared by live feedback and final banking.
+        // It never writes history, model samples, or unlock qualification.
+        function cleanKeyTimings(item) {
+            const sequence=(!item.conjunct&&!item.alt&&item.k.length===1)?item.k:unicodeToKrutiDev(item.h), times=[];
+            // Match either per-byte events or one merged multi-byte event
+            // (an Alt-code glyph committed as a single input unit).
+            for(let end=0;end<measurementEvents.length;end++){
+                let acc='';
+                for(let start=end;start>=0;start--){
+                    acc=measurementEvents[start].key+acc;
+                    if(acc===sequence){
+                        const group=measurementEvents.slice(start,end+1);
+                        if(group.every(e=>e.ms>0&&!e.typo))times.push(group.reduce((sum,e)=>sum+e.ms,0));
+                        break;
+                    }
+                    if(acc.length>sequence.length)break;
+                }
+            }
+            return times;
+        }
+        function trimmedTimingMean(times) {
+            const sorted=[...times].sort((a,b)=>a-b),trim=sorted.length>=10?Math.floor(sorted.length*.1):0;
+            const filtered=sorted.slice(trim,sorted.length-trim);
+            return filtered.reduce((a,b)=>a+b,0)/filtered.length;
+        }
+        function liveReadinessPreview(item,banked) {
+            const times=cleanKeyTimings(item);
+            if(!times.length||lessonCompleted)return {...banked,liveSamples:0};
+            const samples=banked.samples+times.length;
+            const speedRatio=(12000/targetSpeedGoal)/trimmedTimingMean(times);
+            // 100% remains a completed, qualifying result. A preview cannot unlock.
+            const pct=Math.min(99,Math.round(Math.min(samples/10,speedRatio)*100));
+            return {...banked,pct,samples,liveSamples:times.length};
+        }
+
         function updateMasteryCard() {
             const currentItem = KEY_PROGRESSION[unlockedIndex];
             if (!currentItem) return;
@@ -86,9 +121,12 @@
 
             el.leadCurSpeed.textContent = `${curSpeed} WPM`;
             el.leadConsistency.textContent = `${consistency}%`;
-            el.progressFill.style.width = `${unlockState.pct}%`;
-            el.progressPct.textContent = `Key readiness: ${unlockState.pct}%`;
-            el.leadSamplesStatus.textContent = `Clean timings: ${unlockState.samples} / ${unlockState.minimum || 10} (updated at lesson end)`;
+            const preview=liveReadinessPreview(currentItem,unlockState);
+            el.progressFill.style.width = `${preview.pct}%`;
+            el.progressPct.textContent = `Key readiness${preview.liveSamples?' (live)':''}: ${preview.pct}%`;
+            el.leadSamplesStatus.textContent = preview.liveSamples
+                ? `Clean timings: ${preview.samples} / 10 (${preview.liveSamples} this lesson, not banked) - qualification checked at lesson end`
+                : `Clean timings: ${unlockState.samples} / 10 - live feedback; qualification checked at lesson end`;
 
             // Queue only. Never replace the lesson while it is being typed.
             if (!reviewMode && textSource==='words' && unlockState.ready && unlockedIndex < KEY_PROGRESSION.length - 1) {
@@ -116,16 +154,14 @@
             if(!unlockState.ready){
                 const current=keyStats[currentItem.k],unmet=[];
                 const lastAcc=(current.recentLessonAccuracy||current.lastAccuracy||0);
-                if(lastAcc<95)unmet.push('need 95% lesson accuracy'+(lastAcc>0?' (last: '+lastAcc.toFixed(1)+'%)':''));
-                if((current.modelSamples||0)<10)unmet.push('need '+(10-(current.modelSamples||0))+' more clean timings');
+                if(lastAcc<95)unmet.push('need 95% lesson accuracy');
                 // The gate checks the BANKED accurateBest (95%+ lessons), which
                 // can differ from the readiness bar's measuredBest (any lesson).
                 // Quote the banked figure here or the line contradicts itself
                 // after a fast-but-sloppy lesson.
-                if((current.accurateBest||Infinity)>12000/targetSpeedGoal)unmet.push(currentItem.h+" banked best "+(current.accurateBest?(12000/current.accurateBest).toFixed(1):'none yet')+' / '+targetSpeedGoal+" WPM (banks only on 95%+ accuracy lessons, key's own pace)");
+                if((current.accurateBest||Infinity)>12000/targetSpeedGoal)unmet.push(currentItem.h+" banked best "+(current.accurateBest?(12000/current.accurateBest).toFixed(1):'none yet')+' / '+targetSpeedGoal+" WPM");
                 if(!unlockState.starterReady)unmet.push('calibrating starter keys');
                 if(!unlockState.strictOk)unmet.push('earlier keys must also reach the target speed');
-                if(current.lastLessonWpm)unmet.push(currentItem.h+' last lesson: '+current.lastLessonWpm.toFixed(1)+' WPM own pace');
                 if(unmet.length)el.leadSamplesStatus.textContent+=' · '+unmet.join(' · ');
             }
 
@@ -237,25 +273,10 @@
            Unlock only at lesson end, after ten clean timings and 95% accuracy. */
         function commitKeyMeasurements() {
             KEY_PROGRESSION.slice(0,highestUnlocked+1).forEach(item=>{
-                const sequence=(!item.conjunct&&!item.alt&&item.k.length===1)?item.k:unicodeToKrutiDev(item.h), times=[];
-                // Match either per-byte events or one merged multi-byte event
-                // (an Alt-code glyph committed as a single input unit).
-                for(let end=0;end<measurementEvents.length;end++){
-                    let acc='';
-                    for(let start=end;start>=0;start--){
-                        acc=measurementEvents[start].key+acc;
-                        if(acc===sequence){
-                            const group=measurementEvents.slice(start,end+1);
-                            if(group.every(e=>e.ms>0&&!e.typo))times.push(group.reduce((sum,e)=>sum+e.ms,0));
-                            break;
-                        }
-                        if(acc.length>sequence.length)break;
-                    }
-                }
+                const times=cleanKeyTimings(item);
                 if(!times.length)return;
                 const stats=keyStats[item.k];
-                const sorted=[...times].sort((a,b)=>a-b),trim=sorted.length>=10?Math.floor(sorted.length*.1):0;
-                const filtered=sorted.slice(trim,sorted.length-trim),mean=filtered.reduce((a,b)=>a+b,0)/filtered.length;
+                const mean=trimmedTimingMean(times);
                 stats.modelTtt=stats.modelTtt ? .1*mean+.9*stats.modelTtt : mean;
                 stats.modelBest=Math.min(stats.modelBest||Infinity,stats.modelTtt);
                 // This lesson's own pace for the key, kept beside the smoothed
@@ -383,14 +404,10 @@
             const liveAcc=sessionCorrect+sessionErrors?sessionCorrect/(sessionCorrect+sessionErrors)*100:(last?last.acc:100);
             el.metricWpm.textContent=Math.max(0,liveSpeed).toFixed(1);
             el.metricAccuracy.textContent=Math.round(liveAcc);
-            const recent=lessonHistory.slice(-10);
-            const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
-            const avgWpm=avg(recent.map(r=>r.wpm)), avgAcc=avg(recent.map(r=>r.acc));
-            put('metric-wpm-avg',avgWpm==null?'avg of last lessons: -':'avg of last lessons: '+avgWpm.toFixed(1)+' wpm');
-            put('metric-accuracy-avg',avgAcc==null?'avg of last lessons: -':'avg of last lessons: '+avgAcc.toFixed(1)+'%');
+            put('metric-wpm-label',sessionWarmed?'Speed (this lesson)':last?'Speed (last lesson)':'Speed');
+            put('metric-accuracy-label',sessionCorrect+sessionErrors?'Accuracy (this lesson)':last?'Accuracy (last lesson)':'Accuracy');
             el.metricScore.textContent=Math.round(last?last.score||0:0).toLocaleString();
             put('metric-score-best','best: '+Math.round(bestScore).toLocaleString());
-            put('p-last',last?last.wpm.toFixed(1)+' wpm · '+last.acc.toFixed(1)+'% accuracy':'none yet');
             put('p-streak',accuracyStreak?accuracyStreak+' lesson(s) at 95%+ accuracy'+(bestStreak>accuracyStreak?' (best '+bestStreak+')':''):'No accuracy streaks.');
             const day=new Date().toLocaleDateString('en-CA');
             const seconds=dailyPractice.day===day?dailyPractice.seconds:0;

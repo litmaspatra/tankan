@@ -55,7 +55,7 @@ const path = require('node:path');
 
     // Mastery status line (phone-visible) names the last-lesson pace.
     const status = await page.evaluate(() => document.getElementById('lead-samples-status').textContent);
-    assert.ok(status.includes('े last lesson: 35.6 WPM own pace'), 'status names last-lesson pace, got: ' + status);
+    assert.ok(!status.includes('last lesson:'), 'historical own pace stays in key details, not repeated in mastery status');
     assert.ok(status.includes('banked best 37.1 / 40 WPM'), 'status keeps the banked figure, got: ' + status);
 
     // Profile key popup: Last lesson, Smoothed and Banked are separate rows.

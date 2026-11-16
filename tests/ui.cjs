@@ -268,7 +268,7 @@ const path = require('node:path');
             event: (document.getElementById('practice-event') || {}).textContent || ''
         };
     });
-    assert.ok(guided.event.includes('WPM'), 'guided mode: event line shows the lesson speed');
+    assert.ok(!/Lesson: [\d.]+ WPM/.test(guided.event), 'guided mode: result figures are not repeated in the event line');
     assert.equal(guided.cursor, 0, 'guided lesson cursor resets to the start');
     assert.equal(guided.history, 1, 'guided lesson recorded once');
     assert.ok(guided.afterLen < guided.firstLen + 50, 'text was replaced, not extended (was ' + guided.firstLen + ', now ' + guided.afterLen + ')');

@@ -29,9 +29,6 @@
                 el.srLesson.dataset.text = currentLessonText;
                 el.srLesson.textContent = currentLessonText;
             }
-            const lessonPct=targetKrutiText.length?Math.min(100,Math.round(cursorIndex/targetKrutiText.length*100)):0;
-            document.getElementById('lesson-completion-pct').textContent=lessonPct+'%';
-            document.getElementById('lesson-completion-fill').style.width=lessonPct+'%';
             if (!targetKrutiText) {
                 targetKrutiText = unicodeToKrutiDev(currentLessonText || generateLessonText());
             }
@@ -125,13 +122,12 @@
                     }
                     if(cleared)sound.unlock();
                     saveStorage();
-                    const last=lessonHistory.at(-1);
                     // keybr-style everywhere: the finished lesson's stats fold into
                     // the metrics and history, and a freshly generated lesson
                     // REPLACES the text instantly - a separate lesson, not appended
                     // text, and no Enter/Continue/toast.
                     const guidance=textSource!=='words'?'':cleared?'Key cleared. Next: '+KEY_PROGRESSION[unlockedIndex].h:state.ready?'Ready. Continue to practice.':!state.recentAccuracy?'Reach 95% accuracy in a completed lesson.':state.samples<10?'Need 10 clean target timings.':!state.starterReady?'Calibrate each starter key at goal speed.':'Best target speed is below your '+targetSpeedGoal+' WPM goal.';
-                    if(textSource==='words')flashPracticeEvent('Lesson: '+last.wpm.toFixed(1)+' WPM · '+last.acc.toFixed(1)+'% accuracy'+(pendingLessonEvents.length?' · '+pendingLessonEvents.join(' · '):'')+(guidance?' · '+guidance:''));
+                    if(textSource==='words')flashPracticeEvent([guidance,...pendingLessonEvents].filter(Boolean).join(' · '));
                     pendingLessonEvents=[];
                     regenerateLesson();
                 }

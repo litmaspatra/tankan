@@ -150,7 +150,6 @@
             </div>
 
 <div class="practice-live"><span class="mobile-notice">On a phone? Feel free to look around - typing practice itself needs a physical keyboard.</span></div>
-            <div class="insight-row" style="font-size:.75rem;color:var(--text-dim)"><span>Lesson completion: <strong id="lesson-completion-pct">0%</strong></span><div class="goal-track"><div class="goal-fill" id="lesson-completion-fill"></div></div></div>
             <!-- Keybr Speed-Maintenance & Confidence Card -->
             <div class="target-card">
                 <div class="target-card-top">
@@ -196,14 +195,12 @@
             <!-- keybr-style metrics strip: the live lesson metrics live in practice -->
             <div class="stats-strip">
                 <div class="stat-card">
-                    <span class="s-label">Speed</span>
+                    <span class="s-label" id="metric-wpm-label">Speed</span>
                     <div class="s-value"><span id="metric-wpm">0.0</span><span class="s-unit">wpm</span></div>
-                    <span class="s-sub" id="metric-wpm-avg">avg of last lessons: -</span>
                 </div>
                 <div class="stat-card">
-                    <span class="s-label">Accuracy</span>
+                    <span class="s-label" id="metric-accuracy-label">Accuracy</span>
                     <div class="s-value"><span id="metric-accuracy">100</span><span class="s-unit">%</span></div>
-                    <span class="s-sub" id="metric-accuracy-avg">avg of last lessons: -</span>
                 </div>
                 <div class="stat-card" id="score-stat-card">
                     <span class="s-label">Score</span>
@@ -241,7 +238,6 @@
             </div>
 
             <div class="practice-substats">
-                <span>Last lesson: <strong id="p-last">none yet</strong></span>
                 <span id="p-streak">No accuracy streaks.</span>
                 <span>Daily goal: <strong id="p-goal">0%</strong></span>
                 <span class="goal-track"><span class="goal-fill" id="p-goal-fill"></span></span>
@@ -636,10 +632,10 @@
     <script src="src/js/hikeybr/storage.js?v=20261116-fonts-restored"></script>
     <script src="src/js/hikeybr/engine.js?v=20261116-input4"></script>
     <script src="src/js/hikeybr/keyboard.js?v=20261114a"></script>
-    <script src="src/js/hikeybr/adaptive.js?v=20261114a"></script>
+    <script src="src/js/hikeybr/adaptive.js?v=20261116-live-readiness"></script>
     <script src="src/js/hikeybr/lessons.js?v=20261116-input4"></script>
     <script src="src/js/shared/legacy-renderer.js?v=20261116-input4"></script>
-    <script src="src/js/hikeybr/display.js?v=20261116-input4"></script>
+    <script src="src/js/hikeybr/display.js?v=20261116-live-readiness"></script>
     <script src="src/js/hikeybr/input.js?v=20261116-input4"></script>
     <script src="src/js/hikeybr/ui.js?v=20261116-input4"></script>
     <script src="src/js/hikeybr/backup.js?v=20261115c"></script>
