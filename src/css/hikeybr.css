@@ -2159,3 +2159,17 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
 #avatar-menu .menu-item { display: grid; grid-template-columns: 20px minmax(0, 1fr); }
 .theme-menu .theme-choice { display: flex; flex-wrap: nowrap; white-space: nowrap; gap: 12px; }
 .theme-choice.active::after { flex: 0 0 auto; }
+
+/* A theme-independent green current-unit marker, only while highlighting is on. */
+html:not(.cur-off) #text-current {
+    color: #ffffff !important;
+    background: #166534 !important;
+    box-shadow: 0 2px 0 #166534 !important;
+    outline: 1px solid #86efac;
+    outline-offset: 1px;
+}
+/* Keep missed units red, including the current unit and monochrome themes. */
+.text-stream-container .typing-error {
+    color: #991b1b !important;
+    background: #fee2e2 !important;
+}
