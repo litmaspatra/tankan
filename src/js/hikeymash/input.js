@@ -78,7 +78,7 @@
             updateHUD();
         }
 
-        // Alt Code Helpers for Remington GAIL
+        // Alt Code Helpers for Remington Kruti Dev
         function commitMashSymbol(sym) {
             const converted = unicodeToKrutiDev(sym);
             if (!converted) return;

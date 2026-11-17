@@ -2,7 +2,7 @@
 
 
         // ─────────────────────────────────────────────────────────────
-        // 1. COMPLETE REMINGTON GAIL PROGRESSION & MAPPINGS
+        // 1. COMPLETE REMINGTON (KRUTI DEV 010) PROGRESSION & MAPPINGS
         // ─────────────────────────────────────────────────────────────
         const NUMPAD_DIGIT_MAP = { Numpad0:'0', Numpad1:'1', Numpad2:'2', Numpad3:'3', Numpad4:'4', Numpad5:'5', Numpad6:'6', Numpad7:'7', Numpad8:'8', Numpad9:'9', Digit0:'0', Digit1:'1', Digit2:'2', Digit3:'3', Digit4:'4', Digit5:'5', Digit6:'6', Digit7:'7', Digit8:'8', Digit9:'9' };
         const MODIFIER_KEYS = ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'];
@@ -117,7 +117,7 @@
         const LAST_TRAINABLE_INDEX = (() => { let i = KEY_PROGRESSION.length - 1; while (i > 0 && KEY_PROGRESSION[i].skip) i--; return i; })();
         const TRAINABLE_KEY_COUNT = KEY_PROGRESSION.filter(it => !it.skip).length; // 54
 
-        // Virtual Keyboard Matrix (Remington GAIL physical positions)
+        // Virtual Keyboard Matrix (Remington Kruti Dev physical positions)
         const KB_MATRIX = [
             // Row 1: Numbers & Symbols
             [
@@ -196,7 +196,7 @@
             ]
         ];
 
-        // Alt-Codes Reference Catalog for special conjuncts (Exam & GAIL mappings)
+        // Alt-Codes Reference Catalog for special conjuncts (Exam & Kruti Dev mappings)
         const ALT_CODES_CATALOG = [
             { glyph: 'क्त', code: '0228', gail: 'Dr',  desc: 'Ka + Ta conjunct',   sample: 'भक्त, रक्त' },
             { glyph: 'द्द', code: '0204', gail: 'n~n', desc: 'Da + Da conjunct',   sample: 'रद्दी, गद्दा' },

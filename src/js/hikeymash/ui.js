@@ -114,7 +114,7 @@
                 '🚀 गति: ' + el.statWpm.textContent + ' WPM\n' +
                 '🎯 सटीकता: ' + el.statAcc.textContent + '\n' +
                 '⏱️ समय: ' + el.statTime.textContent + '\n\n' +
-                'हिंदी रेमिंगटन GAIL टाइपिंग मैच खेलें: ' + window.location.href;
+                'हिंदी रेमिंगटन क्रुति देव टाइपिंग मैच खेलें: ' + window.location.href;
             navigator.clipboard.writeText(shareText).then(() => {
                 alert('✅ स्कोर कॉपी हो गया!');
             }).catch(() => {});

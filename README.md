@@ -1,6 +1,6 @@
 # Tankan (टंकण) ⌨️
 
-**Tankan** is an adaptive Hindi typing tutor specifically designed for the **Remington (GAIL)** layout, built in the aesthetic and pedagogical spirit of [keybr.com](https://www.keybr.com).
+**Tankan** is an adaptive Hindi typing tutor specifically designed for the **Remington (Kruti Dev 010)** layout, built in the aesthetic and pedagogical spirit of [keybr.com](https://www.keybr.com).
 
 ![Tankan Screenshot](https://raw.githubusercontent.com/litmaspatra/tankan/main/preview.png)
 
@@ -13,7 +13,7 @@
 - **Authentic KrutiDev 010 Engine**:
   - Six bundled **Remington legacy fonts** (KrutiDev 010 / 021 Italic / 070 Bold, DevLys 010 / 040 / 040 Bold) render every keystroke as its own glyph, so matras and half letters highlight individually - no broken OpenType ligatures. Unicode display fonts were removed for exactly that reason.
   - **Half-Letter Highlighting**: When typing composite letters (e.g., `श` typed as `'` + `k`), typing `'` highlights **only the half-letter `श्`** in green, and `k` completes the full consonant.
-  - **Chhoti `ि` Matra (`f`)**: Typed before the consonant, matching authentic Remington GAIL typewriter rules.
+  - **Chhoti `ि` Matra (`f`)**: Typed before the consonant, matching authentic Remington typewriter rules.
   - **Reph `र्` (`Shift + Z`)**: Typed after the consonant, moving above automatically.
 - **25 Words per Lesson**: Keybr standard phonotactic drills generated strictly from currently unlocked keys.
 - **Speed-Maintenance Progression**: Keys unlock at the end of a lesson after banking 10 clean timings at the target speed (e.g. 25 WPM) with at least 95% lesson accuracy.
@@ -33,7 +33,9 @@ Tankan is a static site - no build step or server code is required to run it.
 
 ---
 
-## 📜 Keyboard Layout Reference (Remington GAIL)
+## 📜 Keyboard Layout Reference (Remington Kruti Dev 010)
+
+This is the legacy Kruti Dev 010 keyboard mapping (Remington typewriter keys, as used in government typing exams) - not the Remington GAIL/Unicode variant. For example, त्र is the `=` key, ृ is the backtick key, and रु is `Shift+3`.
 
 | Hindi | Physical Key | Shift Key | Finger |
 | :--- | :--- | :--- | :--- |
