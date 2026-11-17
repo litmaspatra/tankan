@@ -128,9 +128,16 @@
             const info=document.getElementById('book-info'),list=document.getElementById('para-list'),range=document.getElementById('para-range');
             if(!info)return;
             if(!book){info.replaceChildren();list.replaceChildren();return;}
-            const st=bookStats(book),paras=bookParagraphs(book);
             info.innerHTML='';
             const t=document.createElement('div');t.className='bi-title';t.textContent=book.title+' - '+book.author;
+            if(!bookIsReady(book)){
+                const loading=document.createElement('div');loading.className='bi-meta';
+                loading.textContent='Loading book…';
+                info.append(t,loading);
+                list.replaceChildren();
+                return;
+            }
+            const st=bookStats(book),paras=bookParagraphs(book);
             const m=document.createElement('div');m.className='bi-meta';
             m.textContent=`Paragraphs: ${st.paragraphs.toLocaleString()} · All words: ${st.words.toLocaleString()} · Unique words: ${st.unique.toLocaleString()} · Characters: ${st.chars.toLocaleString()} · Average word length: ${st.avg.toFixed(2)}`;
             info.append(t,m);
@@ -186,6 +193,13 @@
             const b=textSource==='words'?null:findBook(textSource);
             if(!b)return;
             if(unitEl)unitEl.textContent='paras';
+            if(!bookIsReady(b)){
+                paraEl.textContent='\u2013';
+                document.getElementById('metric-book-total').textContent='\u2013';
+                document.getElementById('metric-book-label').textContent=b.id==='custom'?'Custom Text Progress':(b.kind==='essay'?'Essay Progress':'Book Progress');
+                document.getElementById('metric-book-title').textContent=b.id==='custom'?'your custom text':`${b.title} - ${b.author}`;
+                return;
+            }
             const paras=bookParagraphs(b),total=paras.length;
             let pos=(typeof paraPos==='number')?paraPos:(Number.isInteger(bookPos[b.id])?bookPos[b.id]:0);
             if(total)pos=((pos%total)+total)%total;
@@ -286,7 +300,25 @@
                 textSource='words';syncSettingsUI();
                 flashPracticeEvent(officialFallbackNote||'Official words need a few more unlocked keys - too few fit your keys so far.');
             }
-            if(textSource!=='words'){const book=findBook(textSource);if(book){const t=bookLessonText(book,parseInt(el.wordsSelect.value,10)||25);if(t)return t;}textSource='words';syncSettingsUI();}
+            if(textSource!=='words'){
+                const book=findBook(textSource);
+                if(book){
+                    if(!bookIsReady(book)){
+                        // Large novels load on demand. Keep the current text on
+                        // screen while the file downloads, then regenerate.
+                        const lst=document.getElementById('word-pool-status');
+                        if(lst)lst.textContent=`Loading ${book.title}…`;
+                        ensureBookLoaded(book.id).then(ok=>{
+                            if(ok&&textSource===book.id){populateTextSources();regenerateLesson();}
+                            else if(!ok&&textSource===book.id){flashPracticeEvent(`Could not load ${book.title} - check your connection and try again.`);textSource='words';syncSettingsUI();regenerateLesson();}
+                        });
+                        return 'लोड हो रहा है';
+                    }
+                    const t=bookLessonText(book,parseInt(el.wordsSelect.value,10)||25);
+                    if(t)return t;
+                }
+                textSource='words';syncSettingsUI();
+            }
             const {unlockedItems, unlockedKeySet} = unlockedKeyContext();
             const activeItem = KEY_PROGRESSION[unlockedIndex];
             const wordCount = Math.max(1,Math.ceil((parseInt(el.wordsSelect.value, 10) || 25)/Math.max(1,opts.repeat)));

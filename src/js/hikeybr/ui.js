@@ -304,7 +304,7 @@
         $id('essay-select').addEventListener('change',e=>{opts.lastEssay=e.target.value;textSource=e.target.value;applyOpts(true);refocus();});
         $id('para-range').addEventListener('change',e=>{const b=findBook(textSource);if(!b)return;bookPos[b.id]=parseInt(e.target.value,10)-1;applyOpts(true);refocus();});
         $id('para-range').addEventListener('input',e=>{$id('para-val').textContent='#'+e.target.value;});
-        const stepPara=d=>{const b=findBook(textSource);if(!b)return;const n=bookParagraphs(b).length;if(!n)return;bookPos[b.id]=(((lastLessonParaStart+d)%n)+n)%n;applyOpts(true);refocus();};
+        const stepPara=d=>{const b=findBook(textSource);if(!b||!bookIsReady(b))return;const n=bookParagraphs(b).length;if(!n)return;bookPos[b.id]=(((lastLessonParaStart+d)%n)+n)%n;applyOpts(true);refocus();};
         $id('para-prev').onclick=()=>stepPara(-1);$id('para-next').onclick=()=>stepPara(1);
         $id('opt-strict').onchange=e=>{opts.strict=e.target.checked;targetKeyBuffer=[];applyOpts(true);updateMasteryCard();};
         $id('opt-repeat').oninput=e=>{opts.repeat=parseInt(e.target.value,10);$id('opt-repeat-val').textContent=opts.repeat;};

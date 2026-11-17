@@ -12,7 +12,7 @@ const path=require('node:path');
  await page.click('#theme-menu-btn');await page.click('.lesson-settings summary');
  const read=()=>page.evaluate(()=>({text:HiKeybr.currentLessonText,cursor:HiKeybr.cursorIndex,correct:HiKeybr.sessionCorrect,errors:HiKeybr.sessionErrors,status:document.querySelector('#word-pool-status').textContent}));
  for(const tab of ['books','essays']){
-  await page.click('[data-lstab="'+tab+'"]');let before=await read();
+  await page.click('[data-lstab="'+tab+'"]');await page.evaluate(()=>{const b=findBook(textSource);return b&&!Array.isArray(b.lines)?ensureBookLoaded(b.id):Promise.resolve(true);});let before=await read();
   await page.evaluate(()=>HiKeybr.handleKeystroke(HiKeybr.targetKrutiText[0]));before=await read();
   await page.click('[data-lstab="'+tab+'"]');assert.deepEqual(await read(),before,'clicking active '+tab+' must not advance/reset');
   await page.click('[data-lstab="words"]');await page.click('[data-lstab="'+tab+'"]');

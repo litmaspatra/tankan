@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261116-stats-cards">
+    <link rel="stylesheet" href="src/css/hikeybr.css?v=20261117-lazy1">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/css/keyboard.css?v=20261114a">
 
@@ -156,7 +156,7 @@
                     <div class="target-identity">
                         <div class="target-char-pill">
                             <span class="t-char" id="lead-char">क</span>
-                            <span class="t-key" id="lead-key">Key: D</span>
+                            <span class="t-key" id="lead-key">Learning: D</span>
                         </div>
                         <span id="lead-finger" style="font-size:0.75rem; color:var(--text-dim);">👉 Left Middle Finger</span>
                     </div>
@@ -267,7 +267,7 @@
 
             <!-- Live Keystroke Hint Strip -->
             <div class="live-hint-strip" id="live-hint-strip">
-                <span><span id="live-hint-prefix">Next key: Press </span><kbd class="live-hint-key" id="live-hint-key">D</kbd><span id="live-hint-for"> for </span><span id="live-hint-char" style="font-family:'Noto Sans Devanagari'; font-size:1.15rem; color:var(--accent);">क</span></span>
+                <span><span id="live-hint-prefix">Next to type: </span><kbd class="live-hint-key" id="live-hint-key">D</kbd><span id="live-hint-for"> for </span><span id="live-hint-char" style="font-family:'Noto Sans Devanagari'; font-size:1.15rem; color:var(--accent);">क</span></span>
                 <span id="live-hint-detail" style="font-size:0.75rem; color:var(--text-faint);"></span>
             </div>
 
@@ -626,8 +626,9 @@
         <p>"Best" is your highest lesson score. Lesson length and key variety affect the score, so it is not a like-for-like speed rating. It does not unlock keys.</p>
         <button type="button" id="score-help-close">Got it</button>
     </dialog>
-    <script src="data/books/nirmala.js?v=20261116-input4"></script>
-    <script src="data/books/godan.js?v=20261114a"></script>
+    <!-- Large novels (data/books/godan.js, nirmala.js) are NOT loaded here;
+         their catalog stubs are, and the text loads on demand (bookloader.js). -->
+    <script src="data/books/catalog.js?v=20261117-lazy1"></script>
     <script src="books.js?v=20261116-font3"></script>
     <script src="data/essays.js?v=20261114a"></script>
     <script src="src/js/hikeybr/progression.js?v=20261116-input4"></script>
@@ -636,12 +637,13 @@
     <script src="src/js/hikeybr/storage.js?v=20261116-fonts-restored"></script>
     <script src="src/js/hikeybr/engine.js?v=20261116-input4"></script>
     <script src="src/js/hikeybr/keyboard.js?v=20261114a"></script>
-    <script src="src/js/hikeybr/adaptive.js?v=20261116-stats-cards"></script>
-    <script src="src/js/hikeybr/lessons.js?v=20261116-input4"></script>
+    <script src="src/js/hikeybr/adaptive.js?v=20261117-lazy1"></script>
+    <script src="src/js/hikeybr/bookloader.js?v=20261117-lazy1"></script>
+    <script src="src/js/hikeybr/lessons.js?v=20261117-lazy1"></script>
     <script src="src/js/shared/legacy-renderer.js?v=20261116-input4"></script>
-    <script src="src/js/hikeybr/display.js?v=20261116-live-readiness"></script>
-    <script src="src/js/hikeybr/input.js?v=20261116-input4"></script>
-    <script src="src/js/hikeybr/ui.js?v=20261116-input4"></script>
+    <script src="src/js/hikeybr/display.js?v=20261117-lazy1"></script>
+    <script src="src/js/hikeybr/input.js?v=20261117-lazy1"></script>
+    <script src="src/js/hikeybr/ui.js?v=20261117-lazy1"></script>
     <script src="src/js/hikeybr/backup.js?v=20261115c"></script>
     <script src="src/js/hikeybr/auth.js?v=20261114a"></script>
     <script src="src/js/hikeybr/sync.js?v=20261115b"></script>

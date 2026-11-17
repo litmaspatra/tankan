@@ -5,7 +5,15 @@
         function lessonElapsed(){return sessionStartTime?Math.max(0,(lessonEndedAt||pausedAt||Date.now())-sessionStartTime-pausedTotal):0;}
         function pauseLesson(){if(sessionStartTime&&!lessonCompleted&&!pausedAt){pausedAt=Date.now();activityAt=null;lastKeystrokeTime=null;pendingShiftTiming.clear();const ht=document.getElementById('canvas-hint-text');if(ht)ht.textContent='Paused';}}
         function resumeLesson(){if(pausedAt){pausedTotal+=Date.now()-pausedAt;pausedAt=null;lastKeystrokeTime=null;activityAt=null;pendingShiftTiming.clear();const ht=document.getElementById('canvas-hint-text');if(ht)ht.textContent='Typing…';}el.hiddenInput.focus({preventScroll:true});}
+        function bookLoadPending(){
+            if(textSource==='words'||textSource==='official'||textSource==='custom')return false;
+            const b=findBook(textSource);
+            return !!b&&!bookIsReady(b);
+        }
         function handleKeystroke(keyString) {
+            // A lazy book is still downloading: ignore keystrokes so the user
+            // never types into a lesson that the arriving book will replace.
+            if(bookLoadPending())return;
             if(pausedAt)resumeLesson();
             if (cursorIndex >= targetKrutiText.length) return;
 

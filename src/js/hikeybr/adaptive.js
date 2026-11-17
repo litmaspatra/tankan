@@ -110,7 +110,7 @@
             if (!currentItem) return;
 
             el.leadChar.textContent = currentItem.h;
-            el.leadKey.textContent = currentItem.alt ? (()=>{const row=ALT_CODES_CATALOG.find(x=>x.code===currentItem.alt);return row&&row.gail?`Alt + ${currentItem.alt} or type: ${row.gail}`:`Alt Code: ${currentItem.alt}`;})() : (currentItem.conjunct ? (currentItem.k === '#' ? 'Key: Shift + 3' : (()=>{const row=ALT_CODES_CATALOG.find(x=>x.glyph===currentItem.h);return row&&row.gail?`Type: ${row.gail}`:`Key: ${currentItem.finger||currentItem.h}`;})()) : `Key: ${currentItem.k.toUpperCase()}`);
+            el.leadKey.textContent = currentItem.alt ? (()=>{const row=ALT_CODES_CATALOG.find(x=>x.code===currentItem.alt);return row&&row.gail?`Alt + ${currentItem.alt} or type: ${row.gail}`:`Alt Code: ${currentItem.alt}`;})() : (currentItem.conjunct ? (currentItem.k === '#' ? 'Learning: Shift + 3' : (()=>{const row=ALT_CODES_CATALOG.find(x=>x.glyph===currentItem.h);return row&&row.gail?`Type: ${row.gail}`:`Learning: ${currentItem.finger||currentItem.h}`;})()) : `Learning: ${currentItem.k.toUpperCase()}`);
             el.leadFinger.style.display = showFingerHint ? 'block' : 'none';
             el.leadFinger.textContent = currentItem.alt ? `👉 ${currentItem.finger}` : `👉 ${currentItem.finger} finger`;
             el.leadGoalSpeed.textContent = `${targetSpeedGoal} WPM`;

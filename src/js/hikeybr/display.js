@@ -41,7 +41,7 @@
             if (el.textError) el.textError.textContent = '';
 
             // 3. Current character & Remaining text
-            if (document.getElementById('live-hint-prefix')) document.getElementById('live-hint-prefix').textContent = cursorIndex < targetKrutiText.length ? 'Next key: Press ' : '';
+            if (document.getElementById('live-hint-prefix')) document.getElementById('live-hint-prefix').textContent = cursorIndex < targetKrutiText.length ? 'Next to type: ' : '';
             if (document.getElementById('live-hint-for')) document.getElementById('live-hint-for').textContent = cursorIndex < targetKrutiText.length ? ' for ' : ' ';
             if (cursorIndex < targetKrutiText.length) {
                 const currChar = targetKrutiText.charAt(cursorIndex);

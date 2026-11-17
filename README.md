@@ -22,7 +22,8 @@
 
 ## 🚀 Running Locally or Deploying
 
-Tankan is a static site with zero build tools or server dependencies required.
+Tankan is a static site - no build step or server code is required to run it.
+(The test suite, not the site, needs Node.js and Playwright: `npm ci && npx playwright install --with-deps chromium && npm test`.)
 
 1. **Local Run**: Double click `index.html` or open with any modern web browser.
 2. **GitHub Pages**:
