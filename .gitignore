@@ -11,3 +11,6 @@ desktop.ini
 
 # Node
 node_modules/
+
+# Generated regression-test artifacts
+/test-results/
