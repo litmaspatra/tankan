@@ -293,7 +293,7 @@
             // Generation reserves the next paragraph. Keep the unfinished
             // paragraph available when leaving a book/essay via the mode tabs.
             const previousBook=findBook(previousSource);
-            if(previousBook&&!lessonCompleted)bookPos[previousBook.id]=lastLessonParaStart;
+            if(previousBook&&bookIsReady(previousBook)&&!lessonCompleted)bookPos[previousBook.id]=lastLessonParaStart;
             if(tab!=='official'){officialFallbackNote='';officialFallbackAt=-1;}
             forceTab=(tab==='custom'&&!opts.customText.trim())?'custom':null;
             saveStorage();syncSettingsUI();regenerateLesson();

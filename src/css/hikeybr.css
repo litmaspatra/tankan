@@ -2181,3 +2181,13 @@ html:not(.cur-off) #text-current {
 #panel-practice > .stats-strip .s-sub strong { color: var(--text); font-weight: 600; }
 .stats-average-scope { margin: -3px 0 7px; font-size: .64rem; line-height: 1.4; color: var(--text-dim); }
 @media(max-width:650px) { #panel-practice > .stats-strip .stat-card { padding: 6px 8px; } #panel-practice > .stats-strip .s-label { font-size: .58rem; } #panel-practice > .stats-strip .s-value { font-size: 1.1rem; } #panel-practice > .stats-strip .s-sub { font-size: .65rem; } }
+
+/* Two equal phone tabs, with centered labels instead of oversized-looking
+   left-aligned blocks. Keep the longer Leaderboard label fully readable. */
+@media(max-width:650px) {
+    header > nav > button.nav-tab {
+        justify-content: center;
+        font-size: .8rem !important;
+        gap: 6px;
+    }
+}

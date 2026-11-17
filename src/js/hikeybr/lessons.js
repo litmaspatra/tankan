@@ -292,7 +292,9 @@
             return out.join(' ');
         }
 
+        let lessonLoadRequest=0;
         function generateLessonText() {
+            const loadRequest=++lessonLoadRequest;
             lastPracticeFocus=null; // only the guided path below can set this
             if(textSource==='official'){
                 const t=officialLessonText(parseInt(el.wordsSelect.value,10)||25);
@@ -304,13 +306,13 @@
                 const book=findBook(textSource);
                 if(book){
                     if(!bookIsReady(book)){
-                        // Large novels load on demand. Keep the current text on
-                        // screen while the file downloads, then regenerate.
+                        // Large novels load on demand. Show a non-typable loading
+                        // placeholder while the file downloads, then regenerate.
                         const lst=document.getElementById('word-pool-status');
                         if(lst)lst.textContent=`Loading ${book.title}…`;
                         ensureBookLoaded(book.id).then(ok=>{
-                            if(ok&&textSource===book.id){populateTextSources();regenerateLesson();}
-                            else if(!ok&&textSource===book.id){flashPracticeEvent(`Could not load ${book.title} - check your connection and try again.`);textSource='words';syncSettingsUI();regenerateLesson();}
+                            if(ok&&textSource===book.id&&loadRequest===lessonLoadRequest){populateTextSources();regenerateLesson();}
+                            else if(!ok&&textSource===book.id&&loadRequest===lessonLoadRequest){flashPracticeEvent(`Could not load ${book.title} - check your connection and try again.`);textSource='words';syncSettingsUI();regenerateLesson();}
                         });
                         return 'लोड हो रहा है';
                     }
