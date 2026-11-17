@@ -26,18 +26,32 @@ const path = require('path');
     const styles = await page.evaluate(() => {
       const s = getComputedStyle(document.getElementById('text-current'));
       const e = getComputedStyle(document.querySelector('.typing-error'));
-      return [s.backgroundColor, s.color, e.color, e.backgroundColor];
+      const root = getComputedStyle(document.documentElement);
+      return {bg:s.backgroundColor, color:s.color, shadow:s.boxShadow,
+        outline:s.outlineStyle, accent:root.getPropertyValue('--accent').trim(),
+        error:e.color, errorBg:e.backgroundColor};
     });
-    assert.deepEqual(styles, ['rgb(22, 101, 52)', 'rgb(255, 255, 255)', 'rgb(153, 27, 27)', 'rgb(254, 226, 226)'], theme);
+    assert.notEqual(styles.bg, 'rgb(22, 101, 52)', theme + ': no green box');
+    assert.equal(styles.outline, 'none', theme + ': no outline box');
+    assert.equal(styles.color, await page.evaluate(() => {
+      const n=document.createElement('span'); n.style.color='var(--accent)';
+      document.body.append(n); const c=getComputedStyle(n).color; n.remove(); return c;
+    }), theme + ': theme accent current character');
+    assert.notEqual(styles.shadow, 'none', theme + ': subtle underline cue');
+    assert.equal(styles.error, 'rgb(153, 27, 27)', theme);
+    assert.equal(styles.errorBg, 'rgb(254, 226, 226)', theme);
     await page.evaluate(() => {
       document.getElementById('opt-cursor').checked = false;
       document.getElementById('opt-cursor').dispatchEvent(new Event('change'));
     });
-    assert.notEqual(await page.locator('#text-current').evaluate(n => getComputedStyle(n).backgroundColor), 'rgb(22, 101, 52)');
+    const off = await page.locator('#text-current').evaluate(n => {
+      const s=getComputedStyle(n); return [s.backgroundColor,s.boxShadow,s.outlineStyle];
+    });
+    assert.deepEqual(off, ['rgba(0, 0, 0, 0)', 'none', 'none'], theme + ': highlight off');
     assert.equal(await page.locator('.typing-error').evaluate(n => getComputedStyle(n).color), 'rgb(153, 27, 27)');
     await page.evaluate(() => HiKeybr.regenerateLesson({keepText:true}));
     assert.equal(await page.locator('.typing-error').count(), 0);
   }
-  console.log('PASS: 8 themes, green current unit, actual wrong/correct/move-on keeps errors red, highlight-off, restart');
+  console.log('PASS: 8 themes, theme-accent current unit without green box, actual wrong/correct/move-on keeps errors red, highlight-off, restart');
   await browser.close();
 })().catch(error => { console.error(error); process.exit(1); });
