@@ -61,7 +61,7 @@ const server = http.createServer((req, res) => {
     assert.ok(aligned.every(row => row.iconX === aligned[0].iconX && row.labelX === aligned[0].labelX && row.width === 20 && row.centerDelta < .1), 'all menu icons and labels share aligned columns and vertical centers');
 
     // 3. The Theme button sits beside the sound toggle and opens a dropdown
-    //    with all eight themes; picking one works signed out, syncs the
+    //    with all seven themes; picking one works signed out, syncs the
     //    Settings select and persists.
     assert.ok(await page.locator('#theme-menu-btn').isVisible(), 'theme button visible signed out');
     const order = await page.evaluate(() => Array.from(document.querySelectorAll('.header-actions > *')).map(el => el.id || el.className));
@@ -70,7 +70,7 @@ const server = http.createServer((req, res) => {
     await page.waitForTimeout(150);
     assert.ok(await page.locator('#theme-menu').isVisible(), 'theme dropdown opens');
     assert.ok(await page.locator('#avatar-menu').isHidden(), 'opening themes closes the profile menu');
-    assert.strictEqual(await page.locator('#menu-theme-row .theme-choice').count(), 8, 'all eight themes pickable without Settings');
+    assert.strictEqual(await page.locator('#menu-theme-row .theme-choice').count(), 7, 'all seven themes pickable without Settings');
     await page.click('.theme-choice[data-theme="forest"]');
     await page.waitForTimeout(200);
     assert.strictEqual(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'forest', 'theme applied');

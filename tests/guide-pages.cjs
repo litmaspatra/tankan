@@ -89,8 +89,8 @@ const server = http.createServer((req, res) => {
             const bg = getComputedStyle(document.body).backgroundColor;
             return { theme: document.documentElement.getAttribute('data-theme'), bg };
         });
-        assert.strictEqual(themed.theme, 'light', name + ': defaults to the Paper theme');
-        assert.strictEqual(themed.bg, 'rgb(239, 230, 208)', name + ': body uses the theme palette, got ' + themed.bg);
+        assert.strictEqual(themed.theme, 'dark', name + ': defaults to the Ink theme');
+        assert.strictEqual(themed.bg, 'rgb(16, 20, 15)', name + ': body uses the theme palette, got ' + themed.bg);
     }
 
     // A theme saved by the app applies to the guide pages too.

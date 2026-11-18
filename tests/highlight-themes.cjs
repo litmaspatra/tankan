@@ -6,7 +6,7 @@ const path = require('path');
   const page = await browser.newPage({viewport:{width:1366,height:900}});
   await page.goto(process.env.TANKAN_TEST_URL || 'file://' + path.resolve(__dirname, '../index.html'));
   await page.waitForFunction(() => document.documentElement.dataset.fontReady === '1');
-  for (const theme of ['dark', 'navy', 'amber', 'light', 'sunshine', 'forest', 'epaper', 'blackwhite']) {
+  for (const theme of ['dark', 'navy', 'amber', 'sunshine', 'forest', 'epaper', 'blackwhite']) {
     await page.evaluate(theme => {
       document.documentElement.dataset.theme = theme;
       opts.cursorHighlight = true;
@@ -61,6 +61,6 @@ const path = require('path');
     await page.evaluate(() => HiKeybr.regenerateLesson({keepText:true}));
     assert.equal(await page.locator('.typing-error').count(), 0);
   }
-  console.log('PASS: 8 themes, theme-accent current unit without green box, mistakes keep theme error colour without background block (underline in blackwhite), highlight-off, restart');
+  console.log('PASS: 7 themes, theme-accent current unit without green box, mistakes keep theme error colour without background block (underline in blackwhite), highlight-off, restart');
   await browser.close();
 })().catch(error => { console.error(error); process.exit(1); });

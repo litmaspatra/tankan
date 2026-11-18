@@ -32,7 +32,7 @@
         let totalErrorsCount = 0;
         let soundEnabled = true;
         let showFingerHint = true;
-        let currentTheme = 'light';
+        let currentTheme = 'dark';
         let lessonHistory = [], keyLearning = {}, dailyPractice = {day:'', seconds:0};
         let accuracyStreak = 0, dailyGoalMinutes = 30, lessonStyle = 'classic', keyFont = 'sans';
         // Per-day and lifetime aggregates backing the profile charts (persisted).

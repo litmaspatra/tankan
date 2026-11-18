@@ -49,10 +49,9 @@
     // practice page. The list stays open so themes can be sampled back to
     // back; the active theme is marked.
     var THEMES = [
-        ['dark', 'Ink'],
+        ['dark', 'Ink (Default)'],
         ['navy', 'Peacock'],
         ['amber', 'Letterpress'],
-        ['light', 'Paper (Default)'],
         ['sunshine', 'Marigold'],
         ['forest', 'Forest'],
         ['epaper', 'E-paper'],
@@ -61,7 +60,7 @@
     var row = $('menu-theme-row');
     if (row) {
         var paint = function () {
-            var cur = document.documentElement.getAttribute('data-theme') || 'light';
+            var cur = document.documentElement.getAttribute('data-theme') || 'dark';
             row.querySelectorAll('button').forEach(function (b) {
                 b.classList.toggle('active', b.dataset.theme === cur);
             });

@@ -63,6 +63,12 @@
                 const raw = localStorage.getItem('hikeybr_store_v3');
                 if (!raw) return;
                 const data = JSON.parse(raw);
+                // Paper was retired. Change only its theme field, keeping the
+                // original progress and all other saved preferences intact.
+                if (data.theme === 'light') {
+                    data.theme = 'dark';
+                    try { localStorage.setItem('hikeybr_store_v3', JSON.stringify(data)); } catch (_) {}
+                }
                 if (typeof data.unlockedIndex === 'number') {
                     unlockedIndex = Math.max(0, Math.min(data.unlockedIndex, KEY_PROGRESSION.length - 1));
                 }
