@@ -10,6 +10,7 @@
       ['Start with a few keys','Begin with four keys. New keys unlock one at a time after a lesson when key-speed, accuracy and clean-practice requirements are met. The starter keys must all qualify first.','कुछ कुंजियों से शुरुआत','शुरुआत चार कुंजियों से होती है। कुंजी की गति, शुद्धता और पर्याप्त सही अभ्यास की शर्तें पूरी होने पर पाठ के बाद एक नई कुंजी खुलती है। पहले चारों शुरुआती कुंजियाँ तैयार होनी चाहिए।'],
       ['Give weaker keys more practice','New and slower keys get extra attention. Your lesson speed and the speed of an individual key are different measurements.','कमज़ोर कुंजियों का अधिक अभ्यास','नई और धीमी कुंजियों पर अधिक ध्यान दिया जाता है। पूरे पाठ की गति और किसी एक कुंजी की गति अलग-अलग माप हैं।'],
       ['Your lesson text','Type the highlighted part next. Use the key hint below when you need help. The next lesson loads automatically.','अभ्यास का पाठ','अगला चिह्नित भाग टाइप करें। ज़रूरत होने पर नीचे दिया कुंजी संकेत देखें। अगला पाठ अपने आप आता है।'],
+      ['Lesson settings','The ⚙ Lessons button opens your lesson settings: choose guided lessons, books, essays, official words or custom text, and set your target speed. Change them any time; your progress is kept.','पाठ सेटिंग','⚙ Lessons बटन से पाठ सेटिंग खुलती हैं: गाइडेड पाठ, किताबें, निबंध, कार्यालयी शब्द या अपना पाठ चुनें, और लक्ष्य गति तय करें। इन्हें कभी भी बदलें; आपकी प्रगति सहेजी रहती है।'],
       ['Speed and accuracy','These show your last completed lesson. The smaller figures average your latest 10 completed lessons. Aim for accurate typing as well as speed.','गति और शुद्धता','यहाँ पिछले पूरे किए गए पाठ के परिणाम हैं। छोटे आँकड़े पिछले 10 पूरे पाठों का औसत हैं। गति के साथ शुद्धता पर भी ध्यान दें।'],
       ['Your learning keys','The colours and bars show how each key is progressing toward your speed goal. Hover or tap a key to see its details.','आपकी अभ्यास कुंजियाँ','रंग और पट्टियाँ बताती हैं कि प्रत्येक कुंजी गति के लक्ष्य की ओर कितनी बढ़ी है। विवरण के लिए कुंजी पर माउस ले जाएँ या टैप करें।'],
       ['A key\'s progress','Each dot records this key\'s pace in a lesson. The dashed line is your target. Dots appear after practice. A lessons-to-goal estimate appears only with a usable trend; it is not an unlock promise.','कुंजी की प्रगति','हर बिंदु एक पाठ में इस कुंजी की गति है। टूटी रेखा लक्ष्य है। अभ्यास के बाद बिंदु दिखेंगे। पर्याप्त रुझान होने पर ही बचे पाठों का अनुमान दिखता है; यह कुंजी खुलने का वादा नहीं है।'],
@@ -24,11 +25,12 @@
     }
     function targets(){
         if(index===4)return [$('#text-stream-container')];
-        if(index===5)return [$('#metric-wpm')?.closest('.stat-card'),$('#metric-accuracy')?.closest('.stat-card')];
-        if(index===6)return [$('.alphabet-strip')];
-        if(index===7)return [$('#key-popup .kp-chart')];
-        if(index===8)return [$('#key-popup .kp-speeds')];
-        if(index===9)return [$('#avatar-corner')];
+        if(index===5)return [$('#lesson-settings')];
+        if(index===6)return [$('#metric-wpm')?.closest('.stat-card'),$('#metric-accuracy')?.closest('.stat-card')];
+        if(index===7)return [$('.alphabet-strip')];
+        if(index===8)return [$('#key-popup .kp-chart')];
+        if(index===9)return [$('#key-popup .kp-speeds')];
+        if(index===10)return [$('#avatar-corner')];
         return [];
     }
     function position(){
@@ -49,14 +51,14 @@
         card.style.left=left+'px';card.style.top=top+'px';
     }
     function paint(){
-        if(index===7||index===8)popup();else if(typeof hideKeyPopup==='function')hideKeyPopup();
+        if(index===8||index===9)popup();else if(typeof hideKeyPopup==='function')hideKeyPopup();
         const c=copy[index],hi=lang==='hi';
         card.lang=lang;
         card.innerHTML='<div class="tour-top"><span>टंकण · '+(index+1)+' / '+copy.length+'</span><button type="button" id="tour-language">'+(hi?'English':'हिंदी')+'</button><button type="button" id="tour-close" aria-label="'+(hi?'परिचय बंद करें':'Close tour')+'">×</button></div><h2 id="tour-title"></h2><p id="tour-copy"></p><div class="tour-actions"><button type="button" id="tour-skip">'+(hi?'छोड़ें':'Skip tour')+'</button><span></span><button type="button" id="tour-back" '+(index?'':'disabled')+'>'+(hi?'पीछे':'Back')+'</button><button type="button" class="tour-primary" id="tour-next">'+(index===copy.length-1?(hi?'अभ्यास शुरू करें':'Start practising'):(hi?'आगे':'Next'))+'</button></div>';
         $('#tour-title').textContent=c[hi?2:0];$('#tour-copy').textContent=c[hi?3:1];
         button('#tour-close',close);button('#tour-skip',close);button('#tour-back',()=>move(-1));button('#tour-next',()=>index===copy.length-1?close():move(1));button('#tour-language',()=>{lang=hi?'en':'hi';put(LANG,lang);paint();});
         const target=targets().find(x=>x&&x.getClientRects().length);
-        if(target&&index!==7&&index!==8)target.scrollIntoView({block:'center',behavior:'instant'});
+        if(target&&index!==8&&index!==9)target.scrollIntoView({block:'center',behavior:'instant'});
         position();requestAnimationFrame(position);$('#tour-next').focus({preventScroll:true});
     }
     function move(delta){index=Math.max(0,Math.min(copy.length-1,index+delta));paint();}
@@ -92,7 +94,7 @@
         e.stopImmediatePropagation();
     },true);
     document.addEventListener('focusin',e=>{if(active&&!card.contains(e.target))card.querySelector('#tour-next').focus({preventScroll:true});});
-    window.addEventListener('resize',()=>{if(active&&(index===7||index===8))popup();position();});window.addEventListener('scroll',position,true);
+    window.addEventListener('resize',()=>{if(active&&(index===8||index===9))popup();position();});window.addEventListener('scroll',position,true);
     $('#tour-replay')?.addEventListener('click',()=>{$('#avatar-menu').hidden=true;start();});
     window.TankanTour={start,close,get active(){return active;},get step(){return index;}};
     // Check the pre-initialization snapshot, not a default save generated later.

@@ -2191,3 +2191,6 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
         gap: 6px;
     }
 }
+
+/* Screen-reader-only text: present to assistive tech and crawlers, invisible on screen. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
