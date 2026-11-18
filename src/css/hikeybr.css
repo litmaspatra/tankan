@@ -2162,10 +2162,15 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
 /* Current unit uses the existing theme accent and light underline treatment.
    Do not override it with a filled box: matras and half letters must stay visible,
    and cur-off / the saved cursor styles must keep working. */
-/* Keep missed units red, including the current unit and monochrome themes. */
-.text-stream-container .typing-error {
-    color: #991b1b !important;
-    background: #fee2e2 !important;
+/* Missed units stay red in the theme's own error colour, with no background
+   block: the hard-coded pale slab overrode dark themes and cut across joined
+   glyphs (Kartik 2026-11-18). Black & White's --error is white like its text,
+   so there a thin underline carries the mark without relying on colour. */
+:root[data-theme="blackwhite"] .text-stream-container .typing-error {
+    text-decoration: underline;
+    text-decoration-color: var(--error);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
 }
 
 /* Completed-result cards: explicit averages without a duplicate results row. */

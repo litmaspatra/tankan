@@ -29,7 +29,7 @@ const path = require('path');
       const root = getComputedStyle(document.documentElement);
       return {bg:s.backgroundColor, color:s.color, shadow:s.boxShadow,
         outline:s.outlineStyle, accent:root.getPropertyValue('--accent').trim(),
-        error:e.color, errorBg:e.backgroundColor};
+        error:e.color, errorBg:e.backgroundColor, errorDeco:e.textDecorationLine};
     });
     assert.notEqual(styles.bg, 'rgb(22, 101, 52)', theme + ': no green box');
     assert.equal(styles.outline, 'none', theme + ': no outline box');
@@ -38,8 +38,17 @@ const path = require('path');
       document.body.append(n); const c=getComputedStyle(n).color; n.remove(); return c;
     }), theme + ': theme accent current character');
     assert.notEqual(styles.shadow, 'none', theme + ': subtle underline cue');
-    assert.equal(styles.error, 'rgb(153, 27, 27)', theme);
-    assert.equal(styles.errorBg, 'rgb(254, 226, 226)', theme);
+    // Mistakes take the theme's own error colour with no background block
+    // (the hard-coded pale slab used to override dark themes). Black & White,
+    // whose --error is white like its text, adds a thin underline instead.
+    const expectedError = await page.evaluate(() => {
+      const n=document.createElement('span'); n.style.color='var(--error)';
+      document.body.append(n); const c=getComputedStyle(n).color; n.remove(); return c;
+    });
+    assert.equal(styles.error, expectedError, theme + ': theme error colour');
+    assert.equal(styles.errorBg, 'rgba(0, 0, 0, 0)', theme + ': no background block');
+    if (theme === 'blackwhite') assert.equal(styles.errorDeco, 'underline', theme + ': underline fallback');
+    else assert.equal(styles.errorDeco, 'none', theme + ': no underline');
     await page.evaluate(() => {
       document.getElementById('opt-cursor').checked = false;
       document.getElementById('opt-cursor').dispatchEvent(new Event('change'));
@@ -48,10 +57,10 @@ const path = require('path');
       const s=getComputedStyle(n); return [s.backgroundColor,s.boxShadow,s.outlineStyle];
     });
     assert.deepEqual(off, ['rgba(0, 0, 0, 0)', 'none', 'none'], theme + ': highlight off');
-    assert.equal(await page.locator('.typing-error').evaluate(n => getComputedStyle(n).color), 'rgb(153, 27, 27)');
+    assert.equal(await page.locator('.typing-error').evaluate(n => getComputedStyle(n).color), expectedError);
     await page.evaluate(() => HiKeybr.regenerateLesson({keepText:true}));
     assert.equal(await page.locator('.typing-error').count(), 0);
   }
-  console.log('PASS: 8 themes, theme-accent current unit without green box, actual wrong/correct/move-on keeps errors red, highlight-off, restart');
+  console.log('PASS: 8 themes, theme-accent current unit without green box, mistakes keep theme error colour without background block (underline in blackwhite), highlight-off, restart');
   await browser.close();
 })().catch(error => { console.error(error); process.exit(1); });
