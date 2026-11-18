@@ -8,7 +8,7 @@ const setup=async(seed,user=null)=>{const ctx=await browser.newContext({viewport
 const p=await setup();await p.waitForSelector('#tour-next');assert.equal(await p.locator('#tour-title').textContent(),'Learn Hindi touch typing');
 await p.click('#tour-language');assert.match(await p.locator('#tour-title').textContent(),/हिंदी/);await p.click('#tour-language');
 for(let i=0;i<11;i++){assert.equal(await p.evaluate(()=>TankanTour.step),i);if(i>=4)assert.equal(await p.locator('#tankan-tour').evaluate(e=>e.classList.contains('tour-centered')),false,'page explanations stay anchored');if(i===4||i===8||i===10)await p.screenshot({path:'/downloads/tankan-tour-live-step-'+i+'.png'});if(i<10)await p.click('#tour-next');}
-assert.match(await p.locator('#tour-copy').textContent(),/Google photo/);await p.click('#tour-next');assert.equal(await p.locator('#tankan-tour').count(),0);await p.reload();await p.waitForTimeout(1000);assert.equal(await p.locator('#tankan-tour').count(),0);
+assert.match(await p.locator('#tour-copy').textContent(),/avatar/);await p.click('#tour-next');assert.equal(await p.locator('#tankan-tour').count(),0);await p.reload();await p.waitForTimeout(1000);assert.equal(await p.locator('#tankan-tour').count(),0);
 const returning=await setup({unlockedIndex:7,highestUnlocked:7,totalTypedCount:200,totalLessons:2,lessonHistory:[],measurementVersion:2});await returning.waitForTimeout(1000);assert.equal(await returning.locator('#tankan-tour').count(),0);
 await returning.evaluate(()=>{HiKeybr.handleKeystroke(HiKeybr.targetKrutiText[0]);});
 const before=await returning.evaluate(()=>({text:HiKeybr.currentLessonText,cursor:HiKeybr.cursorIndex,errors:HiKeybr.sessionErrors,level:HiKeybr.unlockedIndex,store:localStorage.getItem('hikeybr_store_v3')}));
