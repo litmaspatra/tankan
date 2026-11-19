@@ -894,7 +894,7 @@
 
         /* DevLys 040 bindu fused with the tips of the ी/ै/ॉ strokes; lift it
            clear (inline-block so the transform applies; layout is unchanged). */
-        .bindu-lift { display: inline-block; transform: translate(0.04em, -0.085em); }
+        .bindu-lift { display: inline-block; transform: translate(0.10em, 0); }
 
         /* Error portion: red with subtle background highlight */
         .text-error {
