@@ -83,9 +83,6 @@
             s = s.replace(/श(?!्)/g, "'k");
             s = s.replace(/ष(?!्)/g, '"k');
 
-            // ङ conjuncts use the anusvara key, as Kruti Dev typists write अंग.
-            s = s.replace(/ङ्/g, 'a');
-
             // Half forms (halant):
             s = s.replace(/ख्/g, '[');
             s = s.replace(/क्ष्/g, '{');

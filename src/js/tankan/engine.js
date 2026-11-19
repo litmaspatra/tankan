@@ -101,11 +101,6 @@
             s = s.replace(/श(?!्)/g, "'k");
             s = s.replace(/ष(?!्)/g, '"k');
 
-            // ङ has no Remington key: type its conjuncts with the anusvara key,
-            // exactly as Kruti Dev typists write अंग. Without this the halant
-            // survived as a stray tick under the anusvara dot (अङ्ग).
-            s = s.replace(/ङ्/g, 'a');
-
             // Half forms (halant):
             s = s.replace(/ख्/g, '[');
             s = s.replace(/क्ष्/g, '{');
