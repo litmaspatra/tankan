@@ -27,6 +27,7 @@
             font-display: swap;
         }
 @font-face{font-family:'TankanRemington';src:url('../../fonts/Tankan-Remington-Regular.ttf?v=20261116-font5') format('truetype');font-weight:400;font-style:normal;font-display:block;}
+@font-face{font-family:'TankanClean';src:url('../../fonts/Tankan-Clean-Regular.ttf?v=20261119-clean1') format('truetype');font-weight:400;font-style:normal;font-display:block;}
         /* ═══════════════════════════════════════════════════════════
            AUTHENTIC KRUTIDEV 010 FONT (Base64 + Local Fallback)
            ═══════════════════════════════════════════════════════════ */
