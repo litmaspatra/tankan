@@ -6,7 +6,7 @@
             // Optional practice substitutions, not equivalent Unicode spellings.
             // Keep explicit user's sequences separate from normal-mode mapping.
             return text.replace(/Ùk/g, 'Rr').replace(/[¡ÅØÝë¶¥·ª«Ù]/g, ch => ({
-                '¡':'Wa', 'Å':'m', 'Ø':'dz', 'Ý':'Qz', 'ë':'gz', '¶':'Q~',
+                '¡':'a', 'Å':'m', 'Ø':'dz', 'Ý':'Qz', 'ë':'gz', '¶':'Q~',
                 '¥':'u', '·':'v', 'ª':'z', '«':'=~', 'Ù':'RR'
             })[ch]);
         }
