@@ -125,7 +125,7 @@
                 dailyGoalMinutes = [10,15,30,45,60].includes(data.dailyGoalMinutes) ? data.dailyGoalMinutes : 30;
                 lessonStyle = ['classic','bold','spaced','large'].includes(data.lessonStyle) ? data.lessonStyle : 'classic';
                 keyFont = ['sans','serif','system'].includes(data.keyFont) ? data.keyFont : 'sans';
-                displayFont = data.fontChoiceVersion===2 && FONT_REGISTRY[data.displayFont] ? data.displayFont : 'devlys040bold';
+                displayFont = data.fontChoiceVersion===2 && FONT_REGISTRY[data.displayFont] ? data.displayFont : 'devlys040';
                 applyDisplayPreferences();
                 if (data.theme) {
                     currentTheme = data.theme;

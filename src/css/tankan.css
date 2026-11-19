@@ -26,20 +26,6 @@
             font-style: normal;
             font-display: swap;
         }
-@font-face {
-            font-family: 'KrutiDev021';
-            src: url('../../fonts/KrutiDev-021-Italic.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-            font-display: swap;
-        }
-@font-face {
-            font-family: 'KrutiDev070';
-            src: url('../../fonts/KrutiDev-070-Bold.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-            font-display: swap;
-        }
 @font-face{font-family:'TankanRemington';src:url('../../fonts/Tankan-Remington-Regular.ttf?v=20261116-font5') format('truetype');font-weight:400;font-style:normal;font-display:block;}
         /* ═══════════════════════════════════════════════════════════
            AUTHENTIC KRUTIDEV 010 FONT (Base64 + Local Fallback)

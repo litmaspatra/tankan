@@ -218,8 +218,6 @@
             krutidev: 'KrutiDev010',
             devlys040: 'DevLys040',
             devlys040bold: 'DevLys040Bold',
-            krutidev021: 'KrutiDev021',
-            krutidev070: 'KrutiDev070'
         };
         function applyRaceFont(key) {
             const fam = MASH_FONTS[key] || MASH_FONTS.devlys010;
