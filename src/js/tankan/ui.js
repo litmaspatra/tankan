@@ -225,7 +225,10 @@
 
         // Logo click -> Jump to Practice
         document.getElementById('logo-btn').addEventListener('click', () => {
-            document.querySelector('.nav-tab[data-target="practice"]').click();
+            const practiceTab = document.querySelector('.nav-tab[data-target="practice"]');
+            // Already on the practice (home) view: the logo reloads the page.
+            if (practiceTab.classList.contains('active')) { location.reload(); return; }
+            practiceTab.click();
         });
 
         // Deep links from the static guide pages (index.html#profile,
