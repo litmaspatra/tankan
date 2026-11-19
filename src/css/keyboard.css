@@ -1,8 +1,8 @@
 /* ═══════════════════════════════════════════════════════════
-   SHARED KEYBOARD SKIN — HiKeybr (index.html) & HiKeymash (hikeymash.html)
+   SHARED KEYBOARD SKIN — Tankan (index.html) & HiKeymash (hikeymash.html)
    keybr.com look: flat square borderless keys with even gaps on a
    rounded flat frame; the next key gets a thin ring around its
-   letter, Shift-needed keys get a flat accent fill, and HiKeybr's
+   letter, Shift-needed keys get a flat accent fill, and Tankan's
    guided lessons colour keys by per-key confidence.
 
    Loaded AFTER theme.css in both pages. The !important rules undo
@@ -39,13 +39,13 @@
     filter: brightness(0.8);
 }
 
-/* HiKeybr guided lessons: unlocked keys carry a subtle theme tint
+/* Tankan guided lessons: unlocked keys carry a subtle theme tint
    until they earn a confidence colour below. */
 #keyboard-frame .k-key.unlocked {
     background: var(--key-unlocked);
 }
 
-/* keybr-style per-key confidence heat map (HiKeybr colours its keys
+/* keybr-style per-key confidence heat map (Tankan colours its keys
    from measured per-key timings; HiKeymash collects no per-key stats,
    so it never applies these classes):
    heat-1  yellow = practising, below 80% of goal speed

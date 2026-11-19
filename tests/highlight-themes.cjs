@@ -13,15 +13,15 @@ const path = require('path');
       opts.stopOnError = true;
       document.getElementById('opt-cursor').checked = true;
       document.getElementById('opt-cursor').dispatchEvent(new Event('change'));
-      HiKeybr.currentLessonText = 'कला और परीक्षण ';
-      HiKeybr.regenerateLesson({keepText:true});
+      Tankan.currentLessonText = 'कला और परीक्षण ';
+      Tankan.regenerateLesson({keepText:true});
     }, theme);
     await page.locator('#hidden-input').focus();
     await page.keyboard.type('x');
     await page.waitForTimeout(400);
-    assert.equal(await page.evaluate(() => HiKeybr.cursorIndex), 0);
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 0);
     await page.keyboard.type('dyk');
-    assert.equal(await page.evaluate(() => HiKeybr.cursorIndex), 3);
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 3);
     assert.equal(await page.locator('.typing-error').textContent(), 'd');
     const styles = await page.evaluate(() => {
       const s = getComputedStyle(document.getElementById('text-current'));
@@ -58,7 +58,7 @@ const path = require('path');
     });
     assert.deepEqual(off, ['rgba(0, 0, 0, 0)', 'none', 'none'], theme + ': highlight off');
     assert.equal(await page.locator('.typing-error').evaluate(n => getComputedStyle(n).color), expectedError);
-    await page.evaluate(() => HiKeybr.regenerateLesson({keepText:true}));
+    await page.evaluate(() => Tankan.regenerateLesson({keepText:true}));
     assert.equal(await page.locator('.typing-error').count(), 0);
   }
   console.log('PASS: 7 themes, theme-accent current unit without green box, mistakes keep theme error colour without background block (underline in blackwhite), highlight-off, restart');

@@ -21,10 +21,10 @@ const path = require('node:path');
     // 1. Real key events advance the practice cursor.
     await fresh();
     await page.click('#typing-canvas');
-    const first = await page.evaluate(() => HiKeybr.targetKrutiText[0]);
+    const first = await page.evaluate(() => Tankan.targetKrutiText[0]);
     await page.keyboard.press(first === ' ' ? 'Space' : first);
-    assert.equal(await page.evaluate(() => HiKeybr.cursorIndex), 1, 'real key advances cursor');
-    assert.equal(await page.evaluate(() => HiKeybr.sessionCorrect), 1, 'real key scores once');
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 1, 'real key advances cursor');
+    assert.equal(await page.evaluate(() => Tankan.sessionCorrect), 1, 'real key scores once');
 
     // 2. Custom text field keeps focus while typing (was stolen by the global keydown handler).
     await page.click('#lesson-settings > summary');
@@ -40,13 +40,13 @@ const path = require('node:path');
         t.value = 'क्त क्त क्त';
         t.dispatchEvent(new Event('change'));
     });
-    assert.ok((await page.evaluate(() => HiKeybr.targetKrutiText)).startsWith('Dr'), 'क्त encodes to Remington Dr');
+    assert.ok((await page.evaluate(() => Tankan.targetKrutiText)).startsWith('Dr'), 'क्त encodes to Remington Dr');
     await page.click('#typing-canvas');
     await page.keyboard.down('Alt');
     for (const k of ['Numpad0', 'Numpad2', 'Numpad2', 'Numpad8']) await page.keyboard.press(k);
     await page.keyboard.up('Alt');
-    assert.equal(await page.evaluate(() => HiKeybr.cursorIndex), 2, 'Alt+0228 types both bytes of क्त');
-    assert.equal(await page.evaluate(() => HiKeybr.sessionCorrect), 1, 'Alt-code glyph counts as one input unit');
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 2, 'Alt+0228 types both bytes of क्त');
+    assert.equal(await page.evaluate(() => Tankan.sessionCorrect), 1, 'Alt-code glyph counts as one input unit');
     // A second Alt entry after a real space gets a valid whole-entry timing.
     await page.keyboard.press('Space');
     await page.waitForTimeout(80);
@@ -54,8 +54,8 @@ const path = require('node:path');
     await page.keyboard.down('Alt');
     for (const k of ['Digit0', 'Digit2', 'Digit2', 'Digit8']) await page.keyboard.press(k);
     await page.keyboard.up('Alt');
-    assert.equal(await page.evaluate(() => HiKeybr.cursorIndex), 5, 'second क्त via top-row digits + space committed');
-    assert.equal(await page.evaluate(() => HiKeybr.sessionCorrect), 3, 'each Alt glyph still one unit');
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 5, 'second क्त via top-row digits + space committed');
+    assert.equal(await page.evaluate(() => Tankan.sessionCorrect), 3, 'each Alt glyph still one unit');
 
     // 3b. Verified Kruti Dev 010 / DevLys 010 byte table: Alt+0221 must give फ्र (was wrongly 0217).
     await page.evaluate(() => {
@@ -63,18 +63,18 @@ const path = require('node:path');
         t.value = 'फ्र ह्र ह्र';
         t.dispatchEvent(new Event('change'));
     });
-    assert.ok((await page.evaluate(() => HiKeybr.targetKrutiText)).startsWith(String.fromCharCode(221)), 'फ्र encodes to byte 221');
+    assert.ok((await page.evaluate(() => Tankan.targetKrutiText)).startsWith(String.fromCharCode(221)), 'फ्र encodes to byte 221');
     await page.click('#typing-canvas');
     await page.keyboard.down('Alt');
     for (const k of ['Numpad0', 'Numpad2', 'Numpad2', 'Numpad1']) await page.keyboard.press(k);
     await page.keyboard.up('Alt');
-    assert.equal(await page.evaluate(() => HiKeybr.cursorIndex), 1, 'Alt+0221 commits फ्र');
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 1, 'Alt+0221 commits फ्र');
     await page.keyboard.press('Space');
-    assert.ok((await page.evaluate(() => HiKeybr.targetKrutiText))[2] === String.fromCharCode(235), 'ह्र encodes to byte 235');
+    assert.ok((await page.evaluate(() => Tankan.targetKrutiText))[2] === String.fromCharCode(235), 'ह्र encodes to byte 235');
     await page.keyboard.down('Alt');
     for (const k of ['Numpad0', 'Numpad2', 'Numpad3', 'Numpad5']) await page.keyboard.press(k);
     await page.keyboard.up('Alt');
-    assert.equal(await page.evaluate(() => HiKeybr.cursorIndex), 3, 'Alt+0235 commits ह्र');
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 3, 'Alt+0235 commits ह्र');
 
     // 3d. Windows-style Alt entry: the OS composes Alt+numpad itself, swallows
     //     the Alt keyup, and pushes the composed symbol into the field. The
@@ -95,8 +95,8 @@ const path = require('node:path');
         kd('Alt', 'AltLeft', false); // user presses Alt again after the lost keyup
         window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft', bubbles: true }));
     });
-    assert.equal(await page.evaluate(() => HiKeybr.cursorIndex), 2, 'lost Alt keyup: fresh Alt press commits क्त');
-    assert.equal(await page.evaluate(() => HiKeybr.sessionErrors), 0, 'no errors from lost-keyup entry');
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 2, 'lost Alt keyup: fresh Alt press commits क्त');
+    assert.equal(await page.evaluate(() => Tankan.sessionErrors), 0, 'no errors from lost-keyup entry');
 
     // Variant 2: the OS-composed symbol arrives (as a keydown) instead of the Alt keyup.
     await page.keyboard.press('Space');
@@ -105,25 +105,25 @@ const path = require('node:path');
     await page.evaluate(() => {
         document.getElementById('hidden-input').dispatchEvent(new KeyboardEvent('keydown', { key: 'Ø', bubbles: true, cancelable: true }));
     });
-    assert.equal(await page.evaluate(() => HiKeybr.cursorIndex), 5, 'OS symbol keydown commits क्त without an Alt keyup');
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 5, 'OS symbol keydown commits क्त without an Alt keyup');
     await page.keyboard.up('Alt'); // a late keyup must not double-commit
-    assert.equal(await page.evaluate(() => HiKeybr.cursorIndex), 5, 'late Alt keyup does not double-commit');
-    assert.equal(await page.evaluate(() => HiKeybr.sessionErrors), 0, 'OS symbol is not counted as an error');
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 5, 'late Alt keyup does not double-commit');
+    assert.equal(await page.evaluate(() => Tankan.sessionErrors), 0, 'OS symbol is not counted as an error');
 
     // Variant 3: the Alt keyup fires first, then the OS symbol arrives late.
     await page.keyboard.press('Space');
     await page.keyboard.down('Alt');
     for (const k of ['Numpad0', 'Numpad2', 'Numpad2', 'Numpad8']) await page.keyboard.press(k);
     await page.keyboard.up('Alt');
-    assert.equal(await page.evaluate(() => HiKeybr.cursorIndex), 8, 'Alt keyup commits क्त');
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 8, 'Alt keyup commits क्त');
     await page.evaluate(() => {
         const hi = document.getElementById('hidden-input');
         hi.dispatchEvent(new KeyboardEvent('keydown', { key: 'Ø', bubbles: true, cancelable: true }));
         hi.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    assert.equal(await page.evaluate(() => HiKeybr.cursorIndex), 8, 'late OS symbol is swallowed after a keyup commit');
-    assert.equal(await page.evaluate(() => HiKeybr.sessionErrors), 0, 'late OS symbol adds no error');
-    assert.equal(await page.evaluate(() => HiKeybr.sessionCorrect), 5, '3 Alt glyphs + 2 spaces, each glyph one input unit');
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 8, 'late OS symbol is swallowed after a keyup commit');
+    assert.equal(await page.evaluate(() => Tankan.sessionErrors), 0, 'late OS symbol adds no error');
+    assert.equal(await page.evaluate(() => Tankan.sessionCorrect), 5, '3 Alt glyphs + 2 spaces, each glyph one input unit');
 
     // 3c. Only legacy Remington fonts are offered (Unicode fonts dropped: their
     //     matras/half letters could not highlight per keystroke). Per-byte
@@ -142,7 +142,7 @@ const path = require('node:path');
         current: document.getElementById('text-current').textContent,
         remaining: document.getElementById('text-remaining').textContent
     }));
-    assert.equal(parts.correct + parts.current + parts.remaining, await page.evaluate(() => HiKeybr.unicodeToKrutiDev(HiKeybr.currentLessonText)), 'legacy-font spans reassemble the lesson byte stream');
+    assert.equal(parts.correct + parts.current + parts.remaining, await page.evaluate(() => Tankan.unicodeToKrutiDev(Tankan.currentLessonText)), 'legacy-font spans reassemble the lesson byte stream');
 
     // 4. Speed control: the lesson-settings slider is the single source of truth.
     assert.equal(await page.$('#settings-speed-goal'), null, 'duplicated Settings speed dropdown removed');
@@ -191,20 +191,20 @@ const path = require('node:path');
     assert.ok(download.suggestedFilename().endsWith('.json'), 'export downloads progress JSON');
 
     // 8. Remington punctuation converts to authentic KrutiDev bytes (books/custom text).
-    const punctConv = await page.evaluate(() => HiKeybr.unicodeToKrutiDev(',?.;-:!'));
+    const punctConv = await page.evaluate(() => Tankan.unicodeToKrutiDev(',?.;-:!'));
     assert.equal(punctConv, ']\\-(&%!', 'comma=]  ?=\\  .=-  ;=(  -=&  :=%  !=!');
-    assert.equal(await page.evaluate(() => HiKeybr.unicodeToKrutiDev('ए')), ',', "the ',' KEY still types ए");
-    assert.equal(await page.evaluate(() => HiKeybr.unicodeToKrutiDev('घ')), '?k', "the '?' byte still types घ");
-    assert.equal(await page.evaluate(() => HiKeybr.unicodeToKrutiDev('।')), 'A', 'danda = Shift+A');
+    assert.equal(await page.evaluate(() => Tankan.unicodeToKrutiDev('ए')), ',', "the ',' KEY still types ए");
+    assert.equal(await page.evaluate(() => Tankan.unicodeToKrutiDev('घ')), '?k', "the '?' byte still types घ");
+    assert.equal(await page.evaluate(() => Tankan.unicodeToKrutiDev('।')), 'A', 'danda = Shift+A');
 
     // 8b. Half-letter conjuncts: consonant + halant converts to the font's true
     //     half-form byte (the क ृ ष ् ण bug), never full letter + halant mark.
-    assert.equal(await page.evaluate(() => HiKeybr.unicodeToKrutiDev('कृष्णा')), 'd`".kk', 'कृष्णा uses the half-ष byte "');
-    assert.equal(await page.evaluate(() => HiKeybr.unicodeToKrutiDev('ष')), '"k', 'standing ष keeps half + stem');
-    assert.equal(await page.evaluate(() => HiKeybr.unicodeToKrutiDev('लक्ष्मी')), 'y{eh', 'लक्ष्मी uses the half-क्ष byte {');
-    assert.equal(await page.evaluate(() => HiKeybr.unicodeToKrutiDev('क्षमा')), '{kek', 'standing क्ष keeps half + stem');
-    assert.equal(await page.evaluate(() => HiKeybr.unicodeToKrutiDev('क्यों')), 'D;ksa', 'क्यों uses half-क D');
-    assert.ok(!(await page.evaluate(() => HiKeybr.unicodeToKrutiDev('कृष्णा'))).includes('~'), 'no leftover halant byte in कृष्णा');
+    assert.equal(await page.evaluate(() => Tankan.unicodeToKrutiDev('कृष्णा')), 'd`".kk', 'कृष्णा uses the half-ष byte "');
+    assert.equal(await page.evaluate(() => Tankan.unicodeToKrutiDev('ष')), '"k', 'standing ष keeps half + stem');
+    assert.equal(await page.evaluate(() => Tankan.unicodeToKrutiDev('लक्ष्मी')), 'y{eh', 'लक्ष्मी uses the half-क्ष byte {');
+    assert.equal(await page.evaluate(() => Tankan.unicodeToKrutiDev('क्षमा')), '{kek', 'standing क्ष keeps half + stem');
+    assert.equal(await page.evaluate(() => Tankan.unicodeToKrutiDev('क्यों')), 'D;ksa', 'क्यों uses half-क D');
+    assert.ok(!(await page.evaluate(() => Tankan.unicodeToKrutiDev('कृष्णा'))).includes('~'), 'no leftover halant byte in कृष्णा');
 
     // 9. Custom text with punctuation expects the Remington keys ] and \.
     await fresh();
@@ -215,7 +215,7 @@ const path = require('node:path');
         t.value = 'राम, क्या?';
         t.dispatchEvent(new Event('change'));
     });
-    assert.equal(await page.evaluate(() => HiKeybr.targetKrutiText), 'jke] D;k\\', 'custom text punctuation uses Remington keys');
+    assert.equal(await page.evaluate(() => Tankan.targetKrutiText), 'jke] D;k\\', 'custom text punctuation uses Remington keys');
 
     // 10. keybr-style flow: finishing ANY lesson (guided, books or custom)
     //     instantly replaces it with a freshly generated lesson - a separate
@@ -229,16 +229,16 @@ const path = require('node:path');
         t.value = 'राम सीता';
         t.dispatchEvent(new Event('change'));
     });
-    const customTarget = await page.evaluate(() => HiKeybr.targetKrutiText);
+    const customTarget = await page.evaluate(() => Tankan.targetKrutiText);
     await page.evaluate(() => {
-        const seq = HiKeybr.targetKrutiText;
-        for (const ch of seq) HiKeybr.handleKeystroke(ch);
+        const seq = Tankan.targetKrutiText;
+        for (const ch of seq) Tankan.handleKeystroke(ch);
     });
     const flow = await page.evaluate(() => ({
-        cursor: HiKeybr.cursorIndex,
-        target: HiKeybr.targetKrutiText,
-        history: HiKeybr.lessonHistory.length,
-        last: HiKeybr.lessonHistory.at(-1),
+        cursor: Tankan.cursorIndex,
+        target: Tankan.targetKrutiText,
+        history: Tankan.lessonHistory.length,
+        last: Tankan.lessonHistory.at(-1),
         event: (document.getElementById('practice-event') || {}).textContent || '',
         toastPresent: !!document.getElementById('lesson-result'),
         continuePresent: !!document.getElementById('continue-btn')
@@ -255,16 +255,16 @@ const path = require('node:path');
     //      replaces the whole block with a newly generated lesson.
     await fresh();
     const guided = await page.evaluate(() => {
-        const first = HiKeybr.currentLessonText;
-        const firstLen = HiKeybr.targetKrutiText.length;
-        const seq = HiKeybr.targetKrutiText;
-        for (const ch of seq) HiKeybr.handleKeystroke(ch);
+        const first = Tankan.currentLessonText;
+        const firstLen = Tankan.targetKrutiText.length;
+        const seq = Tankan.targetKrutiText;
+        for (const ch of seq) Tankan.handleKeystroke(ch);
         return {
             first, firstLen,
-            afterText: HiKeybr.currentLessonText,
-            afterLen: HiKeybr.targetKrutiText.length,
-            cursor: HiKeybr.cursorIndex,
-            history: HiKeybr.lessonHistory.length,
+            afterText: Tankan.currentLessonText,
+            afterLen: Tankan.targetKrutiText.length,
+            cursor: Tankan.cursorIndex,
+            history: Tankan.lessonHistory.length,
             event: (document.getElementById('practice-event') || {}).textContent || ''
         };
     });

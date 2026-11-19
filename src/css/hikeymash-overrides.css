@@ -1,8 +1,8 @@
         /* ═══════════════════════════════════════════════════════════
            RETRO TYPEWRITER RESTYLE (HiKeymash identity)
-           - Default theme: Paper (same palette as HiKeybr's Paper).
+           - Default theme: Paper (same palette as Tankan's Paper).
            - --km-* keymash variables are remapped onto the shared
-             theme.css palettes so every theme matches HiKeybr.
+             theme.css palettes so every theme matches Tankan.
            - Typography + components get the typewriter look: Courier /
              Special Elite, ink-on-paper, square keycaps, ledger rules.
            ═══════════════════════════════════════════════════════════ */
@@ -120,7 +120,7 @@
 
         /* ── Keyboard: intentionally NOT restyled ──
            HiKeymash's on-screen keyboard must look and behave exactly like
-           HiKeybr's (index.html), so the retro typewriter treatment skips
+           Tankan's (index.html), so the retro typewriter treatment skips
            it; the shared keyboard rules above are the single source. ── */
 
         /* ── Racers: ledger rows, dashed track, square carriage ── */

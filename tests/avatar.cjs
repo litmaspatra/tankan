@@ -183,7 +183,7 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
 // cannot catch a blob: regression - this reads the files directly.
 {
     const fs = require('fs');
-    const avatarSrc = fs.readFileSync(require('path').join(__dirname, '..', 'src', 'js', 'hikeybr', 'avatar.js'), 'utf8');
+    const avatarSrc = fs.readFileSync(require('path').join(__dirname, '..', 'src', 'js', 'tankan', 'avatar.js'), 'utf8');
     const headers = fs.readFileSync(require('path').join(__dirname, '..', '_headers'), 'utf8');
     assert.ok(!avatarSrc.includes('URL.createObjectURL('), 'avatar decode must not use blob: object URLs (CSP blocks them)');
     const imgSrc = (headers.match(/img-src ([^;]+)/) || [])[1] || '';

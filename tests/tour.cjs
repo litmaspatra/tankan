@@ -10,10 +10,10 @@ await p.click('#tour-language');assert.match(await p.locator('#tour-title').text
 for(let i=0;i<11;i++){assert.equal(await p.evaluate(()=>TankanTour.step),i);if(i>=4)assert.equal(await p.locator('#tankan-tour').evaluate(e=>e.classList.contains('tour-centered')),false,'page explanations stay anchored');if(i===4||i===8||i===10)await p.screenshot({path:'/downloads/tankan-tour-live-step-'+i+'.png'});if(i<10)await p.click('#tour-next');}
 assert.match(await p.locator('#tour-copy').textContent(),/avatar/);await p.click('#tour-next');assert.equal(await p.locator('#tankan-tour').count(),0);await p.reload();await p.waitForTimeout(1000);assert.equal(await p.locator('#tankan-tour').count(),0);
 const returning=await setup({unlockedIndex:7,highestUnlocked:7,totalTypedCount:200,totalLessons:2,lessonHistory:[],measurementVersion:2});await returning.waitForTimeout(1000);assert.equal(await returning.locator('#tankan-tour').count(),0);
-await returning.evaluate(()=>{HiKeybr.handleKeystroke(HiKeybr.targetKrutiText[0]);});
-const before=await returning.evaluate(()=>({text:HiKeybr.currentLessonText,cursor:HiKeybr.cursorIndex,errors:HiKeybr.sessionErrors,level:HiKeybr.unlockedIndex,store:localStorage.getItem('hikeybr_store_v3')}));
+await returning.evaluate(()=>{Tankan.handleKeystroke(Tankan.targetKrutiText[0]);});
+const before=await returning.evaluate(()=>({text:Tankan.currentLessonText,cursor:Tankan.cursorIndex,errors:Tankan.sessionErrors,level:Tankan.unlockedIndex,store:localStorage.getItem('hikeybr_store_v3')}));
 await returning.click('#avatar-corner');await returning.click('#tour-replay');await returning.click('#tour-next');await returning.keyboard.press('Escape');
-assert.deepEqual(await returning.evaluate(()=>({text:HiKeybr.currentLessonText,cursor:HiKeybr.cursorIndex,errors:HiKeybr.sessionErrors,level:HiKeybr.unlockedIndex,store:localStorage.getItem('hikeybr_store_v3')})),before);
+assert.deepEqual(await returning.evaluate(()=>({text:Tankan.currentLessonText,cursor:Tankan.cursorIndex,errors:Tankan.sessionErrors,level:Tankan.unlockedIndex,store:localStorage.getItem('hikeybr_store_v3')})),before);
 const signed=await setup(null,{uid:'returning',email:'test@example.invalid'});await signed.waitForTimeout(1000);assert.equal(await signed.locator('#tankan-tour').count(),0);
 await returning.evaluate(()=>TankanTour.start());
 for(const theme of ['light','dark','navy','forest','sunshine','amber','epaper','blackwhite']){await returning.evaluate(t=>document.documentElement.setAttribute('data-theme',t),theme);assert.ok(await returning.locator('#tour-next').isVisible());}

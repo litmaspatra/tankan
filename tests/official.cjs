@@ -11,7 +11,7 @@ const path=require('node:path');
  const url='file://'+path.resolve(__dirname,'../index.html');
  const fresh=async(seed)=>{await page.goto(url);await page.evaluate(seed=>{localStorage.clear();if(seed)localStorage.setItem('hikeybr_store_v3',JSON.stringify(seed));},seed);await page.reload();await page.waitForTimeout(400);};
  const clickTab=async t=>{await page.evaluate(()=>{document.getElementById('lesson-settings').open=true;});await page.locator(`.ls-tab[data-lstab="${t}"]`).click();};
- const lessonWords=()=>page.evaluate(()=>HiKeybr.currentLessonText.trim().split(/\s+/).filter(Boolean));
+ const lessonWords=()=>page.evaluate(()=>Tankan.currentLessonText.trim().split(/\s+/).filter(Boolean));
 
  // 1. Pool honesty at hu=15 (89 eligible official words)
  await fresh({unlockedIndex:15,highestUnlocked:15});
@@ -34,7 +34,7 @@ const path=require('node:path');
  const typed=await page.evaluate(()=>{
    const KP=KEY_PROGRESSION.slice(0,16),ks=new Set(KP.map(x=>x.k));
    const SB={'~':'`','!':'1','@':'2','#':'3','$':'4','%':'5','^':'6','&':'7','*':'8','(':'9',')':'0','_':'-','+':'=','{':'[','}':']','|':'\\',':':';','"':"'",'<':',','>':'.','?':'/'};
-   return [...HiKeybr.targetKrutiText].every(c=>c===' '||ks.has(c)||ks.has(c.toLowerCase())||ks.has(SB[c]));
+   return [...Tankan.targetKrutiText].every(c=>c===' '||ks.has(c)||ks.has(c.toLowerCase())||ks.has(SB[c]));
  });
  assert.ok(typed,'no locked-key bytes in the official lesson');
 
@@ -65,8 +65,8 @@ const path=require('node:path');
  await fresh({unlockedIndex:5,highestUnlocked:5});
  await page.evaluate(()=>{
    const realNow=Date.now;let now=realNow();Date.now=()=>now;
-   const seq=HiKeybr.targetKrutiText,slowSeq=';kj'; // यार - every occurrence typed slowly
-   for(let i=0;i<seq.length;i++){const slow=seq.substr(i,slowSeq.length)===slowSeq;const ms=slow?900:80;now+=ms;HiKeybr.handleKeystroke(seq[i]);}
+   const seq=Tankan.targetKrutiText,slowSeq=';kj'; // यार - every occurrence typed slowly
+   for(let i=0;i<seq.length;i++){const slow=seq.substr(i,slowSeq.length)===slowSeq;const ms=slow?900:80;now+=ms;Tankan.handleKeystroke(seq[i]);}
    Date.now=realNow;
  });
  const ws=await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('hikeybr_store_v3')).wordStats||{};return Object.entries(s).map(([w,v])=>({w,avg:v.ms/v.n,n:v.n})).sort((a,b)=>b.avg-a.avg);});

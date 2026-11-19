@@ -23,7 +23,7 @@ const server = http.createServer((req,res) => {
     if(theme!==null)localStorage.setItem('hikeybr_store_v3',JSON.stringify(seed));
    },{seed,theme});
    const page=await ctx.newPage();await page.goto(base+route);
-   if(route==='index.html')await page.waitForFunction(()=>!!window.HiKeybr);
+   if(route==='index.html')await page.waitForFunction(()=>!!window.Tankan);
    const result=await page.evaluate(()=>({theme:document.documentElement.dataset.theme,stored:JSON.parse(localStorage.getItem('hikeybr_store_v3')||'null')}));
    const resolved=theme===null||theme==='light'?'dark':theme;
    assert.equal(result.theme,resolved,route+' '+theme+' theme');

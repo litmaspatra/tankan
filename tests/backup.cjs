@@ -59,7 +59,7 @@ const path = require('node:path');
         store: JSON.parse(localStorage.getItem('hikeybr_store_v3') || '{}'),
         book: localStorage.getItem('hikeybr_book_progress_nirmala'),
         font: localStorage.getItem('hikeymash_font'),
-        unlocked: HiKeybr.unlockedIndex
+        unlocked: Tankan.unlockedIndex
     }));
     assert.equal(restored.store.unlockedIndex, 10, 'store restored verbatim');
     assert.equal(restored.store.totalTypedCount, 1234);

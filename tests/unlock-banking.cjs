@@ -17,7 +17,7 @@ const path=require('node:path');
  const fresh=async(seed)=>{await page.goto(url);await page.evaluate(seed=>{localStorage.clear();if(seed)localStorage.setItem('hikeybr_store_v3',JSON.stringify(seed));},seed);await page.reload();await page.waitForTimeout(400);};
  // Her state: 35 keys done, current key त्र ('='), banked best 44.7 WPM, 1140 clean timings.
  const herState=async()=>{await page.goto(url);await page.waitForTimeout(400);return page.evaluate(()=>{
-   const KP=HiKeybr.KEY_PROGRESSION;
+   const KP=Tankan.KEY_PROGRESSION;
    const idx=KP.findIndex(it=>it.h==='त्र'),k=KP[idx].k;
    const ks={};ks[k]={modelSamples:1140,accurateBest:268.46,modelBest:268.46,modelTtt:300,lastAccuracy:95.2,recentLessonAccuracy:95.2};
    return {seed:{unlockedIndex:idx,highestUnlocked:idx,targetSpeedGoal:45,keyStats:ks},idx,k};
@@ -26,42 +26,42 @@ const path=require('node:path');
  const typeLesson=(msFor,errorRate,outlier)=>page.evaluate(({msForStr,errorRate,outlier})=>{
    const msFor=eval('('+msForStr+')');
    const realNow=Date.now;let now=realNow();Date.now=()=>now;
-   const seq=HiKeybr.targetKrutiText;
-   const traSeq=HiKeybr.unicodeToKrutiDev('त्र');let traSeen=0;
-   const before=HiKeybr.unlockedIndex;
+   const seq=Tankan.targetKrutiText;
+   const traSeq=Tankan.unicodeToKrutiDev('त्र');let traSeen=0;
+   const before=Tankan.unlockedIndex;
    for(let i=0;i<seq.length;i++){
-     if(errorRate&&i%errorRate===0){now+=250;HiKeybr.handleKeystroke('☃');}
+     if(errorRate&&i%errorRate===0){now+=250;Tankan.handleKeystroke('☃');}
      let ms=msFor(seq[i],i);
      if(outlier&&seq.substr(i,traSeq.length)===traSeq){traSeen++;if(traSeen===3){now+=30000;ms+=0;}}
-     now+=ms;HiKeybr.handleKeystroke(seq[i]);
+     now+=ms;Tankan.handleKeystroke(seq[i]);
    }
    Date.now=realNow;
-   return {before,after:HiKeybr.unlockedIndex,traSeq};
+   return {before,after:Tankan.unlockedIndex,traSeq};
  },{msForStr:msFor.toString(),errorRate,outlier});
 
  // A. Qualifying lesson: every keystroke 200ms (60 WPM), no errors -> banks, gate passes, unlock at lesson end.
  let st=await herState();await fresh(st.seed);
  let r=await typeLesson(()=>200,0,false);
  assert.equal(r.after,st.idx+1,'fast accurate lesson unlocks the next key at lesson end');
- let ks=await page.evaluate(k=>HiKeybr.keyStats[k],st.k);
+ let ks=await page.evaluate(k=>Tankan.keyStats[k],st.k);
  assert.ok(ks.accurateBest<=215,'qualifying lesson banks the fast mean (got '+ks.accurateBest+')');
  assert.ok(ks.modelSamples>1140,'clean timings keep accumulating ('+ks.modelSamples+')');
  // E. Stats for the completed key stay intact after advancing.
  assert.equal(ks.lastAccuracy,100,'previous key stats intact after advancing');
- assert.ok((await page.evaluate(k=>HiKeybr.keyStats[k].modelSamples,st.k))>1140,'previous key samples not reset');
+ assert.ok((await page.evaluate(k=>Tankan.keyStats[k].modelSamples,st.k))>1140,'previous key samples not reset');
 
  // C. Persistence: the bank survives save + reload.
  let saved=await page.evaluate(k=>JSON.parse(localStorage.getItem('hikeybr_store_v3')).keyStats[k],st.k);
  assert.ok(saved&&saved.accurateBest<=215,'banked best persisted to storage');
  await page.reload();await page.waitForTimeout(400);
- ks=await page.evaluate(k=>HiKeybr.keyStats[k],st.k);
+ ks=await page.evaluate(k=>Tankan.keyStats[k],st.k);
  assert.ok(ks.accurateBest<=215&&ks.modelSamples>1140,'banked best and samples survive reload');
 
  // B. Fast-but-sloppy lesson (~80% accuracy): display best moves, bank does not.
  st=await herState();await fresh(st.seed);
  r=await typeLesson(()=>200,4,false);
  assert.equal(r.after,st.idx,'low accuracy must not unlock');
- ks=await page.evaluate(k=>HiKeybr.keyStats[k],st.k);
+ ks=await page.evaluate(k=>Tankan.keyStats[k],st.k);
  assert.equal(Math.round(ks.accurateBest*100),26846,'sloppy lesson never banks (bank stays 44.7)');
  assert.ok(ks.modelTtt<300&&ks.modelTtt>200,'one fast lesson nudges the smoothed pace only 10% ('+ks.modelTtt+')');
  assert.equal(ks.modelBest,268.46,'one fast lesson does NOT move the displayed best - by design (anti-lucky-unlock)');
@@ -72,15 +72,15 @@ const path=require('node:path');
  assert.match(pct,/99%/,'readiness stays capped at 99%');
  // Sustained fast sloppy lessons DO converge the smoothed pace: after 15, the
  // any-lesson tracker shows sub-goal speed even though nothing ever banked.
- for(let i=0;i<15;i++){await page.evaluate(()=>HiKeybr.regenerateLesson());await typeLesson(()=>200,4,false);}
- ks=await page.evaluate(k=>HiKeybr.keyStats[k],st.k);
+ for(let i=0;i<15;i++){await page.evaluate(()=>Tankan.regenerateLesson());await typeLesson(()=>200,4,false);}
+ ks=await page.evaluate(k=>Tankan.keyStats[k],st.k);
  assert.ok(ks.modelBest<240,'sustained fast pace converges the display best ('+ks.modelBest+')');
  assert.equal(Math.round(ks.accurateBest*100),26846,'bank still untouched after 16 sloppy lessons');
 
  // D. One 30-second outlier on a target-key hit cannot poison bank or model best.
  st=await herState();await fresh(st.seed);
  r=await typeLesson(()=>200,0,true);
- ks=await page.evaluate(k=>HiKeybr.keyStats[k],st.k);
+ ks=await page.evaluate(k=>Tankan.keyStats[k],st.k);
  assert.ok(ks.accurateBest<=268.46,'outlier never worsens the bank ('+ks.accurateBest+')');
  assert.ok(ks.modelBest<=268.46,'outlier never worsens the model best ('+ks.modelBest+')');
  assert.equal(r.after,st.idx+1,'outlier lesson still unlocks when the trimmed mean qualifies');

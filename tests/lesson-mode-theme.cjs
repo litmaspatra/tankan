@@ -12,10 +12,10 @@ const path=require('node:path');
  assert.equal(await page.locator('#menu-theme-row button.active').getAttribute('data-theme'),'epaper','restored theme menu tick matches active e-paper');
  await page.screenshot({path:'test-results/tankan-epaper-tick-fixed.png',fullPage:true});
  await page.click('#theme-menu-btn');await page.click('.lesson-settings summary');
- const read=()=>page.evaluate(()=>({text:HiKeybr.currentLessonText,cursor:HiKeybr.cursorIndex,correct:HiKeybr.sessionCorrect,errors:HiKeybr.sessionErrors,status:document.querySelector('#word-pool-status').textContent}));
+ const read=()=>page.evaluate(()=>({text:Tankan.currentLessonText,cursor:Tankan.cursorIndex,correct:Tankan.sessionCorrect,errors:Tankan.sessionErrors,status:document.querySelector('#word-pool-status').textContent}));
  for(const tab of ['books','essays']){
   await page.click('[data-lstab="'+tab+'"]');await page.evaluate(()=>{const b=findBook(textSource);return b&&!Array.isArray(b.lines)?ensureBookLoaded(b.id):Promise.resolve(true);});let before=await read();
-  await page.evaluate(()=>HiKeybr.handleKeystroke(HiKeybr.targetKrutiText[0]));before=await read();
+  await page.evaluate(()=>Tankan.handleKeystroke(Tankan.targetKrutiText[0]));before=await read();
   await page.click('[data-lstab="'+tab+'"]');assert.deepEqual(await read(),before,'clicking active '+tab+' must not advance/reset');
   await page.click('[data-lstab="words"]');await page.click('[data-lstab="'+tab+'"]');
   const returned=await read();assert.equal(returned.text,before.text,'returning to '+tab+' must not skip unfinished paragraph');

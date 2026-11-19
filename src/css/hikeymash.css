@@ -4,7 +4,7 @@
 
 
 
-        /* Remington design variants (same KrutiDev 010 byte encoding), as in hikeybr */
+        /* Remington design variants (same KrutiDev 010 byte encoding), as in the tutor */
 
 
 
@@ -175,7 +175,7 @@
             --chip-border: #a3e635;
         }
 
-        /* HiKeybr palettes carry no --gold: alias it to the accent. */
+        /* Tankan palettes carry no --gold: alias it to the accent. */
         :root { --gold: var(--accent); --gold-glow: var(--accent-glow); }
 
         * {
@@ -1479,7 +1479,7 @@
 
         /* Keyboard: keybr.com-style keycaps — flat square keys with no
            borders, even 3px gaps on a rounded flat frame. The skin lives
-           in keyboard.css, shared with HiKeybr; only page-specific
+           in keyboard.css, shared with Tankan; only page-specific
            geometry stays here. */
         .keyboard-frame {
             padding: 14px;
@@ -1513,7 +1513,7 @@
         }
 
         /* pressed / target ring / shift-needed: in keyboard.css
-           (shared with HiKeybr). */
+           (shared with Tankan). */
 
         .k-key .hi-shift {
             font-family: 'Noto Sans Devanagari', sans-serif;
@@ -1561,7 +1561,7 @@
             color: var(--km-text-dim);
         }
 
-        /* Real-keyboard proportions (same as HiKeybr): every row fills the
+        /* Real-keyboard proportions (same as Tankan): every row fills the
            frame, keys sized in standard unit ratios, spacebar ~6.25u wide. */
         @media (min-width: 651px) {
             .k-key { flex: 1 1 0; min-width: 0; }

@@ -12,7 +12,7 @@
         populateJumpSelect();
         regenerateLesson();
 
-        window.HiKeybr = {
+        window.Tankan = {
             get currentLessonText() { return currentLessonText; },
             set currentLessonText(v) { currentLessonText = v; },
             get targetKrutiText() { return targetKrutiText; },

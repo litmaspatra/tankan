@@ -13,14 +13,14 @@ const path = require('node:path');
     // 1. Chart math, pure functions with known answers.
     await page.goto(url);
     const math = await page.evaluate(() => ({
-        alpha: HiKeybr.ChartMath.alpha(0.5),
-        smooth: HiKeybr.ChartMath.smooth([10, 20, 30], 0.5),
-        reg: HiKeybr.ChartMath.linRegress([2, 4, 6]),
-        regFlat: HiKeybr.ChartMath.linRegress([7, 7, 7]),
-        bw: HiKeybr.ChartMath.bucketWidth(40),
-        bwSmall: HiKeybr.ChartMath.bucketWidth(15),
-        hist: HiKeybr.ChartMath.histogram([1, 1.5, 2.5, 2.9, 9], 2),
-        nice: [HiKeybr.ChartMath.niceCeil(0), HiKeybr.ChartMath.niceCeil(3), HiKeybr.ChartMath.niceCeil(23), HiKeybr.ChartMath.niceCeil(260)]
+        alpha: Tankan.ChartMath.alpha(0.5),
+        smooth: Tankan.ChartMath.smooth([10, 20, 30], 0.5),
+        reg: Tankan.ChartMath.linRegress([2, 4, 6]),
+        regFlat: Tankan.ChartMath.linRegress([7, 7, 7]),
+        bw: Tankan.ChartMath.bucketWidth(40),
+        bwSmall: Tankan.ChartMath.bucketWidth(15),
+        hist: Tankan.ChartMath.histogram([1, 1.5, 2.5, 2.9, 9], 2),
+        nice: [Tankan.ChartMath.niceCeil(0), Tankan.ChartMath.niceCeil(3), Tankan.ChartMath.niceCeil(23), Tankan.ChartMath.niceCeil(260)]
     }));
     assert.ok(Math.abs(math.alpha - Math.pow(10, -1.5)) < 1e-12, 'keybr alpha');
     assert.deepEqual(math.smooth, [10, 15, 22.5], 'exponential smoothing');
@@ -99,7 +99,7 @@ const path = require('node:path');
     await page.click('#avatar-corner'); await page.click('.nav-tab[data-target="profile"]');
     const mig = await page.evaluate(() => ({
         tiles: document.getElementById('prof-tiles-all').textContent,
-        daily: HiKeybr.dailyStats,
+        daily: Tankan.dailyStats,
         cal: [...document.querySelectorAll('#chart-calendar .cal-cell')].filter(c => c.title.includes('lesson')).length
     }));
     assert.ok(mig.tiles.includes('24.0 wpm'), 'migrated top speed 24: ' + mig.tiles);

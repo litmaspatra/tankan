@@ -1,6 +1,6 @@
 // Lightweight catalog entries for the two full novels. Their text lives in
 // data/books/godan.js and data/books/nirmala.js (~2.6 MB together) and loads
-// on demand - see ensureBookLoaded in src/js/hikeybr/bookloader.js - so the
+// on demand - see ensureBookLoaded in src/js/tankan/bookloader.js - so the
 // first page load doesn't download books the default mode never shows.
 // Keep these fields in sync with the headers of the full book files.
 window.HIKEYBR_BOOKS=window.HIKEYBR_BOOKS||[];

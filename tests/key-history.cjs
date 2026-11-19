@@ -22,14 +22,14 @@ require('node:fs').mkdirSync(shots,{recursive:true});
  assert.match(await page.locator('#key-popup').textContent(),/Average/);
  assert.equal(await page.locator('#key-popup .kp-dot').count(),0,'no EMA substituted for own-key lesson dots');
  assert.match(await page.locator('#key-popup').textContent(),/New dots start/);
- assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),34,'opening graph does not select review');
+ assert.equal(await page.evaluate(()=>Tankan.unlockedIndex),34,'opening graph does not select review');
  await page.screenshot({path:path.join(shots,'tankan-history-legacy-desktop.png')});
  await page.locator('.kp-close').click();
  assert.equal(await page.locator('#key-popup').isVisible(),false,'close remains closed after focus return');
  // A real synthetic keystroke lesson must persist raw own pace, not EMA.
  const after=await page.evaluate(()=>{
   const realNow=Date.now;let now=realNow();Date.now=()=>now;
-  for(const ch of HiKeybr.targetKrutiText){now+=300;HiKeybr.handleKeystroke(ch);}
+  for(const ch of Tankan.targetKrutiText){now+=300;Tankan.handleKeystroke(ch);}
   Date.now=realNow;return JSON.parse(localStorage.getItem('hikeybr_store_v3'));
  });
  const tuple=after.keyLearning['='].lessons.at(-1);
@@ -52,12 +52,12 @@ require('node:fs').mkdirSync(shots,{recursive:true});
  await page.keyboard.press('Escape');
  await page.locator('.ak-badge[data-key="d"]').focus();await page.keyboard.press('Enter');
  assert.equal(await page.locator('#key-popup').isVisible(),true);
- assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),after.highestUnlocked);
+ assert.equal(await page.evaluate(()=>Tankan.unlockedIndex),after.highestUnlocked);
  await page.locator('.kp-practice').click();
- assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),0);
+ assert.equal(await page.evaluate(()=>Tankan.unlockedIndex),0);
  assert.equal(await page.locator('#review-banner').isVisible(),true);
  await page.locator('#review-resume-btn').click();
- assert.equal(await page.evaluate(()=>HiKeybr.unlockedIndex),after.highestUnlocked);
+ assert.equal(await page.evaluate(()=>Tankan.unlockedIndex),after.highestUnlocked);
  // Long history fixture for layout and history limit. Not a recovered user history.
  const demo={...after,keyLearning:structuredClone(after.keyLearning)};
  demo.keyLearning['='].lessons=Array.from({length:130},(_,i)=>({wpm:29+i*.12+Math.sin(i*1.1)*4,accuracy:i%4===0?94.5:97.2,samples:12,lesson:200+i,ts:Date.now()-(130-i)*60000}));

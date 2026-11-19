@@ -106,7 +106,7 @@ a { color: var(--accent); }
 
 /* ═══════════════════════════════════════════════════════════
    SITE HEADER on the guide pages
-   Same header the practice page has (src/css/hikeybr.css): logo, Practice /
+   Same header the practice page has (src/css/tankan.css): logo, Practice /
    Leaderboard tabs, avatar menu, theme dropdown, sound toggle. Rules mirror
    the app's in the same cascade order so the header renders identically;
    tests/guide-pages.cjs compares it against index.html's header box.

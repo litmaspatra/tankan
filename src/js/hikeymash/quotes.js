@@ -124,7 +124,7 @@
 
             // Remote CDN fallback
             try {
-                const remoteRes = await fetch('https://raw.githubusercontent.com/litmaspatra/hikeybr/main/data/quotes.json');
+                const remoteRes = await fetch('https://raw.githubusercontent.com/litmaspatra/tankan/main/data/quotes.json');
                 if (remoteRes.ok) {
                     const remoteData = await remoteRes.json();
                     if (Array.isArray(remoteData) && remoteData.length >= 100) {
