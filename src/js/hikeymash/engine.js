@@ -42,6 +42,7 @@
             s = s.replace(/आ/g, 'vk');
             s = s.replace(/ई/g, 'bZ');
             s = s.replace(/ऐ/g, ',s');
+            s = s.replace(/ऑ/g, 'vkW');
 
             // 4. Special conjuncts (real Remington keyboard keys)
             s = s.replace(/त्र/g, '=');
@@ -82,6 +83,9 @@
             s = s.replace(/श(?!्)/g, "'k");
             s = s.replace(/ष(?!्)/g, '"k');
 
+            // ङ conjuncts use the anusvara key, as Kruti Dev typists write अंग.
+            s = s.replace(/ङ्/g, 'a');
+
             // Half forms (halant):
             s = s.replace(/ख्/g, '[');
             s = s.replace(/क्ष्/g, '{');
@@ -113,7 +117,7 @@
                 'क': 'd', 'ग': 'x', 'च': 'p', 'ज': 't', 'ट': 'V', 'ठ': 'B', 'ड': 'M', 'ढ': '<',
                 'त': 'r', 'द': 'n', 'न': 'u', 'प': 'i', 'फ': 'Q', 'ब': 'c', 'म': 'e', 'य': ';',
                 'र': 'j', 'ल': 'y', 'व': 'o', 'स': 'l', 'ह': 'g', 'ळ': 'G', 'छ': 'N', 'झ': '>', 'ङ': 'a',
-                'ा': 'k', 'ी': 'h', 'ु': 'q', 'ू': 'w', 'े': 's', 'ै': 'S', 'ो': 'ks', 'ौ': 'kS',
+                'ा': 'k', 'ी': 'h', 'ु': 'q', 'ू': 'w', 'े': 's', 'ै': 'S', 'ो': 'ks', 'ौ': 'kS', 'ॉ': 'kW',
                 'ं': 'a', 'ः': '%', 'ृ': '`', '्': '~', '़': '+',
                 '।': 'A',
                 '‘': '^', '’': '*',

@@ -57,6 +57,10 @@
             s = s.replace(/आ/g, 'vk');
             s = s.replace(/ई/g, 'bZ');
             s = s.replace(/ऐ/g, ',s');
+            // ऑ (chandra O) composes like ओ/ौ: stem + chandra sign (Shift+W).
+            // Leaving it as raw Unicode made the word untypable and dropped it
+            // from books and custom text (डॉक्टर, ऑफिस).
+            s = s.replace(/ऑ/g, 'vkW');
 
             // 4. Special conjuncts (real Remington keyboard keys)
             s = s.replace(/त्र/g, '=');
@@ -97,6 +101,11 @@
             s = s.replace(/श(?!्)/g, "'k");
             s = s.replace(/ष(?!्)/g, '"k');
 
+            // ङ has no Remington key: type its conjuncts with the anusvara key,
+            // exactly as Kruti Dev typists write अंग. Without this the halant
+            // survived as a stray tick under the anusvara dot (अङ्ग).
+            s = s.replace(/ङ्/g, 'a');
+
             // Half forms (halant):
             s = s.replace(/ख्/g, '[');
             s = s.replace(/क्ष्/g, '{');
@@ -128,7 +137,7 @@
                 'क': 'd', 'ग': 'x', 'च': 'p', 'ज': 't', 'ट': 'V', 'ठ': 'B', 'ड': 'M', 'ढ': '<',
                 'त': 'r', 'द': 'n', 'न': 'u', 'प': 'i', 'फ': 'Q', 'ब': 'c', 'म': 'e', 'य': ';',
                 'र': 'j', 'ल': 'y', 'व': 'o', 'स': 'l', 'ह': 'g', 'ळ': 'G', 'छ': 'N', 'झ': '>', 'ङ': 'a',
-                'ा': 'k', 'ी': 'h', 'ु': 'q', 'ू': 'w', 'े': 's', 'ै': 'S', 'ो': 'ks', 'ौ': 'kS',
+                'ा': 'k', 'ी': 'h', 'ु': 'q', 'ू': 'w', 'े': 's', 'ै': 'S', 'ो': 'ks', 'ौ': 'kS', 'ॉ': 'kW',
                 'ं': 'a', 'ः': '%', 'ृ': '`', '्': '~', '़': '+',
                 '।': 'A',
                 '‘': '^', '’': '*',
@@ -195,6 +204,7 @@
             "w": { hi: 'ू', name: 'Badi Oo matra', detail: 'Left Ring', key: 'w', shift: false },
             "a": { hi: 'ं', name: 'Anusvara', detail: 'Left Pinky', key: 'a', shift: false },
             "S": { hi: 'ै', name: 'Ai matra', detail: 'Shift + S', key: 's', shift: true },
+            "W": { hi: 'ॉ', name: 'Chandra O matra', detail: 'Shift + W, after the stem', key: 'w', shift: true },
             "N": { hi: 'छ', name: 'Chha', detail: 'Shift + N', key: 'n', shift: true },
             ">": { hi: 'झ', name: 'Jha', detail: 'Shift + .', key: '.', shift: true },
             "=": { hi: 'त्र', name: 'Tra', detail: 'Right Pinky', key: '=', shift: false },

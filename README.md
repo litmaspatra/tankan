@@ -7,7 +7,7 @@ Adaptive Hindi typing practice for the **Remington (Kruti Dev 010)** layout.
 - Learn keys gradually with speed and accuracy targets.
 - Practise with guided lessons, books, essays and Hindi vocabulary.
 - Sign in optionally to sync progress and join the leaderboard.
-- Choose from six bundled fonts and eight themes.
+- Choose from five bundled fonts and seven themes.
 
 ## For developers
 
