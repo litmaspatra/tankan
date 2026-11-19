@@ -52,7 +52,7 @@
                 document.documentElement.dataset.fontReady='1';
             });
         }
-        const FONT_REGISTRY = {krutidev:{label:'KrutiDev 010',encoding:'krutidev',family:'KrutiDev010'},devlys010:{label:'DevLys 010',encoding:'krutidev-compatible',family:'DevLys010Web'},devlys040:{label:'DevLys 040',encoding:'krutidev-compatible',family:'DevLys040'},devlys040bold:{label:'DevLys 040 Bold',encoding:'krutidev-compatible',family:'DevLys040Bold'},tankan:{label:'टंकण (testing)',encoding:'krutidev',family:'TankanRemington'},tankanclean:{label:'टंकण Clean (testing)',encoding:'krutidev',family:'TankanClean'}};
+        const FONT_REGISTRY = {krutidev:{label:'KrutiDev 010',encoding:'krutidev',family:'KrutiDev010'},devlys010:{label:'DevLys 010',encoding:'krutidev-compatible',family:'DevLys010Web'},devlys040:{label:'DevLys 040',encoding:'krutidev-compatible',family:'DevLys040'},devlys040bold:{label:'DevLys 040 Bold',encoding:'krutidev-compatible',family:'DevLys040Bold'},tankan:{label:'टंकण 1',encoding:'krutidev',family:'TankanRemington'},tankanclean:{label:'टंकण 2',encoding:'krutidev',family:'TankanClean'}};
         let audioCtx = null;
         let altCodeBuffer = '';
         let altCodeActive = false;
