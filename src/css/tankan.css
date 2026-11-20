@@ -1648,8 +1648,8 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
 
         /* Typing text: exactly three lines visible; cursor auto-scrolls inside */
         .text-stream-container {
-            height: calc(3 * 1.6334em) !important;
-            max-height: calc(3 * 1.6334em) !important;
+            height: calc(3 * 1.6em) !important;
+            max-height: calc(3 * 1.6em) !important;
             min-height: 0 !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
@@ -1687,8 +1687,8 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
         }
         @media (max-width: 650px) {
             /* No silent cap: the slider's promise is that every value 18-64
-               applies. The 4.9em scroll box keeps tall sizes bounded. */
-            .text-stream-container { font-size: var(--practice-fs, 1.3rem) !important; height: 4.9em !important; max-height: 4.9em !important; }
+               applies. The 4.8em scroll box keeps tall sizes bounded. */
+            .text-stream-container { font-size: var(--practice-fs, 1.3rem) !important; height: 4.8em !important; max-height: 4.8em !important; }
         }
 
         /* Keep the whole practice view inside one 1366x768-class viewport */
@@ -2103,7 +2103,7 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
 }
 /* Focus mode used content-sized height, so wrapping could resize its text box. */
 .typing-canvas.focus-canvas .text-stream-container {
-    height: 4.9em !important;
+    height: 4.8em !important;
     flex: 0 0 auto;
 }
 

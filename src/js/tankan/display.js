@@ -60,10 +60,19 @@
             if (el.textCurrent && el.textCurrent.textContent) {
                 // Keep the cursor visible inside the stream container only;
                 // never move the page (settings changes must not jump the view).
+                // Scroll in whole-line steps: the window is exactly three
+                // line-heights tall, so a pixel-margin scroll parks a clipped
+                // sliver of the next line at the bottom edge (Devanagari ink
+                // starts above the line box and paints inside the container).
                 const cont = el.textStreamContainer;
                 const r = el.textCurrent.getBoundingClientRect(), c = cont.getBoundingClientRect();
-                if (r.bottom > c.bottom - 4) cont.scrollTop += r.bottom - c.bottom + 16;
-                else if (r.top < c.top + 4) cont.scrollTop -= c.top - r.top + 16;
+                const lh = parseFloat(getComputedStyle(cont).lineHeight);
+                if (lh > 0) {
+                    const line = Math.round((r.top - c.top + cont.scrollTop) / lh);
+                    const maxLineScroll = Math.max(0, Math.floor((cont.scrollHeight - cont.clientHeight) / lh) * lh);
+                    const target = Math.min(Math.max(0, (line - 1) * lh), maxLineScroll);
+                    if (Math.abs(cont.scrollTop - target) > 1) cont.scrollTop = target;
+                }
             }
 
             // 4. Keyboard highlight & live hint strip

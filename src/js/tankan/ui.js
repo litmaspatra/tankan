@@ -354,8 +354,13 @@
                 document.documentElement.classList.add('focus-mode');
                 b.textContent='\u2715';b.title='Exit focus mode (Esc)';
                 requestAnimationFrame(()=>requestAnimationFrame(()=>{if(focusMode)applyCanvasRect(cv,focusTargetRect());}));
+                // Real fullscreen, not only an in-page overlay (Kartik
+                // 2026-11-20). The click on the toggle is the user gesture;
+                // a denial (or file://) just leaves the overlay mode.
+                if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});
             }else{
                 focusMode=false;
+                if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
                 document.documentElement.classList.remove('focus-mode');
                 b.textContent='\u26F6';b.title='Focus mode: show only the typing text';
                 // Glide back to the placeholder's live rect (it tracks the
@@ -376,6 +381,9 @@
         };
         $id('focus-toggle').addEventListener('click',()=>setFocusMode(!focusMode));
         document.addEventListener('keydown',e=>{if(e.key==='Escape'&&focusMode){e.preventDefault();setFocusMode(false);}});
+        // Esc inside native fullscreen is consumed by the browser: it exits
+        // fullscreen without a keydown. Sync the overlay state back off.
+        document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&focusMode)setFocusMode(false);});
         window.addEventListener('resize',()=>{if(focusMode)applyCanvasRect($id('typing-canvas'),focusTargetRect());});
         document.querySelectorAll('input[name=snd]').forEach(r=>r.onchange=()=>{if(r.value==='none'){soundEnabled=false;}else{opts.soundMode=r.value;soundEnabled=true;}updateSoundUI();applyOpts(false);saveStorage();sound.click();});
         $id('opt-volume').oninput=e=>{opts.volume=parseInt(e.target.value,10);$id('opt-volume-val').textContent=opts.volume+'%';};
