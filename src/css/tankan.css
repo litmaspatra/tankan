@@ -2110,9 +2110,22 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
 /* A small extra gap between words, without spacing apart conjunct bytes. */
 .text-stream-container { word-spacing: 0.09em; }
 
+/* Legacy bytes reuse ASCII punctuation as Hindi letters ('?' = घ, '.' = ण्),
+   which the Unicode line breaker treats as wrap opportunities mid-word
+   (घ|बराता split, Kartik 2026-11-20). The renderer groups each word into a
+   .w span; wrapping may only happen at spaces. */
+.text-stream-container .w { white-space: nowrap; }
+
 /* Keep missed positions red until the lesson is restarted. */
 .text-stream-container .typing-error { color: var(--error) !important; }
 .text-current .typing-error { background-color: var(--error-bg); }
+
+/* ...but the unit under the cursor keeps its current-key highlight even right
+   after a mistake: it turns red only once typing moves past it, so the next
+   key to press stays obvious after consecutive errors (Kartik 2026-11-20).
+   The transient error-flash on .text-current still signals the bad keypress.
+   Color inherits so the highlight-off style (cur-off) keeps working. */
+.text-current .typing-error { color: inherit !important; background-color: transparent !important; }
 
 /* Emoji glyphs have different natural widths: reserve the same icon column. */
 #avatar-menu .menu-item .nav-icon { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; line-height: 1; }
@@ -2136,6 +2149,10 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
     text-decoration-thickness: 2px;
     text-underline-offset: 4px;
 }
+/* ...but not while it is still the current key: the current-key cue alone
+   marks it until typing moves past. Listed after the rule above so equal
+   specificity resolves this way. */
+:root[data-theme="blackwhite"] .text-stream-container .text-current .typing-error { text-decoration: none; }
 
 /* Completed-result cards: explicit averages without a duplicate results row. */
 #panel-practice > .stats-strip .stat-card { padding: 8px 12px; gap: 3px; }

@@ -27,15 +27,41 @@ window.TankanLegacyRenderer=(()=>{
   return map;
  }
  function glyph(text,index,map,errors){const feature=map.get(index),error=errors?.has(index);if(!feature&&!error)return document.createTextNode(text[index]);const node=document.createElement('span');node.textContent=text[index];if(feature)node.style.fontFeatureSettings='"'+feature+'" 1';if(error)node.classList.add('typing-error');return node;}
+ // Legacy bytes reuse ASCII punctuation codepoints as Hindi letters ('?' is घ,
+ // '.' is ण्, '/' is ध्, ...). The Unicode line breaker treats those bytes as
+ // break opportunities and was splitting words across lines (घ|बराता). Keep
+ // every space-delimited word inside one no-wrap span; only spaces may wrap.
+ function fill(frag,text,start,end,map,errors){
+  let word=null,len=0;
+  for(let j=start;j<end;j++){
+   if(text[j]===' '){word=null;len=0;frag.append(document.createTextNode(' '));continue;}
+   // Exceptionally long unspaced runs (URLs, pasted gibberish) still need wrap
+   // points: past 24 chars, offer a <wbr> every 12 so the line box can never
+   // overflow and the cursor stays reachable. Ordinary Hindi words stay whole.
+   if(word&&len>=24&&len%12===0){word=null;frag.append(document.createElement('wbr'));}
+   if(!word){word=document.createElement('span');word.className='w';frag.append(word);}
+   word.append(glyph(text,j,map,errors));len++;
+  }
+ }
  function stream(nodes,text,cursor,key,errors){
   const state=states.get(nodes[0]);
+  // Move one character between nodes, keeping word spans whole: merge into a
+  // sibling .w span of the same word, or wrap a lone char in a fresh .w span.
+  // Top-level text nodes are spaces; word chars (even bare text nodes) live
+  // inside .w spans, so a pulled char carries whether it needs a word span.
+  const takeFirst=(src)=>{const f=src.firstChild;if(!f)return null;if(f.nodeType===3){f.remove();return{u:f,w:false};}const u=f.firstChild;if(!u)return null;u.remove();if(!f.firstChild)f.remove();return{u,w:true};};
+  const takeLast=(src)=>{const l=src.lastChild;if(!l)return null;if(l.nodeType===3){l.remove();return{u:l,w:false};}const u=l.lastChild;if(!u)return null;u.remove();if(!l.firstChild)l.remove();return{u,w:true};};
+  const putEnd=(dst,t)=>{if(!t)return;if(!t.w){dst.append(t.u);return;}const l=dst.lastChild;if(l&&l.nodeType===1){l.append(t.u);}else{const w=document.createElement('span');w.className='w';w.append(t.u);dst.append(w);}};
+  const putStart=(dst,t)=>{if(!t)return;if(!t.w){dst.prepend(t.u);return;}const f=dst.firstChild;if(f&&f.nodeType===1){f.prepend(t.u);}else{const w=document.createElement('span');w.className='w';w.append(t.u);dst.prepend(w);}};
   if(state?.text===text&&state.key===key&&state.errors===errors&&state.errorCount===(errors?.size||0)){
    if(cursor===state.cursor)return true;
-   if(cursor===state.cursor+1){if(nodes[1].firstChild)nodes[0].append(nodes[1].firstChild);if(nodes[2].firstChild)nodes[1].append(nodes[2].firstChild);state.cursor=cursor;return true;}
-   if(cursor===state.cursor-1){if(nodes[1].firstChild)nodes[2].prepend(nodes[1].firstChild);if(nodes[0].lastChild)nodes[1].append(nodes[0].lastChild);state.cursor=cursor;return true;}
+   if(cursor===state.cursor+1){putEnd(nodes[0],takeFirst(nodes[1]));putEnd(nodes[1],takeFirst(nodes[2]));state.cursor=cursor;return true;}
+   if(cursor===state.cursor-1){putStart(nodes[2],takeFirst(nodes[1]));putEnd(nodes[1],takeLast(nodes[0]));state.cursor=cursor;return true;}
   }
   const map=enabled(key)?features(text,key):new Map(),frags=nodes.map(()=>document.createDocumentFragment());
-  for(let j=0;j<text.length;j++)frags[j<cursor?0:j===cursor?1:2].append(glyph(text,j,map,errors));
+  fill(frags[0],text,0,cursor,map,errors);
+  fill(frags[1],text,cursor,Math.min(cursor+1,text.length),map,errors);
+  fill(frags[2],text,Math.min(cursor+1,text.length),text.length,map,errors);
   nodes.forEach((node,i)=>node.replaceChildren(frags[i]));states.set(nodes[0],{text,cursor,key,errors,errorCount:errors?.size||0});return true;
  }
  function partial(node,text,end,key){if(!enabled(key))return false;const map=features(text,key),frag=document.createDocumentFragment();for(let j=0;j<end;j++)frag.append(glyph(text,j,map));node.replaceChildren(frag);return true;}

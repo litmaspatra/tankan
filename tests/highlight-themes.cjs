@@ -20,6 +20,22 @@ const path = require('path');
     await page.keyboard.type('x');
     await page.waitForTimeout(400);
     assert.equal(await page.evaluate(() => Tankan.cursorIndex), 0);
+    // A mistake still under the cursor keeps the current-key accent
+    // highlight; it only turns red once typing moves past it.
+    const stuck = await page.evaluate(() => {
+      const err = document.getElementById('text-current').querySelector('.typing-error');
+      if (!err) return null;
+      const s = getComputedStyle(err);
+      return {color:s.color, bg:s.backgroundColor, deco:s.textDecorationLine};
+    });
+    assert.ok(stuck, theme + ': errored unit under cursor marked');
+    const accentNow = await page.evaluate(() => {
+      const n=document.createElement('span'); n.style.color='var(--accent)';
+      document.body.append(n); const c=getComputedStyle(n).color; n.remove(); return c;
+    });
+    assert.equal(stuck.color, accentNow, theme + ': current errored key keeps accent colour');
+    assert.equal(stuck.bg, 'rgba(0, 0, 0, 0)', theme + ': current errored key keeps glow, no error block');
+    assert.equal(stuck.deco, 'none', theme + ': no error underline on current key');
     await page.keyboard.type('dyk');
     assert.equal(await page.evaluate(() => Tankan.cursorIndex), 3);
     assert.equal(await page.locator('.typing-error').textContent(), 'd');
