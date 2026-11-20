@@ -420,6 +420,24 @@
 
         function updateLiveStats() {
             updateInsights();
+            // While a lesson is in progress, the speed and accuracy cards show
+            // the live session instead of the last completed one (Kartik
+            // 2026-11-20). Same formulas as the completed-lesson record, so the
+            // live number settles into the card value at completion: wpm is
+            // (correct chars / 5) per active minute via lessonElapsed(), acc is
+            // correct / (correct + errors). updateInsights() above keeps the
+            // last-lesson values whenever the session gate fails, including at
+            // completion and on reset, so unfinished input never enters the
+            // averages or history bars.
+            const typed=sessionCorrect+sessionErrors;
+            const elapsed=typeof lessonElapsed==='function'?lessonElapsed():0;
+            if(!sessionStartTime||lessonCompleted||typed<2||elapsed<1000)return;
+            const acc=sessionCorrect/typed*100;
+            const wpm=(sessionCorrect/5)/(elapsed/60000);
+            el.metricWpm.textContent=wpm.toFixed(1);
+            el.metricAccuracy.textContent=acc.toFixed(1);
+            const wl=document.getElementById('metric-wpm-label');if(wl)wl.textContent='Speed · live';
+            const al=document.getElementById('metric-accuracy-label');if(al)al.textContent='Accuracy · live';
         }
 
         function populateJumpSelect() {
