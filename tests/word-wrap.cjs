@@ -87,6 +87,26 @@ const splitScan = () => {
   await page.evaluate((t) => { Tankan.currentLessonText = t; Tankan.regenerateLesson({keepText:true}); }, 'घबराता कणाद धरती शब्द संस्कृति ');
   assert.equal(await page.locator('#text-stream-container wbr').count(), 0, 'no wbr in ordinary words');
 
+
+  // <wbr> placement inside a rakar/bindu cluster must not disturb glyph
+  // shaping: feature values are per-char from the full-text map, so widths
+  // stay identical whether the wbr falls inside or outside the cluster.
+  await page.setViewportSize({width: 1400, height: 900});
+  await page.waitForTimeout(150);
+  const shaping = await page.evaluate(() => {
+    const cl = 'भाञ्जा';
+    const widths = [];
+    for (const u of ['क'.repeat(22) + cl + 'क'.repeat(10), 'क'.repeat(10) + cl + 'क'.repeat(22)]) {
+      Tankan.currentLessonText = u + ' ' + u;
+      Tankan.regenerateLesson({keepText:true});
+      const range = document.createRange();
+      range.selectNodeContents(document.getElementById('text-remaining'));
+      widths.push(range.getBoundingClientRect().width);
+    }
+    return widths;
+  });
+  assert.ok(Math.abs(shaping[0] - shaping[1]) < 0.5, 'wbr inside vs outside a cluster keeps shaping width');
+
   await browser.close();
   console.log('PASS: no mid-word splits at 4 widths with clean/error cursor states, long unspaced runs wrap via wbr without overflow, ordinary words carry no wbr');
 })().catch(e => { console.error(e); process.exit(1); });
