@@ -1,6 +1,9 @@
         /* ═══════════════════════════════════════════════════════════
-           AUTHENTIC KRUTIDEV 010 FONT (Base64 Embedded + Fallback)
+           टंकण LEGACY-BYTE FONTS (KrutiDev 010 encoding; @font-face in
+           the tutor stylesheet is not loaded here, so Arena declares them)
            ═══════════════════════════════════════════════════════════ */
+        @font-face{font-family:'TankanRemington';src:url('../../fonts/Tankan-Remington-Regular.ttf?v=20261116-font5') format('truetype');font-weight:400;font-style:normal;font-display:block;}
+        @font-face{font-family:'TankanClean';src:url('../../fonts/Tankan-Clean-Regular.ttf?v=20261119-clean1') format('truetype');font-weight:400;font-style:normal;font-display:block;}
 
 
 
@@ -1239,7 +1242,7 @@
 
         /* KrutiDev Stream */
         .kruti-stream {
-            font-family: 'DevLys010Web', 'KrutiDev010', sans-serif;
+            font-family: 'TankanRemington', sans-serif;
             font-size: clamp(1.4rem, 2.5vw, 1.85rem);
             font-weight: 500;
             line-height: 1.75;
@@ -2012,7 +2015,7 @@
         }
 
         .replay-text {
-            font-family: 'DevLys010Web', 'KrutiDev010', sans-serif;
+            font-family: 'TankanRemington', sans-serif;
             font-size: 1.5rem;
             line-height: 1.8;
             color: var(--km-text-dim);

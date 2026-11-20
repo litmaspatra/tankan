@@ -41,18 +41,18 @@
         let bestLessonWpm = 0, bestLessonAcc = 0, bestStreak = 0, bestScore = 0;
         let pendingLessonEvents = [], goalFlashedDay = '';
         let lessonKeyTimes = {}, lessonActiveSeconds = 0, activityAt = null;
-        let previousAttemptWrong=false, measurementEvents = [], displayFont = 'devlys040', altEntryStartedAt = null;
+        let previousAttemptWrong=false, measurementEvents = [], displayFont = 'tankan', altEntryStartedAt = null;
         // Gate font switches on real load so legacy-encoded text never flashes
         // as Latin gibberish while a .ttf is still downloading.
         function ensureFontLoaded(key) {
             if(key==='tankan')return window.TankanLegacyRenderer.ready();
-            const f=FONT_REGISTRY[key]||FONT_REGISTRY.devlys040;
+            const f=FONT_REGISTRY[key]||FONT_REGISTRY.tankan;
             return document.fonts.load('32px "'+f.family+'"').then(faces=>{
                 if(!faces.length)throw new Error('Practice font unavailable');
                 document.documentElement.dataset.fontReady='1';
             });
         }
-        const FONT_REGISTRY = {krutidev:{label:'KrutiDev 010',encoding:'krutidev',family:'KrutiDev010'},devlys010:{label:'DevLys 010',encoding:'krutidev-compatible',family:'DevLys010Web'},devlys040:{label:'DevLys 040',encoding:'krutidev-compatible',family:'DevLys040'},devlys040bold:{label:'DevLys 040 Bold',encoding:'krutidev-compatible',family:'DevLys040Bold'},tankan:{label:'टंकण 1',encoding:'krutidev',family:'TankanRemington'},tankanclean:{label:'टंकण 2',encoding:'krutidev',family:'TankanClean'}};
+        const FONT_REGISTRY = {tankan:{label:'टंकण 1',encoding:'krutidev',family:'TankanRemington'},tankanclean:{label:'टंकण 2',encoding:'krutidev',family:'TankanClean'}};
         let audioCtx = null;
         let altCodeBuffer = '';
         let altCodeActive = false;

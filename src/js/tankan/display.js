@@ -4,7 +4,7 @@
         // ─────────────────────────────────────────────────────────────
         const rakarPrototypeActive=()=>FONT_REGISTRY[displayFont]?.encoding!=='unicode';
         function renderLessonFont() {
-            const font=FONT_REGISTRY[displayFont]||FONT_REGISTRY.krutidev;
+            const font=FONT_REGISTRY[displayFont]||FONT_REGISTRY.tankan;
             el.textStreamContainer.style.fontFamily=`'${font.family}', 'Noto Sans Devanagari', sans-serif`;
             if(font.encoding!=='unicode'){
                 window.TankanLegacyRenderer.stream([el.textCorrect,el.textCurrent,el.textRemaining],targetKrutiText,cursorIndex,displayFont,missedPositions);return;

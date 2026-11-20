@@ -106,7 +106,8 @@
                 }
                 const logItem = keystrokeLog[replayIdx];
                 replayIdx++;
-                el.replayText.textContent = targetKrutiText.substring(0, logItem.idx);
+                const replayPainted = window.TankanLegacyRenderer ? window.TankanLegacyRenderer.partial(el.replayText, targetKrutiText, logItem.idx, window.__hikeymashFont || 'tankan') : false;
+                if (!replayPainted) el.replayText.textContent = targetKrutiText.substring(0, logItem.idx);
                 el.replayScrubberFill.style.width = ((replayIdx / keystrokeLog.length) * 100) + '%';
 
                 const nextItem = keystrokeLog[replayIdx];

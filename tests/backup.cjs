@@ -16,7 +16,7 @@ const path = require('node:path');
             localStorage.clear();
             localStorage.setItem('hikeybr_store_v3', JSON.stringify(s));
             localStorage.setItem('hikeybr_book_progress_nirmala', '7');
-            localStorage.setItem('hikeymash_font', 'devlys010');
+            localStorage.setItem('hikeymash_font', 'tankanclean');
             localStorage.setItem('hikeymash_history_v1', '[]');
         }, STORE);
         await page.reload();
@@ -64,7 +64,7 @@ const path = require('node:path');
     assert.equal(restored.store.unlockedIndex, 10, 'store restored verbatim');
     assert.equal(restored.store.totalTypedCount, 1234);
     assert.equal(restored.book, '7', 'book progress restored');
-    assert.equal(restored.font, 'devlys010', 'keymash prefs restored');
+    assert.equal(restored.font, 'tankanclean', 'keymash prefs restored');
     assert.equal(restored.unlocked, 10, 'app runs on the imported progress');
 
     // 3. Cancel path: valid code, user backs out, nothing changes.

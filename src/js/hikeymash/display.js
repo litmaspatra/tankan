@@ -3,14 +3,19 @@
         // 8. DISPLAY & RACER TRACK UPDATER
         // ─────────────────────────────────────────────────────────────
         function updateDisplay() {
-            el.textCorrect.textContent = targetKrutiText.substring(0, cursorIndex);
             if (el.textError) el.textError.textContent = '';
+            const painted = window.TankanLegacyRenderer
+                ? window.TankanLegacyRenderer.stream([el.textCorrect, el.textCurrent, el.textRemaining], targetKrutiText, cursorIndex, window.__hikeymashFont || 'tankan')
+                : false;
+            if (!painted) el.textCorrect.textContent = targetKrutiText.substring(0, cursorIndex);
 
             if (cursorIndex < targetKrutiText.length) {
                 const currChar = targetKrutiText.charAt(cursorIndex);
-                el.textCurrent.textContent = currChar;
+                if (!painted) {
+                    el.textCurrent.textContent = currChar;
+                    el.textRemaining.textContent = targetKrutiText.substring(cursorIndex + 1);
+                }
                 el.textCurrent.className = 'text-current' + (currChar === ' ' ? ' space-cursor' : '');
-                el.textRemaining.textContent = targetKrutiText.substring(cursorIndex + 1);
 
                 el.textCurrent.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
 

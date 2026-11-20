@@ -214,22 +214,21 @@
 
         // Race display font + sound theme pickers (persisted).
         const MASH_FONTS = {
-            devlys010: 'DevLys010Web',
-            krutidev: 'KrutiDev010',
-            devlys040: 'DevLys040',
-            devlys040bold: 'DevLys040Bold',
+            tankan: 'TankanRemington',
+            tankanclean: 'TankanClean',
         };
         function applyRaceFont(key) {
-            const fam = MASH_FONTS[key] || MASH_FONTS.devlys010;
-            const stack = "'" + fam + "', 'DevLys010Web', 'KrutiDev010', sans-serif";
+            const fam = MASH_FONTS[key] || MASH_FONTS.tankan;
+            const stack = "'" + fam + "', sans-serif";
+            window.__hikeymashFont = MASH_FONTS[key] ? key : 'tankan';
             if (el.krutiStream) el.krutiStream.style.fontFamily = stack;
             if (el.replayTextStream) el.replayTextStream.style.fontFamily = stack;
             try { localStorage.setItem('hikeymash_font', key); } catch (e) {}
         }
         if (el.lobbyFontSelect) {
-            let savedFont = 'devlys010';
-            try { savedFont = localStorage.getItem('hikeymash_font') || 'devlys010'; } catch (e) {}
-            if (!MASH_FONTS[savedFont]) savedFont = 'devlys010';
+            let savedFont = 'tankan';
+            try { savedFont = localStorage.getItem('hikeymash_font') || 'tankan'; } catch (e) {}
+            if (!MASH_FONTS[savedFont]) savedFont = 'tankan';
             el.lobbyFontSelect.value = savedFont;
             applyRaceFont(savedFont);
             el.lobbyFontSelect.addEventListener('change', () => {
