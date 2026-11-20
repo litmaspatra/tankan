@@ -31,14 +31,24 @@ window.TankanLegacyRenderer=(()=>{
  // '.' is ण्, '/' is ध्, ...). The Unicode line breaker treats those bytes as
  // break opportunities and was splitting words across lines (घ|बराता). Keep
  // every space-delimited word inside one no-wrap span; only spaces may wrap.
+ // Bytes that join with what follows (half-form prefixes, i-matra prefix,
+ // halant) and bytes that join with what precedes (matras, rakar, reph,
+ // bindu, nukta, danda): a <wbr> may never split either kind of pair, and
+ // never a feature-marked cluster (map). Long runs defer to the next safe
+ // boundary instead of breaking a glyph apart.
+ const FWD_JOIN="[{./?FH'\"DXPTRUICEYOLf~",BACK_JOIN='khqwsSWa%`~+zZ¥A';
  function fill(frag,text,start,end,map,errors){
-  let word=null,len=0;
+  let word=null,len=0,nextBreak=24;
   for(let j=start;j<end;j++){
-   if(text[j]===' '){word=null;len=0;frag.append(document.createTextNode(' '));continue;}
+   if(text[j]===' '){word=null;len=0;nextBreak=24;frag.append(document.createTextNode(' '));continue;}
    // Exceptionally long unspaced runs (URLs, pasted gibberish) still need wrap
    // points: past 24 chars, offer a <wbr> every 12 so the line box can never
    // overflow and the cursor stays reachable. Ordinary Hindi words stay whole.
-   if(word&&len>=24&&len%12===0){word=null;frag.append(document.createElement('wbr'));}
+   if(word&&len>=nextBreak){
+    if(!FWD_JOIN.includes(text[j-1])&&!BACK_JOIN.includes(text[j])&&!map.has(j-1)&&!map.has(j)){
+     word=null;frag.append(document.createElement('wbr'));nextBreak=len+12;
+    } else nextBreak=len+1;
+   }
    if(!word){word=document.createElement('span');word.className='w';frag.append(word);}
    word.append(glyph(text,j,map,errors));len++;
   }

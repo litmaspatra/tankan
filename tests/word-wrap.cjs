@@ -11,18 +11,21 @@ const path = require('path');
 const splitScan = () => {
   const range = document.createRange();
   const chars = [];
-  for (const node of [document.getElementById('text-correct'), document.getElementById('text-current'), document.getElementById('text-remaining')]) {
-    for (const child of node.childNodes) {
-      if (child.tagName === 'WBR') continue;
-      const tn = child.nodeType === 3 ? child : child.firstChild;
-      if (!tn || tn.nodeType !== 3) continue;
-      for (let i = 0; i < tn.length; i++) {
-        range.setStart(tn, i); range.setEnd(tn, i + 1);
-        const r = range.getBoundingClientRect();
-        chars.push({ch: tn.data[i], top: Math.round(r.top), right: r.right});
-      }
+  const pushTextNode = (tn) => {
+    for (let i = 0; i < tn.length; i++) {
+      range.setStart(tn, i); range.setEnd(tn, i + 1);
+      const r = range.getBoundingClientRect();
+      chars.push({ch: tn.data[i], top: Math.round(r.top), right: r.right});
     }
-  }
+  };
+  const walk = (el) => {
+    for (const child of el.childNodes) {
+      if (child.tagName === 'WBR') continue;
+      if (child.nodeType === 3) pushTextNode(child);
+      else walk(child);
+    }
+  };
+  for (const node of [document.getElementById('text-correct'), document.getElementById('text-current'), document.getElementById('text-remaining')]) walk(node);
   const breaks = [];
   for (let i = 0; i < chars.length - 1; i++) {
     if (chars[i].ch !== ' ' && chars[i+1].ch !== ' ' && chars[i+1].top > chars[i].top) breaks.push(chars[i].ch + '|' + chars[i+1].ch);
@@ -106,6 +109,31 @@ const splitScan = () => {
     return widths;
   });
   assert.ok(Math.abs(shaping[0] - shaping[1]) < 0.5, 'wbr inside vs outside a cluster keeps shaping width');
+
+  // A <wbr> may never sit inside a multi-byte shaping unit: not after a
+  // forward-joining byte (half-form prefixes, i-matra, halant), not before a
+  // dependent byte (matras, rakar, reph, bindu). Forced wrap inside the
+  // भाञ्जा cluster (Hkk¥~tk) visibly fragmented it (Kartik 2026-11-20, pixel
+  // probe), so placement defers to the next safe boundary.
+  await page.setViewportSize({width: 1000, height: 900});
+  await page.evaluate(() => {
+    Tankan.currentLessonText = 'क'.repeat(31) + 'भाञ्जा' + 'क'.repeat(20) + ' क';
+    Tankan.regenerateLesson({keepText:true});
+  });
+  await page.waitForTimeout(150);
+  const unsafe = await page.evaluate(() => {
+    const FWD = "[{./?FH'\"DXPTRUICEYOLf~", BACK = 'khqwsSWa%`~+zZ¥A';
+    const cont = document.getElementById('text-stream-container');
+    const bad = [];
+    for (const wbr of cont.querySelectorAll('wbr')) {
+      const prev = wbr.previousSibling, next = wbr.nextSibling;
+      const left = prev && prev.textContent ? prev.textContent.slice(-1) : '';
+      const right = next && next.textContent ? next.textContent[0] : '';
+      if (FWD.includes(left) || BACK.includes(right)) bad.push(left + '|' + right);
+    }
+    return bad;
+  });
+  assert.equal(unsafe.length, 0, 'no wbr at a glyph-splitting boundary, got ' + JSON.stringify(unsafe));
 
   await browser.close();
   console.log('PASS: no mid-word splits at 4 widths with clean/error cursor states, long unspaced runs wrap via wbr without overflow, ordinary words carry no wbr');
