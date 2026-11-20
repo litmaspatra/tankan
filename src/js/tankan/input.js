@@ -14,6 +14,13 @@
             // A lazy book is still downloading: ignore keystrokes so the user
             // never types into a lesson that the arriving book will replace.
             if(bookLoadPending())return;
+            // A finished lesson's graph stays up until Space starts the next
+            // lesson (Kartik 2026-11-20): Space dismisses it without typing a
+            // character; every other key is ignored while it is up.
+            if(typeof lessonGraphVisible==='function'&&lessonGraphVisible()){
+                if(keyString===' ')hideLessonGraph();
+                return;
+            }
             if(pausedAt)resumeLesson();
             if (cursorIndex >= targetKrutiText.length) return;
 
@@ -61,6 +68,7 @@
                 sound.error();
                 sessionErrors++;
                 totalErrorsCount++;
+                lessonErrorTimes.push(lessonElapsed());
 
                 const errorStats = keyStats[expected] || keyStats[expected.toLowerCase()];
                 if (errorStats) errorStats.errors++;
@@ -126,7 +134,7 @@
             // Latency measurement for instantaneous speed
             const latencyMs=validInterval;
             if(latencyMs>0)(lessonKeyTimes[keyString]||(lessonKeyTimes[keyString]=[])).push(latencyMs);
-            measurementEvents.push({key:keyString,ms:latencyMs,typo:previousAttemptWrong});
+            measurementEvents.push({key:keyString,ms:latencyMs,typo:previousAttemptWrong,t:lessonElapsed()});
             previousAttemptWrong=false;
             const instantWpm=latencyMs>0?12000/latencyMs:0;
 

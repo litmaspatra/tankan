@@ -109,6 +109,10 @@
                     lessonCompleted = true;
                     lessonEndedAt=Date.now();
                     recordCompletedLesson();
+                    // Books/essays: capture the finished lesson's speed graph
+                    // before regenerate resets the session; shown after, and any
+                    // keystroke dismisses it into the fresh paragraph.
+                    const lessonGraphHtml=(typeof findBook==='function'&&findBook(textSource)&&typeof buildLessonGraph==='function')?buildLessonGraph():null;
                     updateMasteryCard();
                     const item = KEY_PROGRESSION[unlockedIndex];
                     const ks = keyStats[item.k];
@@ -139,6 +143,7 @@
                     if(textSource==='words')flashPracticeEvent([guidance,...pendingLessonEvents].filter(Boolean).join(' · '));
                     pendingLessonEvents=[];
                     regenerateLesson();
+                    if(lessonGraphHtml&&typeof showLessonGraph==='function')showLessonGraph(lessonGraphHtml);
                 }
             }
         }
@@ -148,7 +153,8 @@
             lessonCompleted = false;
             pausedAt=null;pausedTotal=0;lessonEndedAt=null;
             pendingUnlockIndex = null;
-            lessonKeyTimes = {}; measurementEvents=[]; previousAttemptWrong=false; lessonActiveSeconds = 0; activityAt = null;
+            lessonKeyTimes = {}; measurementEvents=[]; lessonErrorTimes=[]; previousAttemptWrong=false; lessonActiveSeconds = 0; activityAt = null;
+            { const gp=document.getElementById('lesson-graph-panel'); if(gp) gp.hidden=true; }
             if(!keepText)currentLessonText = generateLessonText();
             targetKrutiText = unicodeToKrutiDev(currentLessonText);
             cursorIndex = 0;

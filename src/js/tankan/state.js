@@ -42,6 +42,8 @@
         let pendingLessonEvents = [], goalFlashedDay = '';
         let lessonKeyTimes = {}, lessonActiveSeconds = 0, activityAt = null;
         let previousAttemptWrong=false, measurementEvents = [], displayFont = 'tankan', altEntryStartedAt = null;
+        // Elapsed-ms timestamp of each error this lesson; feeds the lesson-end graph.
+        let lessonErrorTimes = [];
         // Gate font switches on real load so legacy-encoded text never flashes
         // as Latin gibberish while a .ttf is still downloading.
         function ensureFontLoaded(key) {

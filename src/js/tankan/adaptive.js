@@ -440,6 +440,70 @@
             const al=document.getElementById('metric-accuracy-label');if(al)al.textContent='Accuracy · live';
         }
 
+        // Paragraph-end speed graph for books/essays (Kartik 2026-11-20),
+        // shaped after Monkeytype's result chart: a smoothed cumulative-wpm
+        // line, a dashed raw-speed line, and red crosses marking the seconds
+        // with errors on their own right-side axis. x is seconds of active
+        // typing (pause-aware). Built from this lesson's keystroke timestamps
+        // before regenerateLesson resets them; no keystroke data is stored.
+        function buildLessonGraph(){
+            const totalMs=lessonElapsed();
+            if(totalMs<1500||sessionCorrect<5)return null; // too short to chart
+            // Monkeytype drops a sub-half partial final second; without that
+            // the raw line dives on the last bucket whenever the lesson ends
+            // mid-second.
+            let secs=Math.max(1,Math.ceil(totalMs/1000));
+            if(secs>1&&totalMs%1000<500)secs--;
+            const correctTs=measurementEvents.map(e=>e.t||0).sort((a,b)=>a-b);
+            const errorTs=lessonErrorTimes.slice().sort((a,b)=>a-b);
+            const wpm=[],raw=[],err=[];
+            let ci=0,ei=0,cPrev=0,ePrev=0;
+            for(let s=1;s<=secs;s++){
+                const end=s*1000;
+                while(ci<correctTs.length&&correctTs[ci]<=end)ci++;
+                while(ei<errorTs.length&&errorTs[ei]<=end)ei++;
+                wpm.push((ci/5)/(s/60));
+                raw.push(((ci-cPrev)+(ei-ePrev))/5*60);
+                err.push(ei-ePrev);
+                cPrev=ci;ePrev=ei;
+            }
+            const finalWpm=(sessionCorrect/5)/(totalMs/60000);
+            const finalAcc=sessionCorrect/Math.max(1,sessionCorrect+sessionErrors)*100;
+            const W=640,H=190,padL=38,padR=34,padT=12,padB=24;
+            const iw=W-padL-padR,ih=H-padT-padB;
+            const yMax=ChartMath.niceCeil(Math.max(...wpm,...raw,1)*1.15);
+            const errMax=Math.max(1,...err);
+            const x=i=>padL+(secs===1?iw/2:i/(secs-1)*iw);
+            const y=v=>padT+ih-(v/yMax)*ih;
+            const ye=v=>padT+ih-(v/errMax)*ih;
+            // Catmull-Rom -> cubic bezier, the same smoothing family Chart.js
+            // uses for Monkeytype's tension curve.
+            const smooth=pts=>{let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(pts.length-1,i+2)];d+='C'+(p1[0]+(p2[0]-p0[0])/6).toFixed(1)+','+(p1[1]+(p2[1]-p0[1])/6).toFixed(1)+' '+(p2[0]-(p3[0]-p1[0])/6).toFixed(1)+','+(p2[1]-(p3[1]-p1[1])/6).toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}return d;};
+            const wpmPts=wpm.map((v,i)=>[x(i),y(v)]);
+            const rawPts=raw.map((v,i)=>[x(i),y(v)]);
+            let g='';
+            [0,.5,1].forEach(f=>{const gy=(padT+ih-f*ih).toFixed(1);g+='<line x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/><text x="'+(padL-6)+'" y="'+(+gy+3)+'" text-anchor="end" class="lg-tick">'+Math.round(yMax*f)+'</text>';});
+            const xStep=Math.max(1,Math.ceil(secs/8));
+            for(let i=0;i<secs;i+=xStep)g+='<text x="'+x(i).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" class="lg-tick">'+(i+1)+'s</text>';
+            g+='<path d="'+smooth(rawPts)+'" fill="none" stroke="#7d7d7d" stroke-width="1.6" stroke-dasharray="7 6"/>';
+            g+='<path d="'+smooth(wpmPts)+'" fill="none" stroke="var(--accent)" stroke-width="2.4"/>';
+            err.forEach((n,i)=>{if(n>0){const cx=x(i).toFixed(1),cy=ye(n).toFixed(1);g+='<g stroke="#e05555" stroke-width="1.8" stroke-linecap="round"><line x1="'+(cx-4)+'" y1="'+(cy-4)+'" x2="'+(+cx+4)+'" y2="'+(+cy+4)+'"/><line x1="'+(cx-4)+'" y1="'+(+cy+4)+'" x2="'+(+cx+4)+'" y2="'+(cy-4)+'"/></g>';}});
+            if(errMax>0)g+='<text x="'+(W-padR+6)+'" y="'+(padT+4)+'" class="lg-tick">'+errMax+'</text><text x="'+(W-padR+6)+'" y="'+(padT+ih)+'" class="lg-tick">0</text>';
+            return '<div class="lg-head"><strong>'+finalWpm.toFixed(1)+'</strong> wpm · <strong>'+finalAcc.toFixed(1)+'%</strong> accuracy · '+secs+'s</div>'
+                +svgWrap(W,H,g)
+                +'<div class="lg-foot"><span class="lg-key lg-wpm">wpm</span><span class="lg-key lg-raw">raw</span><span class="lg-key lg-err">errors</span><span class="lg-hint">press Space for the next lesson</span></div>';
+        }
+        function showLessonGraph(html){
+            const gp=document.getElementById('lesson-graph-panel');if(!gp)return;
+            gp.innerHTML=html;gp.hidden=false;
+        }
+        function lessonGraphVisible(){
+            const gp=document.getElementById('lesson-graph-panel');return !!gp&&!gp.hidden;
+        }
+        function hideLessonGraph(){
+            const gp=document.getElementById('lesson-graph-panel');if(gp)gp.hidden=true;
+        }
+
         function populateJumpSelect() {
             el.jumpSelect.innerHTML = '';
             el.jumpSelect.add(new Option('Auto: learn '+KEY_PROGRESSION[highestUnlocked].h+' (next key unlocks at goal)', 'auto'));
