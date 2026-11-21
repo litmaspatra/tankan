@@ -31,7 +31,7 @@ const server = http.createServer((req,res) => {
    if(route==='index.html'){
     assert.deepEqual(await page.locator('#theme-select option').evaluateAll(xs=>xs.map(x=>x.value)),expected);
     assert.equal(await page.locator('#theme-select').inputValue(),resolved);
-    if(theme===null){await page.click('#theme-menu-btn');await page.screenshot({path:'/downloads/tankan-ink-default-verified.png'});}
+    if(theme===null){await page.click('#theme-menu-btn');await page.screenshot({path:require('os').tmpdir()+'/tankan-ink-default-verified.png'});}
    } else if(route!=='transfer.html') {
     await page.click('#theme-menu-btn');
     assert.deepEqual(await page.locator('#menu-theme-row button').evaluateAll(xs=>xs.map(x=>x.dataset.theme)),expected);
