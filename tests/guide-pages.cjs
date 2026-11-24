@@ -69,9 +69,9 @@ const server = http.createServer((req, res) => {
         // Avatar menu lists the same four entries, with the current page marked.
         await header.locator('#avatar-corner').click();
         const items = header.locator('#avatar-menu .menu-item');
-        assert.strictEqual(await items.count(), 4, name + ': avatar menu has Profile/Settings/Tips/About');
+        assert.strictEqual(await items.count(), 5, name + ': avatar menu has Profile/Settings/Tips/About/Contact');
         const hrefs = await items.evaluateAll(els => els.map(e => e.getAttribute('href')));
-        assert.deepStrictEqual(hrefs, ['index.html#profile', 'index.html#settings', 'tips.html', 'about.html'], name + ': avatar menu links');
+        assert.deepStrictEqual(hrefs, ['index.html#profile', 'index.html#settings', 'tips.html', 'about.html', 'contact.html'], name + ': avatar menu links');
         if (name !== 'privacy') {
             assert.strictEqual(await header.locator(`#avatar-menu .menu-item[href="${name}.html"]`).getAttribute('aria-current'), 'page',
                 name + ': current page marked in menu');
