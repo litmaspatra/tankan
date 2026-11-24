@@ -172,7 +172,7 @@
             });
             importBtn.addEventListener('click', () => startImport(codeIn.value));
 
-            // Replaced copies are stashed by sync and by automatic transfers
+            // Replaced copies are stashed by sync and by imports
             // under hikeybr_presync_backup (one slot: the most recently
             // replaced copy). Surface it so the rollback is real; restoring
             // goes through the same confirm modal as any other import.
@@ -183,7 +183,7 @@
                 try { stash = JSON.parse(localStorage.getItem('hikeybr_presync_backup') || 'null'); } catch (_) {}
                 if (!stash || !stash.data || !Object.keys(stash.data).length) { rollbackNote.hidden = true; rollbackBtn.hidden = true; return; }
                 const when = stash.savedAt ? new Date(stash.savedAt) : null;
-                rollbackNote.textContent = 'A copy replaced during sync, transfer or import is kept on this device' + (when && !isNaN(when) ? ' (from ' + when.toLocaleString() + ')' : '') + '.';
+                rollbackNote.textContent = 'A copy replaced during sync or import is kept on this device' + (when && !isNaN(when) ? ' (from ' + when.toLocaleString() + ')' : '') + '.';
                 rollbackNote.hidden = false;
                 rollbackBtn.hidden = false;
             };
@@ -199,13 +199,6 @@
             const closeModal = () => {
                 modal.classList.remove('open');
                 pendingBackup = null;
-                bridgeAck = null;
-                // A cancelled transfer must not leave the 'confirm to finish'
-                // instruction standing: there is nothing left to finish.
-                if (bridgePending) {
-                    bridgePending = false;
-                    setStatus(bridgeStatus, 'Transfer cancelled - nothing was changed. The old site keeps offering the transfer.', false);
-                }
             };
             cancelBtn.addEventListener('click', closeModal);
             modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
@@ -225,154 +218,23 @@
             // versioned backup envelope used by export/import.
             window.TANKAN_BACKUP = { collect: collectKeys, validate, apply: applyBackupData, buildPayload };
 
-            // Set only while a progress transfer from the old site awaits the
-            // replace confirmation. Calling it tells the old site's transfer
-            // tab that the import truly landed, so the old address can start
-            // redirecting. Cancelling the confirm never calls it.
-            let bridgeAck = null;
-            let bridgePending = false; // the confirm modal is showing a transfer payload
-
             confirmBtn.addEventListener('click', () => {
                 if (!pendingBackup) { closeModal(); return; }
                 try {
-                    // Stash what is about to be replaced (one slot, like sync
-                    // and automatic transfers) so every replace is undoable
-                    // from Settings.
+                    // Stash what is about to be replaced (one slot, like sync)
+                    // so every replace is undoable from Settings.
                     const prior = collectKeys();
                     applyBackupData(pendingBackup);
                     if (Object.keys(prior).length) {
                         try { localStorage.setItem('hikeybr_presync_backup', JSON.stringify({ savedAt: new Date().toISOString(), data: prior })); } catch (_) {}
                     }
                     modal.classList.remove('open');
-                    if (bridgeAck) { bridgeAck(); bridgeAck = null; }
-                    bridgePending = false;
                     location.reload();
                 } catch (_) {
                     modal.classList.remove('open');
                     pendingBackup = null;
-                    if (bridgePending) {
-                        bridgePending = false;
-                        setStatus(bridgeStatus, 'The transfer could not be completed - nothing was changed.', false);
-                    }
                     setStatus(importStatus, 'This device refused the import (storage full or blocked). Nothing was changed.', false);
                 }
             });
 
-            // ---- Bring your progress from the old site (github.io) ----
-            // One click: open the old site's transfer page as a popup, prove the
-            // request with a one-time nonce + origin/source checks, receive the
-            // backup payload, and import it. The old site is never changed.
-            const OLD_ORIGIN = 'https://litmaspatra.github.io';
-            const bridgeBtn = $('bridge-fetch-btn'), bridgeStatus = $('bridge-status');
-            if (bridgeBtn && bridgeStatus) {
-                if (location.hostname === 'litmaspatra.github.io') {
-                    bridgeBtn.hidden = true; // already on the old site - nothing to bring
-                } else {
-                    bridgeBtn.addEventListener('click', () => {
-                        setStatus(bridgeStatus, '', true);
-                        const nonce = Array.from(crypto.getRandomValues(new Uint8Array(24)), b => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'[b & 63]).join('');
-                        const popup = window.open(OLD_ORIGIN + '/tankan/transfer.html?n=' + nonce, 'tankan-transfer', 'width=560,height=680');
-                        if (!popup) {
-                            setStatus(bridgeStatus, 'Your browser blocked the pop-up. Allow pop-ups for this site and try again - or use Export on the old site and Import here.', false);
-                            return;
-                        }
-                        setStatus(bridgeStatus, 'Talking to the old site...', true);
-                        let timer = null;
-                        const cleanup = () => {
-                            window.removeEventListener('message', onMsg);
-                            if (timer) { clearTimeout(timer); timer = null; }
-                            try { if (!popup.closed) popup.close(); } catch (_) {}
-                        };
-                        const onMsg = e => {
-                            if (e.source !== popup || e.origin !== OLD_ORIGIN) return;
-                            const d = e.data || {};
-                            if (d.n !== nonce) return;
-                            if (d.kind === 'tankan-transfer-ready') {
-                                popup.postMessage({ kind: 'tankan-transfer-send', n: nonce }, OLD_ORIGIN);
-                            } else if (d.kind === 'tankan-transfer-empty') {
-                                cleanup();
-                                setStatus(bridgeStatus, 'No saved progress was found on the old site in this browser.', false);
-                            } else if (d.kind === 'tankan-transfer-payload') {
-                                const err = validate(d.payload);
-                                if (err) {
-                                    cleanup();
-                                    setStatus(bridgeStatus, 'The old site sent something unreadable. Nothing was changed.', false);
-                                    return;
-                                }
-                                // The popup stays open until the import has
-                                // actually landed here; only then is it told
-                                // the transfer succeeded. The no-answer timer
-                                // and message listener have done their job.
-                                if (timer) { clearTimeout(timer); timer = null; }
-                                window.removeEventListener('message', onMsg);
-                                const ack = () => {
-                                    try { if (!popup.closed) popup.postMessage({ kind: 'tankan-transfer-applied', n: nonce }, OLD_ORIGIN); } catch (_) {}
-                                    try { popup.close(); } catch (_) {}
-                                };
-                                let hasExisting = false;
-                                for (let i = 0; i < localStorage.length; i++) {
-                                    const k = localStorage.key(i);
-                                    if (PREFIXES.some(p => k.startsWith(p))) { hasExisting = true; break; }
-                                }
-                                // The copy with more keys unlocked wins without
-                                // asking (the visitor's standing choice);
-                                // equally-far or unreadable copies still get
-                                // the replace confirmation below.
-                                const keysOf = text => { try { const s = JSON.parse(text || '{}'); return typeof s.highestUnlocked === 'number' ? s.highestUnlocked : (typeof s.unlockedIndex === 'number' ? s.unlockedIndex : null); } catch (_) { return null; } };
-                                const currentKeys = keysOf(localStorage.getItem('hikeybr_store_v3'));
-                                const incomingKeys = keysOf(d.payload.data && d.payload.data.hikeybr_store_v3);
-                                if (hasExisting && currentKeys !== null && incomingKeys !== null && incomingKeys > currentKeys) {
-                                    // The old site's copy is further ahead: bring it over,
-                                    // stashing the replaced copy for rollback first.
-                                    try {
-                                        const prior = {};
-                                        for (let i = 0; i < localStorage.length; i++) {
-                                            const k = localStorage.key(i);
-                                            if (PREFIXES.some(p => k.startsWith(p))) prior[k] = localStorage.getItem(k);
-                                        }
-                                        applyBackupData(d.payload);
-                                        try { localStorage.setItem('hikeybr_presync_backup', JSON.stringify({ savedAt: new Date().toISOString(), data: prior })); } catch (_) {}
-                                        ack();
-                                        setStatus(bridgeStatus, 'The old site was further ahead (' + (incomingKeys + 1) + ' keys unlocked, this device had ' + (currentKeys + 1) + ') - progress brought over. Reloading...', true);
-                                        setTimeout(() => location.reload(), 1200);
-                                    } catch (_) {
-                                        setStatus(bridgeStatus, 'This device refused the import (storage full or blocked). Nothing was changed.', false);
-                                    }
-                                    return;
-                                }
-                                if (hasExisting && currentKeys !== null && incomingKeys !== null && incomingKeys < currentKeys) {
-                                    // tankan.in is already further ahead: keep it, import
-                                    // nothing, and mark nothing - the old site keeps
-                                    // offering the transfer.
-                                    try { if (!popup.closed) popup.postMessage({ kind: 'tankan-transfer-kept', n: nonce }, OLD_ORIGIN); } catch (_) {}
-                                    try { popup.close(); } catch (_) {}
-                                    setStatus(bridgeStatus, 'tankan.in is already further ahead (' + (currentKeys + 1) + ' keys unlocked, the old site has ' + (incomingKeys + 1) + ') - kept this copy; nothing was replaced.', true);
-                                    return;
-                                }
-                                if (hasExisting) {
-                                    // Equally far or unreadable: the visitor chooses.
-                                    bridgeAck = ack;
-                                    bridgePending = true;
-                                    startImport(JSON.stringify(d.payload));
-                                    setStatus(bridgeStatus, 'Progress received - confirm the replacement to finish.', true);
-                                } else {
-                                    try {
-                                        applyBackupData(d.payload);
-                                        ack();
-                                        setStatus(bridgeStatus, 'Progress brought over from the old site - reloading...', true);
-                                        setTimeout(() => location.reload(), 900);
-                                    } catch (_) {
-                                        setStatus(bridgeStatus, 'This device refused the import (storage full or blocked). Nothing was changed.', false);
-                                    }
-                                }
-                            }
-                        };
-                        window.addEventListener('message', onMsg);
-                        timer = setTimeout(() => {
-                            cleanup();
-                            setStatus(bridgeStatus, 'No answer from the old site. If the pop-up did not open, allow pop-ups and try again - or use Export on the old site and Import here.', false);
-                        }, 25000);
-                    });
-                }
-            }
-        })();
+})();

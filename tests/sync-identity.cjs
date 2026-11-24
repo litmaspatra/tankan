@@ -93,7 +93,7 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
     const progress=n=>JSON.stringify({unlockedIndex:n,highestUnlocked:n,bestScore:n*100,lessonHistory:[{wpm:n,acc:99,chars:100,errors:1,seconds:60,score:100,ts:1},{wpm:n+1,acc:98,chars:100,errors:2,seconds:60,score:101,ts:2}]});
     const avatar=JSON.stringify({kind:'preset',preset:'bottts'});
     const seed=async(p,n)=>{await p.goto(base);await p.evaluate(({n,avatar})=>{localStorage.setItem('hikeybr_store_v3',n);localStorage.setItem('hikeybr_avatar_u_u1',avatar);},{n:progress(n),avatar});await openProfile(p);await p.click('#google-signin-btn');};
-    const status=async(p,fragment)=>p.waitForFunction(t=>document.getElementById('sync-status').textContent.includes(t),fragment);
+    const status=async(p,fragment)=>p.waitForFunction(t=>{const el=document.getElementById('sync-status');return !!el&&el.textContent.includes(t);},fragment);
     const hidden=async p=>{await p.waitForFunction(()=>!document.getElementById('community-account').hidden);assert.equal(await p.locator('#account-signed-in').evaluate(n=>n.hidden),false);assert.equal(await p.locator('#community-status').textContent(),'');assert.equal(await p.locator('#sync-conflict').isVisible(),false);assert.equal(await p.locator('#sync-bind-prompt').isVisible(),false);};
 
     // Same account on two device contexts, different key/property order.
@@ -103,25 +103,28 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
     const kept=JSON.parse(shared.payload).data;assert.equal(JSON.parse(kept.hikeybr_store_v3).bestScore,800);
     await phone.context().close();await laptop.context().close();
 
-    // Genuine difference at the SAME furthest progress stays a choice.
-    // Restore account, retain rollback, hide successful replacement on this
-    // device and subsequent reload.
+    // Genuine difference at the SAME furthest progress no longer asks: the
+    // practice tie keeps the account copy. The replaced device copy is
+    // stashed, the restore survives reload, nothing stays offered.
     const tweaked=(n,score)=>{const p=JSON.parse(progress(n));p.bestScore=score;return JSON.stringify(p);};
     shared=envelope({hikeybr_avatar_u_u1:avatar,hikeybr_store_v3:tweaked(8,999)});
-    phone=await device(390);await seed(phone,8);await status(phone,'differs');assert.ok(await phone.locator('#sync-conflict').isVisible());const before=shared.payload;
-    await phone.click('#sync-use-account');await phone.waitForLoadState('domcontentloaded');await status(phone,'Saved');await openProfile(phone);await hidden(phone);
+    phone=await device(390);await seed(phone,8);await status(phone,'Saved');await openProfile(phone);await hidden(phone);
     let local=await phone.evaluate(()=>({current:JSON.parse(localStorage.getItem('hikeybr_store_v3')),rollback:JSON.parse(localStorage.getItem('hikeybr_presync_backup')).data}));
-    assert.equal(local.current.bestScore,999);assert.equal(JSON.parse(local.rollback.hikeybr_store_v3).bestScore,800);
+    assert.equal(local.current.bestScore,999,'same-keys tie keeps the account copy');assert.equal(JSON.parse(local.rollback.hikeybr_store_v3).bestScore,800,'the replaced device copy is stashed');
     await phone.reload();await status(phone,'Saved');await hidden(phone);
     await openProfile(phone);await phone.locator('#sync-status').scrollIntoViewIfNeeded();await phone.screenshot({animations:'disabled',fullPage:false,path:path.join(process.env.TANKAN_SCREENSHOTS||require('node:os').tmpdir(),'tankan-sync-after-restore-phone.png')});
 
-    // The other device's differing progress is NOT silently pulled/replaced.
-    laptop=await device();await laptop.goto(base);await laptop.evaluate(({raw,avatar})=>{localStorage.setItem('hikeybr_store_v3',raw);localStorage.setItem('hikeybr_avatar_u_u1',avatar);},{raw:tweaked(8,700),avatar});await openProfile(laptop);await laptop.click('#google-signin-btn');await status(laptop,'differs');assert.equal(JSON.parse(await laptop.evaluate(()=>localStorage.getItem('hikeybr_store_v3'))).bestScore,700);
-    await laptop.click('#sync-use-device');await status(laptop,'Saved');await hidden(laptop);assert.equal(JSON.parse(JSON.parse(shared.payload).data.hikeybr_store_v3).bestScore,700);
+    // The other device's differing progress at the same keys resolves the
+    // same way: matched to the account copy without asking, its own copy
+    // stashed, the account copy never overwritten.
+    laptop=await device();await laptop.goto(base);await laptop.evaluate(({raw,avatar})=>{localStorage.setItem('hikeybr_store_v3',raw);localStorage.setItem('hikeybr_avatar_u_u1',avatar);},{raw:tweaked(8,700),avatar});await openProfile(laptop);await laptop.click('#google-signin-btn');await status(laptop,'Saved');await openProfile(laptop);await hidden(laptop);
+    assert.equal(JSON.parse(await laptop.evaluate(()=>localStorage.getItem('hikeybr_store_v3'))).bestScore,999,'laptop matched to the account copy');
+    const lstash=await laptop.evaluate(()=>JSON.parse(localStorage.getItem('hikeybr_presync_backup')));assert.equal(JSON.parse(lstash.data.hikeybr_store_v3).bestScore,700,'the replaced laptop copy is stashed');
+    assert.equal(JSON.parse(JSON.parse(shared.payload).data.hikeybr_store_v3).bestScore,999,'the account copy was never overwritten');
     assert.equal(JSON.parse(await phone.evaluate(()=>localStorage.getItem('hikeybr_store_v3'))).bestScore,999);
     await laptop.reload();await status(laptop,'Saved');await hidden(laptop);
     await openProfile(laptop);await laptop.locator('#sync-status').scrollIntoViewIfNeeded();await laptop.screenshot({animations:'disabled',path:path.join(process.env.TANKAN_SCREENSHOTS||require('node:os').tmpdir(),'tankan-sync-after-update-desktop.png')});
-    await phone.reload();await openProfile(phone);await status(phone,'differs');assert.ok(await phone.locator('#sync-conflict').isVisible(),'a newer genuine other-device change still needs consent');
+    await phone.reload();await openProfile(phone);await status(phone,'Saved');assert.ok(!(await phone.locator('#sync-conflict').isVisible()),'devices in step with the account stay synced, nothing asks');
     await laptop.click('#google-signout-btn');await laptop.locator('#community-account').waitFor({state:'hidden'});assert.equal(await laptop.locator('#account-signed-in').isVisible(),false);await laptop.context().close();await phone.context().close();
 
     // Legacy outer-JSON owed state must still recover, including reordered
@@ -129,7 +132,10 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
     const baseData={hikeybr_avatar_u_u1:avatar,hikeybr_store_v3:progress(5)},owedData={hikeybr_store_v3:progress(6),hikeybr_avatar_u_u1:avatar};shared=envelope(baseData);
     phone=await device();await phone.goto(base);await phone.evaluate(({baseData,owedData})=>{for(const[k,v]of Object.entries(owedData))localStorage.setItem(k,v);localStorage.setItem('tankan_sync_state_u1',JSON.stringify({baseDataJson:JSON.stringify(baseData),owedLocalJson:JSON.stringify(owedData)}));},{baseData,owedData});await openProfile(phone);await phone.click('#google-signin-btn');await status(phone,'Saved');await hidden(phone);assert.equal(JSON.parse(JSON.parse(shared.payload).data.hikeybr_store_v3).bestScore,600);await phone.context().close();
 
-    // Same stats with DIFFERENT ordered lesson history is not equal.
-    shared=envelope({hikeybr_store_v3:progress(8),hikeybr_avatar_u_u1:avatar});laptop=await device();await laptop.goto(base);await laptop.evaluate(({raw,avatar})=>{const p=JSON.parse(raw);p.lessonHistory.reverse();localStorage.setItem('hikeybr_store_v3',JSON.stringify(p));localStorage.setItem('hikeybr_avatar_u_u1',avatar);},{raw:progress(8),avatar});await openProfile(laptop);await laptop.click('#google-signin-btn');await status(laptop,'differs');assert.ok(await laptop.locator('#sync-conflict').isVisible());await laptop.context().close();
-    await browser.close();server.close();console.log('PASS sync identity:two-device key/property order, both replacement directions, reload, rollback, no remote clobber, legacy debt, real history conflicts');
+    // Same stats with DIFFERENT ordered lesson history is not equal - and
+    // with equal keys and equal practice the account copy wins the tie.
+    shared=envelope({hikeybr_store_v3:progress(8),hikeybr_avatar_u_u1:avatar});laptop=await device();await laptop.goto(base);await laptop.evaluate(({raw,avatar})=>{const p=JSON.parse(raw);p.lessonHistory.reverse();localStorage.setItem('hikeybr_store_v3',JSON.stringify(p));localStorage.setItem('hikeybr_avatar_u_u1',avatar);},{raw:progress(8),avatar});await openProfile(laptop);await laptop.click('#google-signin-btn');await status(laptop,'Saved');assert.ok(!(await laptop.locator('#sync-conflict').isVisible()),'reordered history is a real difference, resolved by the account-wins tie');
+    const hist=await laptop.evaluate(()=>JSON.parse(localStorage.getItem('hikeybr_store_v3')).lessonHistory.map(l=>l.ts));assert.deepEqual(hist,[1,2],'this device now holds the account copy, history order included');
+    await laptop.context().close();
+    await browser.close();server.close();console.log('PASS sync identity:two-device key/property order, account-wins ties both directions, reload, rollback, no remote clobber, legacy debt, real history differences');
 })().catch(e=>{console.error(e);server.close();process.exit(1)});

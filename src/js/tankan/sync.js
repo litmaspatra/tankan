@@ -7,9 +7,12 @@
 //   once before this device's progress is bound to the account.
 // - When both sides hold different progress, the copy with more keys unlocked
 //   wins automatically (the visitor's standing choice); the replaced copy is
-//   stashed locally first (hikeybr_presync_backup). Only equally-far or
-//   unreadable copies still surface an explicit choice - freshness or time
-//   never decide.
+//   stashed locally first (hikeybr_presync_backup). Copies with the same keys
+//   unlocked resolve by practice volume (total lessons, then practice
+//   seconds), an exact tie keeping the account copy - a signed-in visitor
+//   whose progress is synced to the account is never asked to keep or
+//   replace. Only unreadable copies still surface an explicit choice -
+//   freshness or time never decide.
 // - Replacing local progress first stashes a full pre-sync snapshot under
 //   hikeybr_presync_backup (restorable via the existing Import flow pattern).
 // - Sign-out stops all syncing and changes nothing locally.
@@ -45,6 +48,17 @@
             return null;
         } catch (_) { return null; }
     };
+    // Practice volume in a saved store: [totalLessons, totalPracticeSeconds],
+    // missing fields counting as 0, compared lexicographically. Used to pick
+    // between readable copies with the same keys unlocked.
+    const practiceOf = text => {
+        try {
+            const s = JSON.parse(text || '{}');
+            return [typeof s.totalLessons === 'number' ? s.totalLessons : 0,
+                    typeof s.totalPracticeSeconds === 'number' ? s.totalPracticeSeconds : 0];
+        } catch (_) { return null; }
+    };
+    const practiceCmp = (a, b) => (a[0] - b[0]) || (a[1] - b[1]);
     // localStorage enumeration order is device-specific. Compare named values,
     // not serialized insertion order, or an identical restored account (for
     // example progress + avatar) immediately looks like a new conflict.
@@ -308,8 +322,8 @@
                 // unlocked wins, per the visitor's standing choice. The
                 // replaced copy is stashed first (the account copy below, the
                 // device copy inside applyCloud), so nothing is unrecoverable.
-                // Equally-far or unreadable copies still get the choice -
-                // freshness or time never decide.
+                // Only unreadable copies still get the choice - freshness or
+                // time never decide.
                 const localKeys = keysUnlockedOf(collect()[STORE_KEY]);
                 const cloudKeys = keysUnlockedOf(cloudObj.data[STORE_KEY]);
                 if (localKeys !== null && cloudKeys !== null && localKeys > cloudKeys) {
@@ -325,10 +339,32 @@
                     applyCloud(cloudObj);
                     return;
                 }
+                if (localKeys !== null && cloudKeys !== null && localKeys === cloudKeys) {
+                    // Same keys unlocked: practice volume decides (total
+                    // lessons, then practice seconds); an exact tie keeps the
+                    // account copy. The replaced copy is stashed either way,
+                    // so nothing is unrecoverable. A signed-in visitor whose
+                    // progress is synced to the account is never asked to
+                    // keep or replace.
+                    const localPractice = practiceOf(collect()[STORE_KEY]);
+                    const cloudPractice = practiceOf(cloudObj.data[STORE_KEY]);
+                    const cmp = practiceCmp(localPractice, cloudPractice);
+                    if (cmp > 0) {
+                        bound = true;
+                        try { localStorage.setItem(PRESYNC_KEY, JSON.stringify({ savedAt: new Date().toISOString(), data: cloudObj.data })); window.dispatchEvent(new Event('tankan-stash-updated')); } catch (_) {}
+                        push().then(ok => {
+                            if (ok && uid === user.uid) setStatus('Same keys unlocked, but this device has more practice (' + localPractice[0] + ' vs ' + cloudPractice[0] + ' lessons) - saved this device\'s progress to your account.');
+                        });
+                        return;
+                    }
+                    setStatus(cmp < 0
+                        ? 'Same keys unlocked, but your account has more practice (' + cloudPractice[0] + ' vs ' + localPractice[0] + ' lessons) - bringing it to this device.'
+                        : 'Same keys unlocked and equal practice - matched this device to your account copy.');
+                    applyCloud(cloudObj);
+                    return;
+                }
                 bound = false;
-                conflictText.textContent = (localKeys !== null && cloudKeys !== null)
-                    ? 'This device and your account have different practice but the same keys unlocked (' + (localKeys + 1) + '). Choose which copy to keep - the other is replaced only when you say so.'
-                    : 'This device and your account have different progress. Choose which one to keep - the other copy is replaced only when you say so.';
+                conflictText.textContent = 'This device and your account have different progress that cannot be compared safely. Choose which one to keep - the other copy is replaced only when you say so.';
                 useDeviceBtn.hidden = false;
                 useAccountBtn.hidden = false;
                 useDeviceBtn.textContent = 'Keep this device\'s progress (update the account)';

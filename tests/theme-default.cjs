@@ -13,7 +13,7 @@ const server = http.createServer((req,res) => {
  const base='http://127.0.0.1:'+server.address().port+'/';
  const browser=await chromium.launch({headless:true});
  const expected=['dark','navy','amber','sunshine','forest','epaper','blackwhite'];
- for (const route of ['index.html','tips.html','about.html','privacy.html','transfer.html']) {
+ for (const route of ['index.html','tips.html','about.html','privacy.html']) {
   for (const theme of [null,'light',...expected]) {
    const ctx=await browser.newContext({viewport:{width:1366,height:768}});
    const seed={theme,totalTypedCount:4321,totalLessons:9,highestUnlocked:8,unlockedIndex:8,measurementVersion:2,opts:{textSize:40,cursorHighlight:false},bookPos:{godan:7},sentinel:{untouched:true}};
@@ -32,7 +32,7 @@ const server = http.createServer((req,res) => {
     assert.deepEqual(await page.locator('#theme-select option').evaluateAll(xs=>xs.map(x=>x.value)),expected);
     assert.equal(await page.locator('#theme-select').inputValue(),resolved);
     if(theme===null){await page.click('#theme-menu-btn');await page.screenshot({path:require('os').tmpdir()+'/tankan-ink-default-verified.png'});}
-   } else if(route!=='transfer.html') {
+   } else {
     await page.click('#theme-menu-btn');
     assert.deepEqual(await page.locator('#menu-theme-row button').evaluateAll(xs=>xs.map(x=>x.dataset.theme)),expected);
    }
@@ -40,5 +40,5 @@ const server = http.createServer((req,res) => {
   }
  }
  await browser.close();server.close();
- console.log('PASS: Ink default, Paper-only migration preserves all saved fields, seven retained themes preserved, matching pickers across practice/guides/transfer');
+ console.log('PASS: Ink default, Paper-only migration preserves all saved fields, seven retained themes preserved, matching pickers across practice and guide pages');
 })().catch(e=>{console.error(e);server.close();process.exit(1);});

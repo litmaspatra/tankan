@@ -122,7 +122,8 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
     assert.ok(restored && restored.includes('"unlockedIndex":12'), 'account copy restored to the empty device');
     await page.context().close();
 
-    // 5. Conflict (both differ): account-choice stashes a pre-sync backup and replaces local; device-choice overwrites cloud.
+    // 5. Same keys unlocked, different progress, no practice edge: the tie
+    //    keeps the account copy without asking; the replaced device copy is stashed.
     page = await newPage();
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => {
@@ -132,13 +133,10 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
         }));
     });
     await openProfile(page);
-    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
-    assert.ok(await page.locator('#sync-conflict').isVisible(), 'equally-far differing copies still surface the conflict');
-    assert.match(await page.locator('#sync-conflict-text').textContent(), /same keys unlocked/, 'the prompt explains why it is asking');
-    await page.click('#sync-use-account');
-    await page.waitForTimeout(900);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(1500); // auto-resolve + reload
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()), 'equally-far differing copies resolve without asking');
     let after = await page.evaluate(() => ({ cur: localStorage.getItem('hikeybr_store_v3'), pre: localStorage.getItem('hikeybr_presync_backup') }));
-    assert.ok(after.cur.includes('"marker":"account"'), 'account choice replaces local progress');
+    assert.ok(after.cur.includes('"marker":"account"'), 'an exact tie keeps the account copy on this device');
     const preData = after.pre && JSON.parse(after.pre).data;
     assert.ok(preData && preData.hikeybr_store_v3.includes('"marker":"device"'), 'pre-sync snapshot keeps the replaced device progress');
 
@@ -151,18 +149,22 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
     assert.match(await page.locator('#sync-status').textContent(), /Saved to your account/, 'restored device compares equal to its account copy');
     await page.context().close();
 
+    // Same keys unlocked but this device holds more practice: the device copy
+    // wins without asking, stashing the replaced account copy first.
     page = await newPage();
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => {
-        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 5, marker: 'device2' }));
+        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 5, totalLessons: 40, marker: 'device2' }));
         localStorage.setItem('__syncDocs', JSON.stringify({
-            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5, marker: 'account2' }) } }), savedAt: { seconds: 1794000000 } }
+            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5, totalLessons: 12, marker: 'account2' }) } }), savedAt: { seconds: 1794000000 } }
         }));
     });
     await openProfile(page);
-    await page.click('#google-signin-btn'); await page.waitForTimeout(400);
-    await page.click('#sync-use-device'); await page.waitForTimeout(400);
-    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('"marker":"device2"'), 'device choice updates the account copy');
+    await page.click('#google-signin-btn'); await page.waitForTimeout(600);
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()), 'same keys but more device practice: no prompt');
+    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3.includes('"marker":"device2"'), 'the more-practiced device copy updates the account automatically');
+    const stash5b = await page.evaluate(() => localStorage.getItem('hikeybr_presync_backup'));
+    assert.ok(stash5b && stash5b.includes('account2'), 'the replaced account copy is stashed for rollback');
     await page.context().close();
 
     // 5b. Device strictly further ahead: saves to the account without asking,
@@ -477,12 +479,17 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
     assert.ok(c16 && c16.hikeybr_store_v3.includes('"unlockedIndex":1'), '16: first progress made during the check is saved');
     await page.context().close();
 
-    // 17. Another device saved different progress: a change during the check must NOT overwrite it; the user chooses.
+    // 17. Another device saved different progress with the same keys unlocked
+    //     and no practice edge: the tie keeps the account copy without asking;
+    //     the during-check device copy is stashed, nothing is overwritten.
     page = await newPage();
     await signedInReload(page, envelope({ hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5, marker: 'other-device' }) }),
         { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5, marker: 'device-copy' }) }, { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 5, marker: 'device-copy' }) });
-    assert.ok(await page.locator('#sync-conflict').isVisible(), '17: equally-far differing copies still ask');
-    assert.ok((await cloudData(page)).hikeybr_store_v3.includes('other-device'), '17: account copy untouched before a choice');
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()), '17: equally-far differing copies resolve without asking');
+    assert.ok((await cloudData(page)).hikeybr_store_v3.includes('other-device'), '17: account copy untouched by the tie');
+    assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('other-device'), '17: this device now matches the account copy');
+    const stash17a = await page.evaluate(() => localStorage.getItem('hikeybr_presync_backup'));
+    assert.ok(stash17a && JSON.parse(stash17a).data.hikeybr_store_v3.includes('device-copy'), '17: the replaced device copy is stashed for rollback');
     await page.context().close();
 
     // 17b. The same race with the account copy strictly further ahead resolves
@@ -543,10 +550,12 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
         d.u1 = { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T01:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 8, marker: 'other-device20' }) } }), savedAt: { seconds: 1794002000 } };
         localStorage.setItem('__syncDocs', JSON.stringify(d));
     });
-    await page.click('#sync-retry'); await page.waitForTimeout(700);
-    assert.ok(await page.locator('#sync-conflict').isVisible(), '20: diverged account copy surfaces the choice on retry');
+    await page.click('#sync-retry'); await page.waitForTimeout(1500); // check + auto-resolve + reload
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()), '20: a diverged account copy no longer asks - the account copy is kept');
     assert.ok((await readCloud(page)).includes('other-device20'), '20: retry did not overwrite the account copy');
-    assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('"unlockedIndex":8'), '20: local progress preserved');
+    assert.ok((await page.evaluate(() => localStorage.getItem('hikeybr_store_v3'))).includes('other-device20'), '20: this device now matches the account copy');
+    const stash20 = await page.evaluate(() => localStorage.getItem('hikeybr_presync_backup'));
+    assert.ok(stash20 && stash20.includes('r19'), '20: the owed device copy is stashed for rollback');
     await page.context().close();
 
     // 21. Stuck (slow) save: honest "still saving" text with Retry; late success clears it.
