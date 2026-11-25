@@ -427,3 +427,9 @@ header { height: 44px; }
 #avatar-menu .menu-item { display: grid; grid-template-columns: 20px minmax(0, 1fr); }
 .theme-menu .theme-choice { display: flex; flex-wrap: nowrap; white-space: nowrap; gap: 12px; }
 .theme-choice.active::after { flex: 0 0 auto; }
+
+/* Guide pages: lists and hub */
+.page ul, .page ol { padding-left: 1.3em; }
+.page li { margin: .35em 0; }
+.guide-list { list-style: none; padding-left: 0 !important; }
+.guide-list li { margin: .9em 0; padding: .7em .9em; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
