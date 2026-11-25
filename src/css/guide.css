@@ -433,3 +433,57 @@ header { height: 44px; }
 .page li { margin: .35em 0; }
 .guide-list { list-style: none; padding-left: 0 !important; }
 .guide-list li { margin: .9em 0; padding: .7em .9em; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+
+/* ── Keyboard figure (Kruti Dev layout guide): same flat look as the practice-page keyboard ── */
+.dc { color: var(--text-dim); opacity: .55; font-weight: 400; }
+.kbg-fig { margin: 1.2em 0 1.6em; }
+.kbg-fig figcaption { margin-top: 8px; font-size: .8rem; color: var(--text-dim); text-align: center; }
+.kbg {
+    display: flex; flex-direction: column; gap: 3px;
+    padding: 14px 16px; background: var(--surface); border-radius: 12px;
+    user-select: none; width: 100%;
+}
+.kbg-row { display: flex; gap: 3px; width: 100%; }
+.kbg-sp { flex-basis: 0; flex-shrink: 1; }
+.kbg-key {
+    flex: 1 1 0; min-width: 0; height: 52px; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--key-bg); border-radius: 3px; padding: 2px 3px; overflow: hidden;
+}
+.kbg-key.w-backspace { flex-grow: 2; }
+.kbg-key.w-tab { flex-grow: 1.5; }
+.kbg-key.w-caps { flex-grow: 1.8; }
+.kbg-key.w-enter { flex-grow: 2.3; }
+.kbg-key.w-shift-l, .kbg-key.w-shift-r { flex-grow: 2.3; }
+.kbg-key.w-ctrl, .kbg-key.w-alt { flex-grow: 1.4; }
+.kbg-key.w-space { flex-grow: 6.5; }
+.kbg-sp { visibility: hidden; }
+.kbg-key .hi-shift {
+    position: absolute; top: 3px; left: 5px; font-size: .68rem; line-height: 1; color: var(--text-dim);
+    font-family: 'Noto Sans Devanagari', sans-serif; white-space: nowrap;
+}
+.kbg-key .hi-main {
+    font-family: 'Noto Sans Devanagari', sans-serif; font-size: 1.1rem; font-weight: 700;
+    color: var(--text); line-height: 1; margin-top: 8px; white-space: nowrap;
+}
+.kbg-key .en-sub {
+    position: absolute; bottom: 3px; right: 5px; font-size: .58rem; line-height: 1; color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+}
+.kbg-key.label-key .hi-main { font-size: .72rem; margin-top: 0; font-family: inherit; font-weight: 600; color: var(--text-dim); }
+.kbg-key.home { background: var(--key-unlocked); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.kbg-key.bump::after {
+    content: ''; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+    width: 12px; height: 2px; background: var(--text-dim); border-radius: 1px;
+}
+@media (max-width: 650px) {
+    .kbg-fig { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .kbg { min-width: 600px; padding: 8px 6px; gap: 2px; }
+    .kbg-row { gap: 2px; }
+    .kbg-key { height: 44px; padding: 1px; }
+    .kbg-key .hi-main { font-size: .95rem; margin-top: 8px; }
+    .kbg-key .hi-shift { font-size: .58rem; top: 2px; left: 3px; }
+    .kbg-key .en-sub { font-size: .5rem; right: 3px; bottom: 2px; }
+    .kbg-key.label-key .hi-main { font-size: .5rem; }
+    .kbg-key.bump::after { width: 9px; bottom: 4px; }
+}
