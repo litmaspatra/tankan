@@ -1,5 +1,5 @@
 // Applies the theme saved by the main app (localStorage 'hikeybr_store_v3')
-// to the static pages, so About/Tips/Privacy/Transfer follow the site's
+// to the static pages, so About/Guides/Privacy/Transfer follow the site's
 // selected theme. Loaded synchronously in <head> to avoid a flash of the
 // wrong palette. Default matches the app: Ink (dark).
 (function () {

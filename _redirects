@@ -7,3 +7,7 @@
 /hikeymash.html / 302
 /data/cinema.json / 302
 /data/cinema.js / 302
+
+# Tips were merged into the Guides page (2026-11-26, Kartik chose one reading place).
+/tips /guides 301
+/tips.html /guides 301

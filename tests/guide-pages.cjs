@@ -1,4 +1,4 @@
-// Guide pages (about, tips, privacy): they share the practice page's
+// Guide pages (about, guides, privacy): they share the practice page's
 // container margins, follow the site's selected theme, carry a boxed
 // "Back to Tankan" button, and keep the Hindi toggle inside the page
 // margins. Run: node tests/guide-pages.cjs
@@ -33,7 +33,7 @@ const server = http.createServer((req, res) => {
     const appThemes = await page.evaluate(() =>
         Array.from(document.getElementById('theme-select').options).map(o => [o.value, o.textContent]));
 
-    for (const name of ['about', 'tips', 'privacy']) {
+    for (const name of ['about', 'guides', 'privacy']) {
         await page.goto(`http://localhost:${port}/${name}.html`);
         await page.waitForTimeout(250);
 
@@ -69,9 +69,9 @@ const server = http.createServer((req, res) => {
         // Avatar menu lists the same four entries, with the current page marked.
         await header.locator('#avatar-corner').click();
         const items = header.locator('#avatar-menu .menu-item');
-        assert.strictEqual(await items.count(), 5, name + ': avatar menu has Profile/Settings/Tips/About/Contact');
+        assert.strictEqual(await items.count(), 5, name + ': avatar menu has Profile/Settings/Guides/About/Contact');
         const hrefs = await items.evaluateAll(els => els.map(e => e.getAttribute('href')));
-        assert.deepStrictEqual(hrefs, ['index.html#profile', 'index.html#settings', 'tips.html', 'about.html', 'contact.html'], name + ': avatar menu links');
+        assert.deepStrictEqual(hrefs, ['index.html#profile', 'index.html#settings', 'guides.html', 'about.html', 'contact.html'], name + ': avatar menu links');
         if (name !== 'privacy') {
             assert.strictEqual(await header.locator(`#avatar-menu .menu-item[href="${name}.html"]`).getAttribute('aria-current'), 'page',
                 name + ': current page marked in menu');
@@ -107,19 +107,19 @@ const server = http.createServer((req, res) => {
 
     // Tips: the Hindi toggle lives inside the page margins and flips the
     // content plus the back button language.
-    await page.goto(`http://localhost:${port}/tips.html`);
+    await page.goto(`http://localhost:${port}/guides.html`);
     await page.waitForTimeout(250);
     const pageBox = await page.locator('.page').boundingBox();
     const langBtn = page.locator('#lang-toggle');
     const lBox = await langBtn.boundingBox();
-    assert.ok(lBox.x >= pageBox.x && lBox.x + lBox.width <= pageBox.x + pageBox.width, 'tips: Hindi toggle inside page margins');
-    assert.strictEqual(await langBtn.evaluate(el => getComputedStyle(el).position), 'static', 'tips: Hindi toggle is not fixed/floating');
+    assert.ok(lBox.x >= pageBox.x && lBox.x + lBox.width <= pageBox.x + pageBox.width, 'guides: Hindi toggle inside page margins');
+    assert.strictEqual(await langBtn.evaluate(el => getComputedStyle(el).position), 'static', 'guides: Hindi toggle is not fixed/floating');
     await langBtn.click();
     await page.waitForTimeout(150);
-    assert.ok(await page.locator('#content-hi').isVisible(), 'tips: Hindi content shows');
+    assert.ok(await page.locator('#content-hi').isVisible(), 'guides: Hindi content shows');
     const hiBack = page.locator('.guide-top .back-btn[data-lang="hi"]');
-    assert.ok(await hiBack.isVisible(), 'tips: Hindi back button shows');
-    assert.match(await hiBack.textContent(), /टंकण पर वापस/, 'tips: Hindi back button label');
+    assert.ok(await hiBack.isVisible(), 'guides: Hindi back button shows');
+    assert.match(await hiBack.textContent(), /टंकण पर वापस/, 'guides: Hindi back button label');
 
     // Phone width: the guide column matches the practice column there too
     // (full width, 12px padding) and the Hindi toggle stays inside it.
@@ -128,26 +128,26 @@ const server = http.createServer((req, res) => {
     await mob.goto(`http://localhost:${port}/index.html`);
     await mob.waitForTimeout(300);
     const mobPractice = await mob.locator('#panel-practice').boundingBox();
-    await mob.goto(`http://localhost:${port}/tips.html`);
+    await mob.goto(`http://localhost:${port}/guides.html`);
     await mob.waitForTimeout(250);
     const mobPage = await mob.locator('.page').boundingBox();
     assert.ok(Math.abs(mobPage.x - mobPractice.x) < 2 && Math.abs(mobPage.width - mobPractice.width) < 2,
-        'mobile tips: same margins as practice column, got ' + JSON.stringify(mobPage) + ' vs ' + JSON.stringify(mobPractice));
+        'mobile guides: same margins as practice column, got ' + JSON.stringify(mobPage) + ' vs ' + JSON.stringify(mobPractice));
     const mobLang = await mob.locator('#lang-toggle').boundingBox();
-    assert.ok(mobLang.x >= mobPage.x && mobLang.x + mobLang.width <= mobPage.x + mobPage.width, 'mobile tips: Hindi toggle inside page margins');
+    assert.ok(mobLang.x >= mobPage.x && mobLang.x + mobLang.width <= mobPage.x + mobPage.width, 'mobile guides: Hindi toggle inside page margins');
     await mob.close();
 
     // Picking a theme on a guide page applies immediately, persists to the
     // app's store and survives a reload - and the practice page picks it up.
-    await page.goto(`http://localhost:${port}/tips.html`);
+    await page.goto(`http://localhost:${port}/guides.html`);
     await page.waitForTimeout(250);
     await page.locator('#theme-menu-btn').click();
     await page.locator('#menu-theme-row button[data-theme="forest"]').click();
-    assert.strictEqual(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'forest', 'tips: theme applies live');
-    assert.strictEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('hikeybr_store_v3')).theme), 'forest', 'tips: theme saved to the app store');
+    assert.strictEqual(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'forest', 'guides: theme applies live');
+    assert.strictEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('hikeybr_store_v3')).theme), 'forest', 'guides: theme saved to the app store');
     await page.reload();
     await page.waitForTimeout(250);
-    assert.strictEqual(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'forest', 'tips: theme survives reload');
+    assert.strictEqual(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'forest', 'guides: theme survives reload');
     await page.goto(`http://localhost:${port}/index.html`);
     await page.waitForTimeout(300);
     assert.strictEqual(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'forest', 'practice: picks up the theme chosen on the guide page');
@@ -173,15 +173,15 @@ const server = http.createServer((req, res) => {
     // Mobile: the header wraps with the tabs on their own row, same as the app.
     const mob2 = await browser.newPage({ viewport: { width: 390, height: 844 } });
     mob2.on('pageerror', e => errors.push('mobile2: ' + e.message));
-    await mob2.goto(`http://localhost:${port}/tips.html`);
+    await mob2.goto(`http://localhost:${port}/guides.html`);
     await mob2.waitForTimeout(250);
     const mobNav = await mob2.locator('header nav').boundingBox();
     const mobBrand = await mob2.locator('header .brand').boundingBox();
-    assert.ok(mobNav.y > mobBrand.y, 'mobile tips: tabs wrap to their own row');
-    assert.ok(mobNav.width > 350, 'mobile tips: tabs span the header width');
+    assert.ok(mobNav.y > mobBrand.y, 'mobile guides: tabs wrap to their own row');
+    assert.ok(mobNav.width > 350, 'mobile guides: tabs span the header width');
     // Same as the app on phones: the badge and tab labels stay visible.
-    assert.notStrictEqual(await mob2.locator('header .brand-badge').evaluate(el => getComputedStyle(el).display), 'none', 'mobile tips: brand badge visible');
-    assert.notStrictEqual(await mob2.locator('header nav .nav-tab .nav-label').first().evaluate(el => getComputedStyle(el).display), 'none', 'mobile tips: tab labels visible');
+    assert.notStrictEqual(await mob2.locator('header .brand-badge').evaluate(el => getComputedStyle(el).display), 'none', 'mobile guides: brand badge visible');
+    assert.notStrictEqual(await mob2.locator('header nav .nav-tab .nav-label').first().evaluate(el => getComputedStyle(el).display), 'none', 'mobile guides: tab labels visible');
     await mob2.close();
 
     assert.deepStrictEqual(errors, [], 'no page errors: ' + errors.join(' | '));

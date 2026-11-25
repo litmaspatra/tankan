@@ -1,4 +1,4 @@
-// Shared site header on the static guide pages (tips.html, about.html,
+// Shared site header on the static guide pages (guides.html, about.html,
 // privacy.html): the same avatar menu, theme dropdown and sound toggle the
 // practice page header has, talking to the same store
 // (localStorage 'hikeybr_store_v3': theme, soundEnabled), so a choice made

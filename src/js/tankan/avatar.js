@@ -129,7 +129,7 @@
         currentUser = user;
         const resolved = resolve(user);
         // The corner is always shown: it opens the header menu (profile,
-        // settings, tips, about, themes), which must be reachable signed
+        // settings, guides, about, themes), which must be reachable signed
         // out too. A signed-out visitor gets the default ट initial.
         corner.hidden = false;
         paintInto(img, initial, resolved);

@@ -1,4 +1,4 @@
-// Shared English/Hindi toggle for the static guide pages (tips.html, about.html).
+// Shared English/Hindi toggle for the static guide pages (guides.html, about.html).
 // Per-page strings come from data-* attributes on the toggle button, so this
 // file stays generic and no inline script is needed (CSP: script-src 'self').
 (function () {

@@ -13,7 +13,7 @@ const server = http.createServer((req,res) => {
  const base='http://127.0.0.1:'+server.address().port+'/';
  const browser=await chromium.launch({headless:true});
  const expected=['dark','navy','amber','sunshine','forest','epaper','blackwhite'];
- for (const route of ['index.html','tips.html','about.html','privacy.html']) {
+ for (const route of ['index.html','guides.html','about.html','privacy.html']) {
   for (const theme of [null,'light',...expected]) {
    const ctx=await browser.newContext({viewport:{width:1366,height:768}});
    const seed={theme,totalTypedCount:4321,totalLessons:9,highestUnlocked:8,unlockedIndex:8,measurementVersion:2,opts:{textSize:40,cursorHighlight:false},bookPos:{godan:7},sentinel:{untouched:true}};

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   STATIC GUIDE PAGES (about.html, tips.html, privacy.html, transfer.html)
+   STATIC GUIDE PAGES (about.html, guides.html, privacy.html, transfer.html)
    Same container, margins, fonts and theme palettes as the practice page.
    Requires src/css/theme.css (palettes) and guide-theme.js (data-theme).
    ═══════════════════════════════════════════════════════════ */
@@ -487,3 +487,4 @@ header { height: 44px; }
     .kbg-key.label-key .hi-main { font-size: .5rem; }
     .kbg-key.bump::after { width: 9px; bottom: 4px; }
 }
+h3 { font-size: 1rem; margin-top: 1.4em; }

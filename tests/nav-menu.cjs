@@ -47,10 +47,10 @@ const server = http.createServer((req, res) => {
     await page.waitForTimeout(150);
     assert.ok(await page.locator('#avatar-menu').isVisible(), 'menu opens');
     const entries = await page.evaluate(() => Array.from(document.querySelectorAll('#avatar-menu .menu-item')).map(el => el.textContent.trim()));
-    ['Profile', 'Settings', 'Tips', 'About', 'Contact'].forEach(name => assert.ok(entries.some(e => e.includes(name)), 'menu has ' + name + ', got: ' + entries.join('|')));
+    ['Profile', 'Settings', 'Guides', 'About', 'Contact'].forEach(name => assert.ok(entries.some(e => e.includes(name)), 'menu has ' + name + ', got: ' + entries.join('|')));
     assert.strictEqual(await page.locator('#avatar-menu #menu-theme-row').count(), 0, 'theme picker is not inside the profile menu');
     const links = await page.evaluate(() => Array.from(document.querySelectorAll('#avatar-menu a.menu-item')).map(a => a.getAttribute('href')).sort());
-    assert.deepStrictEqual(links, ['about.html', 'contact.html', 'tips.html'], 'Tips and About link to the real pages');
+    assert.deepStrictEqual(links, ['about.html', 'contact.html', 'guides.html'], 'Guides and About link to the real pages');
 
     const aligned = await page.locator('#avatar-menu .menu-item').evaluateAll(items => items.map(item => {
         const icon = item.querySelector('.nav-icon').getBoundingClientRect();

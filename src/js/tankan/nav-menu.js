@@ -1,5 +1,5 @@
 // Header menus: the profile-picture corner opens Profile, Settings and the
-// public Tips and About pages; a separate Theme button next to the sound
+// public Guides and About pages; a separate Theme button next to the sound
 // toggle opens a dropdown that mirrors the Settings select exactly. Both
 // corners always render (signed out included), so public information and
 // themes are reachable without an account.
