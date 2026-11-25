@@ -1682,9 +1682,13 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
         }
 
         /* Never show legacy-encoded text before its font is ready (a reload
-           would otherwise flash Latin glyphs while the .ttf downloads). */
+           would otherwise flash Latin glyphs while the .ttf downloads).
+           visibility (not just transparent colour) so the text is never
+           painted before the font is ready: painting during the font-load
+           window can cache a corrupted glyph raster in Chromium, seen as a
+           small headlineless र (Ra.dv) in words like कारक. */
         :root:not([data-font-ready]) .text-stream-container,
-        :root:not([data-font-ready]) .text-stream-container * { color: transparent !important; }
+        :root:not([data-font-ready]) .text-stream-container * { visibility: hidden !important; color: transparent !important; }
 
         /* Real-keyboard proportions: every row fills the frame, keys sized in
            standard unit ratios, spacebar ~6.25u wide instead of soaking the row. */
