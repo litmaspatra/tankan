@@ -1,6 +1,6 @@
 // Content guides (how-tankan-works, kruti-dev-layout, home-row, posture,
 // common-mistakes, alt-codes, building-speed, terms, guides) and the home
-// page intro/FAQ. Run: node tests/new-guides.cjs
+// clean home page. Run: node tests/new-guides.cjs
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const http = require('node:http');
@@ -49,16 +49,11 @@ const ALL = GUIDES.concat(['terms', 'guides']);
         assert.ok(await page.locator('#content-hi').isVisible() && !(await page.locator('#content-en').isVisible()), name + ': Hindi shows, English hides');
         await page.click('#lang-toggle');
     }
-    // Home page: intro + FAQ below the typing area; typing still gets focus first.
+    // Home page stays clean: no intro or FAQ, nothing below the keyboard but the footer.
     await page.goto(`http://localhost:${port}/index.html`);
     await page.waitForTimeout(500);
-    const info = page.locator('#home-info');
-    assert.ok(await info.count() === 1, 'home: intro and FAQ present');
-    assert.ok((await info.innerText()).split(/\s+/).length > 200, 'home: FAQ has real text');
-    const kb = await page.locator('#keyboard-frame').boundingBox();
-    const ib = await info.boundingBox();
-    assert.ok(ib.y >= kb.y + kb.height - 2, 'home: info sits below the keyboard, not in the typing area');
-    assert.strictEqual(await page.locator('#home-info dt').count(), 8, 'home: 8 FAQ questions');
+    assert.strictEqual(await page.locator('#home-info').count(), 0, 'home: no intro/FAQ block');
+    assert.strictEqual(await page.locator('dl').count(), 0, 'home: no FAQ list');
     assert.deepEqual(errors, [], 'no page errors: ' + errors.join('; '));
     await browser.close(); server.close();
     console.log('new-guides: ok');
