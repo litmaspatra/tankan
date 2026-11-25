@@ -216,6 +216,10 @@
         const MASH_FONTS = {
             tankan: 'TankanRemington',
             tankanclean: 'TankanClean',
+            tankankalam: 'TankanKalam',
+            tankaneczar: 'TankanEczar',
+            tankanbiryani: 'TankanBiryani',
+            tankankhand: 'TankanKhand',
         };
         function applyRaceFont(key) {
             const fam = MASH_FONTS[key] || MASH_FONTS.tankan;

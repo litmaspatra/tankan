@@ -2,7 +2,7 @@
 // Legacy-byte renderer for Tankan Remington.
 window.TankanLegacyRenderer=(()=>{
  const variants={";": "cv01", ">": "cv02", "K": "cv03", "Q": "cv04", "c": "cv05", "d": "cv06", "e": "cv07", "g": "cv08", "i": "cv09", "l": "cv10", "n": "cv11", "o": "cv12", "p": "cv13", "r": "cv14", "t": "cv15", "u": "cv16", "x": "cv17", "y": "cv18", "\u0090": "cv19", "\u00a5": "cv20", "\u00b4": "cv21", "\u00c4": "cv22", "\u00d2": "cv23", "\u00e4": "cv24", "Hk": "cv25", "[k": "cv26", "?k": "cv27", "/k": "cv28", "Fk": "cv29", "\"k": "cv30", "'k": "cv31", "V": "cv32", "B": "cv33", "M": "cv34", "<": "cv35", "\"V": "cv36"},states=new WeakMap();
- const enabled=key=>key==='tankan'||key==='tankanclean';
+ const enabled=key=>['tankan','tankanclean','tankankalam','tankaneczar','tankanbiryani','tankankhand'].includes(key);
  function features(text,key){
   const map=new Map();
   for(let j=0;j<text.length;j++){

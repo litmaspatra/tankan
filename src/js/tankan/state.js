@@ -54,7 +54,7 @@
                 document.documentElement.dataset.fontReady='1';
             });
         }
-        const FONT_REGISTRY = {tankan:{label:'टंकण 1',encoding:'krutidev',family:'TankanRemington'},tankanclean:{label:'टंकण 2',encoding:'krutidev',family:'TankanClean'}};
+        const FONT_REGISTRY = {tankan:{label:'टंकण 1',encoding:'krutidev',family:'TankanRemington'},tankanclean:{label:'टंकण 2',encoding:'krutidev',family:'TankanClean'},tankankalam:{label:'Tankan Kalam',encoding:'krutidev',family:'TankanKalam'},tankaneczar:{label:'Tankan Eczar',encoding:'krutidev',family:'TankanEczar'},tankanbiryani:{label:'Tankan Biryani',encoding:'krutidev',family:'TankanBiryani'},tankankhand:{label:'Tankan Khand',encoding:'krutidev',family:'TankanKhand'}};
         let audioCtx = null;
         let altCodeBuffer = '';
         let altCodeActive = false;

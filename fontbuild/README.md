@@ -22,3 +22,14 @@ existing टंकण Remington font.
     # needs Mukta-Bold.ttf, Mukta-Regular.ttf (from google/fonts) and
     # fonts/Tankan-Remington-Regular.ttf; adjust paths in the script
     python3 fontbuild/build_v4.py
+
+## Tankan Kalam, Eczar, Biryani, Khand
+Four more own fonts, same encoding and cv01-cv40 system as Tankan Clean (fonts/Tankan-<Name>-Regular.ttf).
+Outlines are re-drawn from open fonts through the Remington cmap and GSUB; every one is SIL OFL 1.1 and
+carries its base font's copyright and licence in the name table. OFL text beside each file (Tankan-<Name>-OFL.txt).
+- Tankan Kalam: Kalam Regular, Indian Type Foundry. https://github.com/google/fonts/tree/main/ofl/kalam
+- Tankan Eczar: Eczar, The Eczar Project Authors. https://github.com/google/fonts/tree/main/ofl/eczar
+- Tankan Biryani: Biryani Bold, Dan Reynolds and Mathieu Reguer. https://github.com/google/fonts/tree/main/ofl/biryani
+- Tankan Khand: Khand Medium, Indian Type Foundry. https://github.com/google/fonts/tree/main/ofl/khand
+None of the four OFL files declare a Reserved Font Name; the renamed "Tankan ..." family names are used anyway.
+Known limits: plain z rakar stroke is still Mukta-style; Kalam bindu placement is approximate.
