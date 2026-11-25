@@ -78,6 +78,8 @@ const path = require('node:path');
     });
     await page.reload();
     await page.waitForTimeout(400);
+    // The page now has intro text below the keyboard, so reload restores the old scroll offset; start from the top so hovering does not scroll (scrolling closes the popup).
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.locator('#alphabet-container .ak-badge[data-key="s"]').hover();
     await page.waitForTimeout(300);
     const pop2 = await page.evaluate(() => { const p = document.getElementById('key-popup'); return p && !p.hidden ? p.textContent : ''; });
