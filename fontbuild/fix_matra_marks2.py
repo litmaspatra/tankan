@@ -5,7 +5,7 @@ from fontTools.ttLib import TTFont
 from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.pointInsidePen import PointInsidePen
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
-SRC='/tmp/tk/fonts/Tankan-%s-Regular.ttf'
+SRC='/tmp/base84/Tankan-%s-Regular.ttf'
 def ld(n):
     f=TTFont(SRC%n);gs=f.getGlyphSet();cm=f.getBestCmap()
     def B(g):
@@ -57,7 +57,7 @@ for k,c in MARKS.items():
     for g in cons:
         dx,dy=P.get((g,mg),(0,0));cx=hm[mI][0]+hm[g][0]+(m[0]+m[2])/2+dx
         want=bI[2]+kk
-        if cx>want+10:
+        if abs(cx-want)>10:
             ctx.append((g,mg,round(want-cx),k))
 print(n,len(log),'ctx',len(ctx),'kk',round(kk),log[:3])
 lines=[f'pos {g} <0 0 0 0> {s} <{dx} {dy} 0 0>;' for (g,s),(dx,dy) in new.items()]
@@ -65,4 +65,4 @@ fea='languagesystem DFLT dflt;\nlanguagesystem latn dflt;\nfeature kern {\n'+'\n
 fea+='feature kern {\n'+'\n'.join(f'pos {mI} {g} {mg}\' <{d} 0 0 0>;' for g,mg,d,k in ctx)+'\n} kern;\n'
 del f['GPOS']
 addOpenTypeFeaturesFromString(f,fea,tables=['GPOS'])
-import os;os.makedirs('/tmp/new8',exist_ok=True);f.save(f'/tmp/new8/Tankan-{n}-Regular.ttf')
+import os;os.makedirs('/tmp/new9',exist_ok=True);f.save(f'/tmp/new9/Tankan-{n}-Regular.ttf')
