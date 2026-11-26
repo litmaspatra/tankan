@@ -54,7 +54,7 @@
                 document.documentElement.dataset.fontReady='1';
             });
         }
-        const FONT_REGISTRY = {tankan:{label:'रेमिंगटन',encoding:'krutidev',family:'TankanRemington'},tankanclean:{label:'साफ़',encoding:'krutidev',family:'TankanClean'},tankankalam:{label:'कलम',encoding:'krutidev',family:'TankanKalam'},tankaneczar:{label:'एक्ज़ार',encoding:'krutidev',family:'TankanEczar'},tankanbiryani:{label:'बिरयानी',encoding:'krutidev',family:'TankanBiryani'},tankankhand:{label:'खंड',encoding:'krutidev',family:'TankanKhand'}};
+        const FONT_REGISTRY = {tankan:{label:'कचौरी',encoding:'krutidev',family:'TankanRemington'},tankanclean:{label:'इमरती',encoding:'krutidev',family:'TankanClean'},tankankalam:{label:'जलेबी',encoding:'krutidev',family:'TankanKalam'},tankaneczar:{label:'बिरयानी',encoding:'krutidev',family:'TankanEczar'},tankanbiryani:{label:'ढोकला',encoding:'krutidev',family:'TankanBiryani'},tankankhand:{label:'खंड',encoding:'krutidev',family:'TankanKhand'}};
         let audioCtx = null;
         let altCodeBuffer = '';
         let altCodeActive = false;
