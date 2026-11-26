@@ -25,7 +25,7 @@ for k,c in (('b','a'),('c','\u00a1')):
         dx,dy=P[(g,mg)];off=hm['matraI.dv'][0]+hm[g][0]+dx
         d=0
         while hit(off+m[0]+d,off+m[2]+d,m[1]+dy,m[3]+dy,PAD) and d<200: d+=6
-        if 0<d<=100: rules.append((g,mg,d))
+        if 0<d: rules.append((g,mg,d))
 print(len(rules),[(g,d) for g,_,d in rules][:40])
 fea='languagesystem DFLT dflt;\nlanguagesystem latn dflt;\nfeature kern {\n'+'\n'.join(f'pos {g} <0 0 0 0> {s} <{dx} {dy} 0 0>;' for (g,s),(dx,dy) in P.items())+'\n} kern;\n'
 fea+='feature kern {\n'+'\n'.join(f"pos matraI.dv {g} {mg}' <{d} 0 0 0>;" for g,mg,d in rules)+'\n} kern;\n'
