@@ -110,7 +110,7 @@ function start(){
     var n=20,words=[];
     for(var i=0;i<n;i++)words.push(POOL[Math.floor(Math.random()*POOL.length)]);
     var text=words.join(' ').normalize('NFD').replace(/[\u200c\u200d]/g,'');
-    cps=Array.from(text);pos=0;errs=0;correct=0;t0=0;done=false;
+    cps=Array.from(text);pos=0;errs=0;correct=0;t0=0;done=false;window.__insDur=0;
     clusters=[];
     var idx=0,str=text;
     var parts=seg?Array.from(seg.segment(str),function(s){return s.segment;}):cps;
@@ -121,7 +121,7 @@ function start(){
   function stats(){
     var s=t0&&!done?(Date.now()-t0):(window.__insDur||0);
     if(!t0)s=0;
-    var min=s/60000,w=min>0?(correct/5)/min:0,tot=correct+errs;
+    var min=s/60000,w=(s>=1500&&correct>=3)?Math.min((correct/5)/min,300):0,tot=correct+errs;
     document.getElementById('ins-wpm').textContent=w.toFixed(1);
     document.getElementById('ins-acc').textContent=tot?(correct/tot*100).toFixed(0):'100';
     var sec=Math.floor(s/1000);document.getElementById('ins-time').textContent=Math.floor(sec/60)+':'+('0'+sec%60).slice(-2);
@@ -210,7 +210,7 @@ function start(){
   drawKb();newLesson();
   var ch=document.getElementById('canvas-hint-text');if(ch)ch.textContent='Start typing';
   window.TankanInscript._state=function(){return {pos:pos,len:cps.length,errs:errs,correct:correct,done:done,text:cps.join('')};};
-  window.TankanInscript._setText=function(t){cps=Array.from(t.normalize('NFD'));clusters=[];var seg2=seg?Array.from(seg.segment(cps.join('')),function(s){return s.segment;}):cps;var i=0;seg2.forEach(function(p){var l=Array.from(p).length;clusters.push([i,i+l]);i+=l;});pos=0;errs=0;correct=0;t0=0;done=false;render();hint();};
+  window.TankanInscript._setText=function(t){cps=Array.from(t.normalize('NFD'));clusters=[];var seg2=seg?Array.from(seg.segment(cps.join('')),function(s){return s.segment;}):cps;var i=0;seg2.forEach(function(p){var l=Array.from(p).length;clusters.push([i,i+l]);i+=l;});pos=0;errs=0;correct=0;t0=0;done=false;window.__insDur=0;render();hint();stats();};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
