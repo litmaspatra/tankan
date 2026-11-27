@@ -107,12 +107,8 @@
 #keyboard-frame.zones-on .k-key[data-zone="i"] { background-image: linear-gradient(rgba(80, 165, 110, 0.25), rgba(80, 165, 110, 0.25)); }
 #keyboard-frame.zones-on .k-key[data-zone="t"] { background-image: linear-gradient(rgba(85, 130, 200, 0.25), rgba(85, 130, 200, 0.25)); }
 
-/* Inscript: cursor steps through each code point of a syllable (e.g. र then ु) */
-.text-current.ins-split{border-left:0;padding-left:0;animation:none;color:var(--km-text-faint,inherit)}
-.text-current.ins-split .ins-typed{color:var(--km-text-dim,inherit)}
-.text-current.ins-split .ins-rest{color:var(--km-text-faint,inherit)}
-.text-current.ins-split .ins-now{color:var(--km-accent,inherit);background:var(--km-accent-glow,transparent);border-bottom:2px solid var(--km-accent,currentColor)}
-.text-current.ins-split.error-flash .ins-now{color:var(--km-error,inherit);border-bottom-color:var(--km-error,currentColor)}
+/* Inscript: a syllable typed in several keystrokes (e.g. र then ु) shows a bar under it, one segment per key */
+.text-current.ins-split{padding-bottom:6px}
 
 /* Caps Lock notice */
 #capslock-notice{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9999;max-width:calc(100vw - 24px);

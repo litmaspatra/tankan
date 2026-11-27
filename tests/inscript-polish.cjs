@@ -34,19 +34,19 @@ const path=require('node:path');
  await fire(false,'x',first.code);
  assert.equal(await pos(),1,'key works after Caps Lock is off');
  assert.ok(!(await page.locator('#capslock-notice').isVisible()),'notice hidden');
- // 4. cursor steps through a syllable one code point at a time
+ // 4. a multi-key syllable stays one text node, with one bar segment per keystroke that advances with each key
  await boot();
  {const r=await page.evaluate(()=>{const I=TankanInscript;let guard=0;
-   while(guard++<80){const st=I._state();if(document.getElementById('text-current').classList.contains('ins-split'))break;
-     const ch=st.text[st.pos];if(ch===' ')I.type('Space',false);else{const q=I.REV[ch];I.type(q.code,q.shift);} if(I._state().done)break;}
-   const cur=document.getElementById('text-current');
-   const first={split:cur.classList.contains('ins-split'),parts:[...cur.children].map(c=>c.className+':'+c.textContent)};
-   const st=I._state(),ch=st.text[st.pos],q=I.REV[ch];I.type(q.code,q.shift);
-   const cur2=document.getElementById('text-current');
-   return {first,second:[...cur2.children].map(c=>c.className+':'+c.textContent),text:cur2.textContent};});
-  assert.ok(r.first.split,'a multi-key syllable shows the split cursor');
-  assert.ok(r.first.parts[0].startsWith('ins-now')&&r.first.parts.slice(1).every(x=>x.startsWith('ins-rest')),'cursor on the first key only: '+r.first.parts);
-  assert.ok(r.second[0].startsWith('ins-typed')&&r.second[1].startsWith('ins-now'),'cursor moved to the next key of the same syllable: '+r.second);
+   const cur=()=>document.getElementById('text-current');
+   while(guard++<80){if(cur().classList.contains('ins-split'))break;
+     const st=I._state(),ch=st.text[st.pos];if(ch===' ')I.type('Space',false);else{const q=I.REV[ch];I.type(q.code,q.shift);} if(I._state().done)break;}
+   const first={split:cur().classList.contains('ins-split'),kids:cur().children.length,txt:cur().textContent,bg:cur().style.backgroundImage};
+   const st=I._state(),q=I.REV[st.text[st.pos]];I.type(q.code,q.shift);
+   const second={kids:cur().children.length,txt:cur().textContent,bg:cur().style.backgroundImage,split:cur().classList.contains('ins-split')};
+   return {first,second};});
+  assert.ok(r.first.split&&r.first.kids===0&&Array.from(r.first.txt).length===2,'two-key syllable is one text node');
+  assert.equal((r.first.bg.match(/linear-gradient/g)||[]).length,2,'one bar segment per keystroke');
+  assert.ok(r.first.bg!==r.second.bg||!r.second.split,'bar changes after the first key');
   await page.screenshot({path:'/tmp/split-cursor.png',clip:{x:0,y:230,width:1000,height:260}});}
  // 5. font select changes the displayed font and persists
  await page.evaluate(()=>{document.getElementById('lesson-settings').open=true;});
