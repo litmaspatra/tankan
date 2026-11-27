@@ -2218,15 +2218,8 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
 .layout-opt.sel{border-color:var(--accent);background:var(--accent-soft)}
 .layout-menu-note{font-size:.72rem;color:var(--text-faint,#888);padding:6px 8px 2px}
 @media (max-width:600px){.layout-picker{display:none}}
-.ins-stats{display:none}
-body.layout-inscript .ins-stats{display:flex;gap:18px;flex-wrap:wrap;align-items:baseline;margin:0 0 10px;font-size:.9rem;color:var(--text-dim)}
-body.layout-inscript .ins-stats b{color:var(--text);font-size:1.15rem}
-body.layout-inscript .ins-stats .ins-note{margin-left:auto;font-size:.75rem;color:var(--text-faint)}
-body.layout-inscript #panel-practice .target-card,
 body.layout-inscript #panel-practice .alt-helper-bar,
-body.layout-inscript #panel-practice .stats-strip,
-body.layout-inscript #panel-practice .alphabet-strip,
-body.layout-inscript #panel-practice .practice-substats,
 body.layout-inscript #panel-practice .lesson-settings{display:none!important}
-body.layout-inscript #panel-practice .stats-average-scope{display:none!important}
+body.layout-inscript #panel-practice #stat-card-book{display:none!important}
+body.layout-inscript #panel-practice #ins-goal-select{background:var(--surface,#1b1b1b);color:var(--text);border:1px solid var(--border,#333);border-radius:6px;font:inherit;font-size:.85rem;padding:2px 6px;margin-left:4px}
 body.layout-inscript #text-stream-container{font-size:2.1rem;line-height:1.7}

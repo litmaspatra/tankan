@@ -1,6 +1,17 @@
-/* Inscript (Devanagari, Mangal) practice layout. Isolated from the Remington
-   Kruti Dev engine: switching layout reloads the page, and while Inscript is
-   active this module owns the keyboard, the lesson text and the stats line.
+/* Inscript (Devanagari, Mangal) practice layout with keybr-style guided
+   progression. Mirrors the Remington Kruti Dev engine's mechanics, with a
+   measurement model re-derived for Unicode typing ("measurements differ"):
+   - the trained unit is one keystroke producing one Unicode codepoint in
+     logical (phonetic) order: matras, halant and nukta are keystrokes of
+     their own, unlike Kruti Dev bytes;
+   - per-key speed = trimmed mean of clean time-to-type samples, with the
+     extra Shift press discounted keybr-style, and the conjunct shortcuts
+     (Shift+5..8) split evenly across the codepoints they produce;
+   - a key unlocks when its banked best (95%+ accuracy lessons only) reaches
+     the goal, with 10+ cumulative clean samples and a recent 95%+ lesson;
+   - WPM = correct codepoints / 5 / minutes: honestly lower than Kruti Dev
+     for the same fluency, because Inscript needs more keystrokes per word.
+   Progress lives in a separate store: each layout keeps its own stats.
    Key positions: xkeyboard-config "in(deva)" InScript table. */
 (function(){
 'use strict';
@@ -9,26 +20,26 @@ var layout=localStorage.getItem(KEY)==='inscript'?'inscript':'kruti';
 
 /* code: [unshifted, shifted] */
 var MAP={
-Backquote:['\u094a','\u0912'],
-Digit1:['\u0967','\u090d'],Digit2:['\u0968','\u0945'],Digit3:['\u0969','#'],Digit4:['\u096a','$'],
-Digit5:['\u096b','%'],Digit6:['\u096c','^'],Digit7:['\u096d','&'],Digit8:['\u096e','*'],
-Digit9:['\u096f','('],Digit0:['\u0966',')'],
-Minus:['-','\u0903'],Equal:['\u0943','\u090b'],
-KeyQ:['\u094c','\u0914'],KeyW:['\u0948','\u0910'],KeyE:['\u093e','\u0906'],KeyR:['\u0940','\u0908'],
-KeyT:['\u0942','\u090a'],KeyY:['\u092c','\u092d'],KeyU:['\u0939','\u0919'],KeyI:['\u0917','\u0918'],
-KeyO:['\u0926','\u0927'],KeyP:['\u091c','\u091d'],BracketLeft:['\u0921','\u0922'],BracketRight:['\u093c','\u091e'],
-Backslash:['\u0949','\u0911'],
-KeyA:['\u094b','\u0913'],KeyS:['\u0947','\u090f'],KeyD:['\u094d','\u0905'],KeyF:['\u093f','\u0907'],
-KeyG:['\u0941','\u0909'],KeyH:['\u092a','\u092b'],KeyJ:['\u0930','\u0931'],KeyK:['\u0915','\u0916'],
-KeyL:['\u0924','\u0925'],Semicolon:['\u091a','\u091b'],Quote:['\u091f','\u0920'],
-KeyZ:['\u0946','\u090e'],KeyX:['\u0902','\u0901'],KeyC:['\u092e','\u0923'],KeyV:['\u0928','\u0929'],
-KeyB:['\u0935','\u0934'],KeyN:['\u0932','\u0933'],KeyM:['\u0938','\u0936'],Comma:[',','\u0937'],
-Period:['.','\u0964'],Slash:['\u092f','\u095f'],Space:[' ',' ']
+Backquote:['ौ','ऒ'],
+Digit1:['१','ऍ'],Digit2:['२','ॅ'],Digit3:['३','#'],Digit4:['४','$'],
+Digit5:['५','%'],Digit6:['६','^'],Digit7:['७','&'],Digit8:['८','*'],
+Digit9:['९','('],Digit0:['०',')'],
+Minus:['-','ः'],Equal:['ृ','ऋ'],
+KeyQ:['ौ','औ'],KeyW:['ै','ऐ'],KeyE:['ा','आ'],KeyR:['ी','ई'],
+KeyT:['ू','ऊ'],KeyY:['ब','भ'],KeyU:['ह','ङ'],KeyI:['ग','घ'],
+KeyO:['द','ध'],KeyP:['ज','झ'],BracketLeft:['ड','ढ'],BracketRight:['़','ञ'],
+Backslash:['ॉ','ऑ'],
+KeyA:['ो','ओ'],KeyS:['े','ए'],KeyD:['्','अ'],KeyF:['ि','इ'],
+KeyG:['ु','उ'],KeyH:['प','फ'],KeyJ:['र','ऱ'],KeyK:['क','ख'],
+KeyL:['त','थ'],Semicolon:['च','छ'],Quote:['ट','ठ'],
+KeyZ:['ॆ','ऎ'],KeyX:['ं','ँ'],KeyC:['म','ण'],KeyV:['न','ऩ'],
+KeyB:['व','ऴ'],KeyN:['ल','ळ'],KeyM:['स','श'],Comma:[',','ष'],
+Period:['.','।'],Slash:['य','य़'],Space:[' ',' ']
 };
 /* Shift+5..8 type conjuncts as a shortcut (Inscript standard) */
-var SHORT={Digit5:'\u091c\u094d\u091e',Digit6:'\u0924\u094d\u0930',Digit7:'\u0915\u094d\u0937',Digit8:'\u0936\u094d\u0930'};
-var SHORTLBL={Digit5:'\u091c\u094d\u091e',Digit6:'\u0924\u094d\u0930',Digit7:'\u0915\u094d\u0937',Digit8:'\u0936\u094d\u0930'};
-var LATIN_DIG={'\u0966':'0','\u0967':'1','\u0968':'2','\u0969':'3','\u096a':'4','\u096b':'5','\u096c':'6','\u096d':'7','\u096e':'8','\u096f':'9'};
+var SHORT={Digit5:'ज्ञ',Digit6:'त्र',Digit7:'क्ष',Digit8:'श्र'};
+var SHORTLBL={Digit5:'ज्ञ',Digit6:'त्र',Digit7:'क्ष',Digit8:'श्र'};
+var LATIN_DIG={'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
 var ROWS=[
  ['Backquote','Digit1','Digit2','Digit3','Digit4','Digit5','Digit6','Digit7','Digit8','Digit9','Digit0','Minus','Equal'],
  ['KeyQ','KeyW','KeyE','KeyR','KeyT','KeyY','KeyU','KeyI','KeyO','KeyP','BracketLeft','BracketRight','Backslash'],
@@ -36,16 +47,271 @@ var ROWS=[
  ['KeyZ','KeyX','KeyC','KeyV','KeyB','KeyN','KeyM','Comma','Period','Slash']
 ];
 var QLBL=function(c){return c.replace('Key','').replace('Digit','').replace('Backquote','`').replace('Minus','-').replace('Equal','=').replace('BracketLeft','[').replace('BracketRight',']').replace('Backslash','\\').replace('Semicolon',';').replace('Quote',"'").replace('Comma',',').replace('Period','.').replace('Slash','/');};
+var FINGERS={Backquote:'Left Pinky',Digit1:'Left Pinky',KeyQ:'Left Pinky',KeyA:'Left Pinky',KeyZ:'Left Pinky',
+Digit2:'Left Ring',KeyW:'Left Ring',KeyS:'Left Ring',KeyX:'Left Ring',
+Digit3:'Left Middle',KeyE:'Left Middle',KeyD:'Left Middle',KeyC:'Left Middle',
+Digit4:'Left Index',Digit5:'Left Index',KeyR:'Left Index',KeyT:'Left Index',KeyF:'Left Index',KeyG:'Left Index',KeyV:'Left Index',KeyB:'Left Index',
+Digit6:'Right Index',Digit7:'Right Index',KeyY:'Right Index',KeyU:'Right Index',KeyH:'Right Index',KeyJ:'Right Index',KeyN:'Right Index',KeyM:'Right Index',
+Digit8:'Right Middle',KeyI:'Right Middle',KeyK:'Right Middle',Comma:'Right Middle',
+Digit9:'Right Ring',KeyO:'Right Ring',KeyL:'Right Ring',Period:'Right Ring',
+Digit0:'Right Pinky',Minus:'Right Pinky',Equal:'Right Pinky',KeyP:'Right Pinky',BracketLeft:'Right Pinky',BracketRight:'Right Pinky',Backslash:'Right Pinky',Semicolon:'Right Pinky',Quote:'Right Pinky',Slash:'Right Pinky'};
 
-/* reverse: codepoint string -> {code, shift} (first match wins) */
+/* reverse: codepoint -> {code, shift}. ौ prefers Q over the backquote key. */
 var REV={};
 Object.keys(MAP).forEach(function(c){
   [0,1].forEach(function(s){var ch=MAP[c][s];if(!(ch in REV))REV[ch]={code:c,shift:!!s};});
 });
 Object.keys(LATIN_DIG).forEach(function(d){REV[LATIN_DIG[d]]=REV[d];});
+REV['ौ']={code:'KeyQ',shift:false};
+
+/* ── Progression: Hindi letter-frequency order (Kartik's 2026-11-06 design:
+   क र ा ि त े स न म ल ह य प ी द …, then the rest by commonness). Each entry
+   trains one Unicode codepoint; the physical key comes from REV. Rare
+   glyphs no modern word needs (ऒ ॆ ऎ ऍ ङ ऴ ऱ ऩ य़) and Latin punctuation
+   stay out of the progression entirely. Digits train last, as number
+   drills. ── */
+var PROGRESSION=[
+ ['क','Ka'],['र','Ra'],['ा','Aa matra'],['ि','Chhoti I matra'],
+ ['त','Ta'],['े','E matra'],['स','Sa'],['न','Na'],['म','Ma'],['ल','La'],
+ ['ह','Ha'],['य','Ya'],['प','Pa'],['ी','Badi Ee matra'],['द','Da'],
+ ['ु','Chhoti U matra'],['ब','Ba'],['ग','Ga'],['व','Va'],['्','Halant'],
+ ['अ','A vowel'],['ं','Anusvara (bindu)'],['ज','Ja'],['ख','Kha'],['फ','Pha'],
+ ['ो','O matra'],['ौ','Au matra'],['ू','Badi Oo matra'],['ट','Tta'],['च','Cha'],
+ ['श','Sha'],['भ','Bha'],['आ','Aa vowel'],['ध','Dha'],['ण','Retroflex Na'],
+ ['ए','E vowel'],['इ','I vowel'],['थ','Tha'],['घ','Gha'],['ष','Retroflex Sha'],
+ ['ै','Ai matra'],['ई','Badi Ee vowel'],['उ','U vowel'],['ँ','Chandrabindu'],
+ ['़','Nukta'],['ड','Dda'],['ठ','Ttha'],['ढ','Ddha'],['छ','Chha'],['झ','Jha'],
+ ['औ','Au vowel'],['ऊ','Badi Oo vowel'],['ऐ','Ai vowel'],['ओ','O vowel'],
+ ['ृ','Ri matra'],['ॅ','Candra E'],['ॉ','Candra O'],['।','Danda'],['ः','Visarga'],
+ ['ऋ','Ri vowel'],['ऑ','Candra O vowel'],['ळ','Retroflex La'],['ञ','Nya (for ज्ञ)'],
+ ['१','Digit 1'],['२','Digit 2'],['३','Digit 3'],['४','Digit 4'],['५','Digit 5'],
+ ['६','Digit 6'],['७','Digit 7'],['८','Digit 8'],['९','Digit 9'],['०','Digit 0']
+];
+PROGRESSION=PROGRESSION.map(function(p,i){
+  var r=REV[p[0]];
+  return {cp:p[0],d:p[1],code:r?r.code:null,shift:r?r.shift:false,finger:r?(FINGERS[r.code]||''):'',i:i};
+});
+var LAST=PROGRESSION.length-1, INITIAL=4;
+var NEEDS_DOT=/^[ऀ-ः़-्]/; // combining marks shown on a dotted circle
+function disp(cp){return NEEDS_DOT.test(cp)?'◌'+cp:cp;}
+function isDigitCp(cp){return cp>='०'&&cp<='९';}
+
+/* ── separate store: layout progress never mixes ── */
+var STORE='tankan_inscript_v1';
+var S;
+function freshState(){return {u:INITIAL-1,h:INITIAL-1,goal:25,ks:{},lessons:[],bestWpm:0,bestScore:0,streak:0,total:0};}
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
+function load(){
+  S=freshState();
+  try{
+    var d=JSON.parse(localStorage.getItem(STORE)||'null');
+    if(!d)return;
+    if(Number.isInteger(d.u))S.u=Math.max(0,Math.min(d.u,LAST));
+    if(Number.isInteger(d.h))S.h=Math.max(INITIAL-1,Math.min(d.h,LAST));
+    if(S.u>S.h)S.u=S.h;
+    if(typeof d.goal==='number'&&d.goal>=10&&d.goal<=100)S.goal=d.goal;
+    if(d.ks&&typeof d.ks==='object')S.ks=d.ks;
+    if(Array.isArray(d.lessons))S.lessons=d.lessons.slice(-60);
+    S.bestWpm=d.bestWpm||0;S.bestScore=d.bestScore||0;S.streak=d.streak||0;S.total=d.total||0;
+  }catch(e){}
+}
+function ks(cp){return S.ks[cp]||(S.ks[cp]={hits:0,errors:0,modelSamples:0,modelTtt:0,modelBest:0,accurateBest:0,lastAccuracy:0,recentLessonAccuracy:0,lastLessonWpm:0,targetLessons:0});}
+function targetMs(){return 12000/S.goal;}
+function target(){return PROGRESSION[review?reviewIdx:S.u];}
+var review=false, reviewIdx=0, showAll=false;
+
+/* unlock state of the current target key */
+function unlockState(){
+  var it=target(),st=ks(it.cp),tm=targetMs();
+  var samples=st.modelSamples||0;
+  var measuredBest=[st.accurateBest,st.modelBest,st.modelTtt].filter(function(v){return v>0&&isFinite(v);}).reduce(function(a,b){return Math.min(a,b);},Infinity);
+  var bank=st.accurateBest>0?tm/st.accurateBest:0;
+  var recentAcc=(st.recentLessonAccuracy||st.lastAccuracy||0)>=95;
+  var starterReady=S.u>=INITIAL||PROGRESSION.slice(0,INITIAL).every(function(x){
+    var z=S.ks[x.cp];return z&&(z.modelSamples||0)>=10&&(z.lastAccuracy||0)>=95&&z.accurateBest>0&&z.accurateBest<=tm;
+  });
+  var ready=bank>=1&&samples>=10&&recentAcc&&starterReady;
+  var pct=ready?100:Math.min(99,Math.round(Math.min(samples/10,isFinite(measuredBest)?tm/measuredBest:0)*100));
+  return {samples:samples,bank:bank,measuredBest:measuredBest,recentAccuracy:recentAcc,starterReady:starterReady,ready:ready,pct:pct};
+}
+/* live readiness: banked + this lesson's clean timings for the target */
+var lessonEvents=[];
+function livePreview(st){
+  var cp=target().cp,times=lessonEvents.filter(function(e){return e.cp===cp&&e.ms>0&&!e.typo;}).map(function(e){return e.ms;});
+  if(!times.length)return {pct:st.ready?100:Math.min(99,Math.round(Math.min(st.samples/10,st.measuredBest===Infinity?0:targetMs()/st.measuredBest)*100)),live:0};
+  var mean=trimMean(times);
+  return {pct:Math.min(99,Math.round(Math.min((st.samples+times.length)/10,targetMs()/mean)*100)),live:times.length};
+}
+function trimMean(times){
+  var sorted=times.slice().sort(function(a,b){return a-b;}),trim=sorted.length>=10?Math.floor(sorted.length*.1):0;
+  var f=sorted.slice(trim,sorted.length-trim);
+  return f.reduce(function(a,b){return a+b;},0)/Math.max(1,f.length);
+}
+/* keybr heat level 0..3 from smoothed time-to-type vs goal */
+function heatOf(cp){
+  var st=S.ks[cp];
+  if(!st||!st.modelTtt||(st.modelSamples||0)<6)return 0;
+  var conf=targetMs()/st.modelTtt;
+  if(conf>=1&&(st.lastAccuracy||0)>=95)return 3;
+  if(conf>=.8)return 2;
+  return 1;
+}
+/* weakest unlocked key below 80% of goal (practice focus), target excluded */
+function weakKey(){
+  var tm=targetMs(),cur=target().cp,best=null;
+  PROGRESSION.slice(0,S.h+1).forEach(function(it){
+    if(it.cp===cur)return;
+    var st=S.ks[it.cp];
+    if(!st||!st.modelTtt||(st.modelSamples||0)<6)return;
+    if(st.modelTtt<=tm/0.8)return;
+    if(!best||st.modelTtt>S.ks[best.cp].modelTtt)best=it;
+  });
+  return best;
+}
+
+/* ── word pool ── */
+var POOL=null;
+function norm(w){return w.normalize('NFD').replace(/[‌‍]/g,'');}
+function pool(){
+  if(POOL)return POOL;
+  var src=[].concat(typeof FREQUENCY_WORDS!=='undefined'?FREQUENCY_WORDS:[],typeof OFFICIAL_WORDS!=='undefined'?OFFICIAL_WORDS:[]);
+  var seen={},out=[];
+  src.forEach(function(w){
+    if(seen[w])return;seen[w]=1;
+    if(typeof isSuitableWord==='function'&&!isSuitableWord(w))return;
+    if(/[A-Za-z]/.test(w))return;
+    var s=norm(w);
+    if(!s.length)return;
+    var ok=true;
+    Array.from(s).forEach(function(c){if(!(c in REV)&&c!==' ')ok=false;});
+    if(ok)out.push(w);
+  });
+  POOL=out;return out;
+}
+function unlockedSet(){
+  var set={};
+  PROGRESSION.slice(0,S.h+1).forEach(function(it){set[it.cp]=1;});
+  return set;
+}
+var eligCache={};
+function eligibleWords(){
+  var key=S.h;
+  if(eligCache[key])return eligCache[key];
+  var set=unlockedSet();
+  var out=pool().filter(function(w){
+    var s=norm(w),ok=true;
+    Array.from(s).forEach(function(c){if(!set[c])ok=false;});
+    return ok;
+  });
+  eligCache[key]=out;return out;
+}
+function unlockedDigits(){return PROGRESSION.slice(0,S.h+1).map(function(it){return it.cp;}).filter(isDigitCp);}
+
+/* ── lesson generation (real words first; every word carries the target key
+   when the pool allows; weak unlocked keys get a review quota; after the
+   final key is trained, lessons rotate over the five slowest keys) ── */
+var recentWords=[];
+function drawFactory(){
+  var decks=new Map(),recent=new Set(recentWords);
+  var shuffle=function(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;};
+  return function draw(poolArr,previous){
+    if(!poolArr||!poolArr.length)return null;
+    var deck=decks.get(poolArr);
+    if(!deck){var cards=poolArr.filter(function(w){return !recent.has(w);});deck={cards:shuffle(cards.length?cards:poolArr.slice()),i:0};decks.set(poolArr,deck);}
+    if(deck.i>=deck.cards.length){deck.cards=shuffle(poolArr.slice());deck.i=0;}
+    if(deck.cards[deck.i]===previous){
+      if(deck.i+1<deck.cards.length){var t=deck.cards[deck.i];deck.cards[deck.i]=deck.cards[deck.i+1];deck.cards[deck.i+1]=t;}
+      else return null;
+    }
+    return deck.cards[deck.i++];
+  };
+}
+function numToken(mustCp,digits){
+  var len=1+Math.floor(Math.random()*2),out='';
+  for(var i=0;i<len;i++)out+=digits[Math.floor(Math.random()*digits.length)];
+  if(out.indexOf(mustCp)<0)out=out.slice(0,len-1)+mustCp;
+  return out;
+}
+function lessonText(count){
+  count=count||20;
+  var it=target(),tcp=it.cp;
+  var eligible=eligibleWords();
+  var focused=eligible.filter(function(w){return norm(w).indexOf(tcp)>=0;});
+  var context=eligible.filter(function(w){return norm(w).indexOf(tcp)<0;});
+  var draw=drawFactory();
+  var weak=review?null:weakKey();
+  var reviewPool=weak?focused.filter(function(w){return norm(w).indexOf(weak.cp)>=0;}):[];
+  var reviewQuota=reviewPool.length?Math.ceil(count*.6):0;
+  var mixedStarters=!review&&S.h===INITIAL-1;
+  var finalTrained=(S.ks[PROGRESSION[LAST].cp]||{}).targetLessons>=3;
+  var allUnlocked=!review&&S.h>=LAST&&finalTrained;
+  var weakRotation=allUnlocked?PROGRESSION.slice(0,S.h+1).filter(function(x){var st=S.ks[x.cp];return st&&(st.modelSamples||0)>=6;}).sort(function(a,b){return (S.ks[b.cp].modelTtt||0)-(S.ks[a.cp].modelTtt||0);}).slice(0,5):[];
+  var weakTurn=0,reviewWords=0;
+  var digits=unlockedDigits();
+  var starterCounts={};PROGRESSION.slice(0,S.h+1).forEach(function(x){starterCounts[x.cp]=0;});
+  var starterPools={};
+  var words=[],previous='';
+  for(var w=0;w<count;w++){
+    var chosen=null;
+    if(mixedStarters){
+      var needy=PROGRESSION.slice(0,S.h+1).filter(function(x){return (starterCounts[x.cp]||0)<3;});
+      if(needy.length){
+        var least=needy.reduce(function(a,b){return (starterCounts[a.cp]||0)<=(starterCounts[b.cp]||0)?a:b;});
+        if(!starterPools[least.cp])starterPools[least.cp]=eligible.filter(function(word){return norm(word).indexOf(least.cp)>=0;});
+        /* Inscript is typed in logical order: a starving matra drills AFTER a
+           base consonant (कि, का), never as a leading mark (िक, ाक). */
+        chosen=draw(starterPools[least.cp],previous)||draw(eligible,previous)||(NEEDS_DOT.test(least.cp)?PROGRESSION[0].cp+least.cp:least.cp+PROGRESSION[0].cp);
+      }else chosen=draw(eligible,previous)||previous;
+      if(chosen)Array.from(norm(chosen)).forEach(function(c){if(c in starterCounts)starterCounts[c]++;});
+    }else if(allUnlocked){
+      if(weakRotation.length){
+        var wk=weakRotation[weakTurn++%weakRotation.length];
+        if(!starterPools['w:'+wk.cp])starterPools['w:'+wk.cp]=isDigitCp(wk.cp)?[]:eligible.filter(function(word){return norm(word).indexOf(wk.cp)>=0;});
+        chosen=isDigitCp(wk.cp)?numToken(wk.cp,digits):(draw(starterPools['w:'+wk.cp],previous)||draw(eligible,previous)||previous);
+      }else chosen=draw(eligible,previous)||previous;
+    }else if(isDigitCp(tcp)){
+      chosen=digits.length?numToken(tcp,digits):tcp+tcp;
+      if(w%3===2){var c2=draw(eligible,previous);if(c2&&c2!==previous)chosen=c2;}
+    }else if(reviewWords<reviewQuota){
+      chosen=draw(reviewPool,previous)||draw(focused,previous)||draw(eligible,previous);
+      if(chosen&&norm(chosen).indexOf(weak.cp)>=0)reviewWords++;
+    }else if(focused.length){
+      chosen=draw(focused,previous)||previous;
+    }else{
+      var ctx=draw(eligible,previous)||PROGRESSION[0].cp;
+      chosen=(NEEDS_DOT.test(tcp)?PROGRESSION[0].cp+tcp:tcp+tcp)+' '+ctx;
+    }
+    if(chosen===null)chosen=previous||tcp;
+    words.push(chosen);previous=chosen;
+  }
+  /* variety for tiny pools: a context word every fourth slot */
+  if(!mixedStarters&&focused.length>0&&focused.length<4&&context.length>0){
+    for(var i=3;i<words.length;i+=4){
+      var c=draw(context,words[i-1]),tries=0;
+      while(c&&(c===words[i-1]||c===words[i+1])&&tries++<3)c=draw(context,words[i-1]);
+      if(c&&c!==words[i-1]&&c!==words[i+1])words[i]=c;
+    }
+  }
+  recentWords=recentWords.concat(words).slice(-150);
+  var st=document.getElementById('word-pool-status');
+  if(st){
+    var note=focused.length.toLocaleString()+' target words / '+eligible.length.toLocaleString()+' usable at this level';
+    if(mixedStarters)note+=' · Mixed starter practice: क, र, ा, ि.';
+    else if(allUnlocked)note+=weakRotation.length?' · All keys unlocked: lessons target your weakest keys ('+weakRotation.map(function(x){return disp(x.cp);}).join(', ')+').':' · All keys unlocked: full-bank practice.';
+    else if(isDigitCp(tcp))note+=' · Number drill.';
+    else if(!focused.length)note+=' · New key plus unlocked-word practice.';
+    else if(focused.length<4)note+=' · Tiny target pool: context words mixed in for variety.';
+    else if(focused.length<count)note+=' · Small target pool: some repetition needed.';
+    if(review)note+=' · Reviewing '+disp(tcp)+'.';
+    st.textContent=note;
+  }
+  lastFocus=(reviewWords>0&&weak)?weak.cp:null;
+  return words.join(' ');
+}
+var lastFocus=null;
 
 window.TankanInscript={
-  active:layout==='inscript', MAP:MAP, SHORT:SHORT, REV:REV,
+  active:layout==='inscript', MAP:MAP, SHORT:SHORT, REV:REV, PROGRESSION:PROGRESSION,
   getLayout:function(){return layout;},
   setLayout:function(v){localStorage.setItem(KEY,v==='inscript'?'inscript':'kruti');location.reload();}
 };
@@ -56,7 +322,7 @@ function buildChip(){
   if(!badge||!document.getElementById('panel-practice'))return;
   var wrap=document.createElement('div');wrap.className='layout-picker';
   var btn=document.createElement('button');btn.type='button';btn.className='brand-badge layout-chip';btn.setAttribute('aria-haspopup','listbox');btn.setAttribute('aria-expanded','false');
-  btn.textContent=(layout==='inscript'?'Inscript (Mangal)':'Remington Kruti Dev')+' \u25be';
+  btn.textContent=(layout==='inscript'?'Inscript (Mangal)':'Remington Kruti Dev')+' ▾';
   var menu=document.createElement('div');menu.className='layout-menu';menu.hidden=true;menu.setAttribute('role','listbox');
   var h=document.createElement('div');h.className='layout-menu-head';h.textContent='Typing layout';menu.appendChild(h);
   [['kruti','Remington Kruti Dev'],['inscript','Inscript (Mangal)']].forEach(function(o){
@@ -77,55 +343,169 @@ function start(){
   buildChip();
   if(layout!=='inscript'||!document.getElementById('panel-practice'))return;
   document.body.classList.add('layout-inscript');
-  /* stop the Remington engine from touching the screen */
-  ['updateDisplay','renderVirtualKeyboard','updateKeyboardHighlights','regenerateLesson','updateLiveStats','updateMasteryCard','updateAlphabetStrip'].forEach(function(n){
+  load();
+  /* stop the Remington engine from touching the screen; the key-history
+     popup reads Remington stats, so it is suppressed here too */
+  ['updateDisplay','renderVirtualKeyboard','updateKeyboardHighlights','regenerateLesson','updateLiveStats','updateMasteryCard','updateAlphabetStrip','showKeyPopup'].forEach(function(n){
     if(typeof window[n]==='function')window[n]=function(){};
   });
   var canvas=el.canvas, input=el.hiddenInput;
-  var statsEl=document.createElement('div');statsEl.className='ins-stats';
-  statsEl.innerHTML='<span><b id="ins-wpm">0.0</b> WPM</span><span><b id="ins-acc">100</b>% accuracy</span><span><b id="ins-time">0:00</b> time</span><span class="ins-note">Inscript practice: all keys open. Progress tracking comes later.</span>';
-  canvas.parentNode.insertBefore(statsEl,canvas);
-  var cps=[],pos=0,errs=0,correct=0,t0=0,done=false,clusters=[],shiftDown=false;
   var seg=(typeof Intl!=='undefined'&&Intl.Segmenter)?new Intl.Segmenter('hi',{granularity:'grapheme'}):null;
-  var timer=null;
 
-  function typeable(w){
-    var s=w.normalize('NFD').replace(/[\u200c\u200d]/g,'');
-    return s.length>0&&[].every.call(s,function(c){return c in REV;});
-  }
-  function pool(){
-    var src=[].concat(typeof FREQUENCY_WORDS!=='undefined'?FREQUENCY_WORDS:[],typeof OFFICIAL_WORDS!=='undefined'?OFFICIAL_WORDS:[]);
-    var seen={},out=[];
-    src.forEach(function(w){
-      if(seen[w])return;seen[w]=1;
-      if(typeof isSuitableWord==='function'&&!isSuitableWord(w))return;
-      if(/[A-Za-z]/.test(w)||!typeable(w))return;
-      out.push(w);
-    });
-    return out;
-  }
-  var POOL=null;
-  function newLesson(){
-    if(!POOL)POOL=pool();
-    var n=20,words=[];
-    for(var i=0;i<n;i++)words.push(POOL[Math.floor(Math.random()*POOL.length)]);
-    var text=words.join(' ').normalize('NFD').replace(/[\u200c\u200d]/g,'');
-    cps=Array.from(text);pos=0;errs=0;correct=0;t0=0;done=false;window.__insDur=0;
-    clusters=[];
-    var idx=0,str=text;
-    var parts=seg?Array.from(seg.segment(str),function(s){return s.segment;}):cps;
+  /* per-lesson runtime */
+  var cps=[],pos=0,errs=0,correct=0,t0=0,done=false,clusters=[],lastKeyTime=null,prevWrong=false,pendingShift=new Set();
+
+  function setTextFromLesson(text){
+    text=norm(text);
+    cps=Array.from(text);pos=0;errs=0;correct=0;t0=0;done=false;lastKeyTime=null;prevWrong=false;pendingShift.clear();lessonEvents=[];
+    clusters=[];var idx=0;
+    var parts=seg?Array.from(seg.segment(text),function(s){return s.segment;}):cps;
     parts.forEach(function(p){var l=Array.from(p).length;clusters.push([idx,idx+l]);idx+=l;});
-    clearInterval(timer);timer=setInterval(stats,500);
-    render();stats();hint();
+  }
+  function newLesson(){
+    setTextFromLesson(lessonText());
+    render();stats();hint();mastery();strip();kbd();
+  }
+
+  /* ── metrics + mastery card ── */
+  function lessonWpm(){var ms=done&&window.__insDur?window.__insDur:(t0?Date.now()-t0:0);var min=ms/60000;return min>0&&(correct>=3||done)?Math.min((correct/5)/min,300):0;}
+  function acc(){var t=correct+errs;return t?correct/t*100:100;}
+  function avg10(key){
+    var last=S.lessons.slice(-10);
+    if(!last.length)return null;
+    return last.reduce(function(a,r){return a+r[key];},0)/last.length;
   }
   function stats(){
-    var s=t0&&!done?(Date.now()-t0):(window.__insDur||0);
-    if(!t0)s=0;
-    var min=s/60000,w=(s>=1500&&correct>=3)?Math.min((correct/5)/min,300):0,tot=correct+errs;
-    document.getElementById('ins-wpm').textContent=w.toFixed(1);
-    document.getElementById('ins-acc').textContent=tot?(correct/tot*100).toFixed(0):'100';
-    var sec=Math.floor(s/1000);document.getElementById('ins-time').textContent=Math.floor(sec/60)+':'+('0'+sec%60).slice(-2);
+    var wl=document.getElementById('metric-wpm-label'),al=document.getElementById('metric-accuracy-label');
+    var live=!!t0;
+    if(wl)wl.textContent=live?'Speed · live':'Speed · last lesson';
+    if(al)al.textContent=live?'Accuracy · live':'Accuracy · last lesson';
+    var w=document.getElementById('metric-wpm'),a=document.getElementById('metric-accuracy');
+    if(live){if(w)w.textContent=lessonWpm().toFixed(1);if(a)a.textContent=acc().toFixed(1);}
+    else{
+      var lastL=S.lessons[S.lessons.length-1];
+      if(w)w.textContent=lastL?lastL.w.toFixed(1):'–';
+      if(a)a.textContent=lastL?lastL.a.toFixed(1):'–';
+    }
+    var wa=avg10('w'),aa=avg10('a');
+    var we=document.getElementById('metric-wpm-avg'),ae=document.getElementById('metric-accuracy-avg');
+    if(we)we.textContent=wa===null?'–':wa.toFixed(1);
+    if(ae)ae.textContent=aa===null?'–':aa.toFixed(1);
+    var sc=document.getElementById('metric-score');if(sc)sc.textContent=S.lessons.length?S.lessons[S.lessons.length-1].s:0;
+    var sb=document.getElementById('metric-score-best');if(sb)sb.textContent='best: '+S.bestScore;
+    var mu=document.getElementById('metric-unlocked');if(mu)mu.textContent=String(S.h+1);
+    var mt=document.getElementById('metric-total-keys');if(mt)mt.textContent=String(PROGRESSION.length);
+    var th=document.getElementById('total-keys-header');if(th)th.textContent=String(PROGRESSION.length);
+    var bars=document.getElementById('ins-history');
+    if(bars){bars.replaceChildren();S.lessons.slice(-12).forEach(function(r){var bar=document.createElement('i');bar.style.height=Math.max(3,Math.min(24,r.w/S.goal*16))+'px';bar.title=r.w.toFixed(1)+' wpm, '+r.a.toFixed(1)+'% accuracy';bars.appendChild(bar);});}
+    var ps=document.getElementById('p-streak');
+    if(ps)ps.textContent=S.streak>0?'Accuracy streak: '+S.streak+' lesson'+(S.streak===1?'':'s')+' at 95%+.':'No accuracy streaks.';
   }
+  function mastery(){
+    var it=target();
+    el.leadChar.textContent=disp(it.cp);
+    el.leadKey.textContent='Learning: '+(it.shift?'Shift + ':'')+QLBL(it.code).toUpperCase();
+    el.leadFinger.textContent='👉 '+it.finger+' finger';
+    el.leadGoalSpeed.textContent=S.goal+' WPM';
+    var st=unlockState(),pv=livePreview(st);
+    el.progressFill.style.width=pv.pct+'%';
+    el.progressPct.textContent='Key readiness'+(pv.live?' (live)':'')+': '+pv.pct+'%';
+    el.leadSamplesStatus.textContent=pv.live
+      ?'Clean timings: '+(st.samples+pv.live)+' / 10 ('+pv.live+' this lesson, not banked) - qualification checked at lesson end'
+      :'Clean timings: '+st.samples+' / 10 - qualification checked at lesson end';
+    if(st.ready&&!review&&S.u<LAST)el.leadSamplesStatus.textContent+=' - goal reached; finish the lesson';
+    if(lastFocus&&!done)el.leadSamplesStatus.textContent+=' - practice focus: '+disp(lastFocus);
+    if(!st.ready){
+      var cur=ks(it.cp),unmet=[];
+      var lastAcc=(cur.recentLessonAccuracy||cur.lastAccuracy||0);
+      if(lastAcc<95)unmet.push('need 95% lesson accuracy');
+      if((cur.accurateBest||Infinity)>targetMs())unmet.push(disp(it.cp)+' banked best '+(cur.accurateBest>0?(12000/cur.accurateBest).toFixed(1):'none yet')+' / '+S.goal+' WPM');
+      if(!st.starterReady)unmet.push('calibrating starter keys');
+      if(unmet.length)el.leadSamplesStatus.textContent+=' · '+unmet.join(' · ');
+    }
+    if(el.reviewBanner){
+      el.reviewBanner.hidden=!review;
+      if(review)el.reviewBannerText.textContent='Reviewing '+disp(it.cp)+' (key '+(reviewIdx+1)+') - key unlocking is paused.';
+    }
+    var ps=document.getElementById('progression-summary');if(ps)ps.textContent=review?('Reviewing key '+(reviewIdx+1)):'Automatic progression';
+  }
+  /* ── progression strip ── */
+  function strip(){
+    el.alphabetContainer.innerHTML='';
+    PROGRESSION.forEach(function(it,idx){
+      if(!showAll&&idx>S.h)return;
+      var badge=document.createElement('div');
+      badge.className='ak-badge';badge.dataset.key=it.cp;badge.dataset.insIdx=idx;
+      if(idx<=S.h){
+        var lvl=heatOf(it.cp);
+        if(lvl>0)badge.classList.add('heat-'+lvl);
+        if(idx===(review?reviewIdx:S.u))badge.classList.add('current');
+      }else badge.classList.add('locked');
+      var bar='';
+      if(idx<=S.h){
+        var st=S.ks[it.cp];
+        if(st&&st.modelTtt>0&&(st.modelSamples||0)>=1){
+          var ratio=Math.min(1,(12000/st.modelTtt)/S.goal);
+          var color=ratio>=1?'var(--correct)':ratio>=.8?'#eab308':'var(--error)';
+          bar='<i class="ak-bar" style="height:'+Math.max(6,Math.round(ratio*100))+'%;background:'+color+'"></i>';
+        }
+      }
+      badge.innerHTML=bar+'<span class="ak-char">'+disp(it.cp)+'</span><span class="ak-key">'+(it.shift?'⇧':'')+QLBL(it.code).toUpperCase()+'</span>';
+      if(idx<=S.h)badge.addEventListener('click',function(){
+        review=idx!==S.h;reviewIdx=idx;
+        save();newLesson();
+        input.focus({preventScroll:true});
+      });
+      el.alphabetContainer.appendChild(badge);
+    });
+  }
+  /* ── keyboard ── */
+  var keyEls={};
+  function drawKb(){
+    var f=el.keyboardFrame;f.innerHTML='';keyEls={};
+    ROWS.forEach(function(r,ri){
+      var row=document.createElement('div');row.className='k-row';
+      if(ri===3){var sl=document.createElement('div');sl.className='k-key label-key w-shift-l';sl.innerHTML='<span class="hi-main">⇧ Shift</span>';row.appendChild(sl);keyEls.ShiftLeft=sl;}
+      r.forEach(function(c){
+        var k=document.createElement('div');k.className='k-key';
+        var lbl=SHORTLBL[c]||MAP[c][1];
+        k.innerHTML='<span class="hi-shift">'+(/[ऀ-ॿ]/.test(MAP[c][1])||SHORTLBL[c]?lbl:'')+'</span><span class="hi-main">'+(MAP[c][0]==='्'?'◌्':(/[ा-ॏऀ-ः़ु-ै]/.test(MAP[c][0])&&MAP[c][0]!=='र'?'◌'+MAP[c][0]:MAP[c][0]))+'</span><span class="en-sub">'+QLBL(c)+'</span>';
+        if(c==='KeyF'||c==='KeyJ')k.classList.add('bump');
+        row.appendChild(k);keyEls[c]=k;
+      });
+      if(ri===3){var sr=document.createElement('div');sr.className='k-key label-key w-shift-r';sr.innerHTML='<span class="hi-main">⇧ Shift</span>';row.appendChild(sr);keyEls.ShiftRight=sr;}
+      f.appendChild(row);
+    });
+    var sp=document.createElement('div');sp.className='k-row';
+    sp.innerHTML='<div class="k-spacer" style="flex-grow:1.9"></div><div class="k-key label-key w-space"><span class="hi-main">Space</span></div><div class="k-spacer" style="flex-grow:1.9"></div>';
+    f.appendChild(sp);keyEls.Space=sp.querySelector('.w-space');
+  }
+  function kbd(){
+    var set=unlockedSet();
+    Object.keys(keyEls).forEach(function(c){
+      var k=keyEls[c],m=MAP[c];if(!m)return;
+      k.classList.remove('unlocked','heat-1','heat-2','heat-3');
+      var u=set[m[0]]||set[m[1]];
+      if(u){
+        k.classList.add('unlocked');
+        var lvl=Math.max(set[m[0]]?heatOf(m[0]):0,set[m[1]]?heatOf(m[1]):0);
+        if(lvl>0)k.classList.add('heat-'+lvl);
+      }
+    });
+  }
+  function hint(){
+    Object.keys(keyEls).forEach(function(c){keyEls[c].classList.remove('target','shift-needed');});
+    if(done||pos>=cps.length){if(el.liveHintKey)el.liveHintKey.textContent='↵';if(el.liveHintChar)el.liveHintChar.textContent='next lesson';if(el.liveHintDetail)el.liveHintDetail.textContent='';return;}
+    var ch=cps[pos],r=REV[ch];
+    if(!r)return;
+    var ke=keyEls[r.code];if(ke)ke.classList.add('target');
+    if(r.shift&&keyEls.ShiftLeft){keyEls.ShiftLeft.classList.add('shift-needed');keyEls.ShiftRight.classList.add('shift-needed');}
+    if(el.liveHintKey)el.liveHintKey.textContent=(r.shift?'Shift+':'')+QLBL(r.code);
+    var it=PROGRESSION.filter(function(p){return p.cp===ch;})[0];
+    if(el.liveHintChar)el.liveHintChar.textContent=ch===' '?'space':disp(ch);
+    if(el.liveHintDetail)el.liveHintDetail.textContent=it?it.d:(ch==='्'?'halant':'');
+  }
+  /* ── rendering ── */
   function render(flash){
     var ci=0;for(var i=0;i<clusters.length;i++){if(pos>=clusters[i][0]&&pos<clusters[i][1]){ci=i;break;}if(pos>=clusters[i][1])ci=i+1;}
     var cs=ci<clusters.length?clusters[ci][0]:cps.length,ce=ci<clusters.length?clusters[ci][1]:cps.length;
@@ -138,79 +518,164 @@ function start(){
     [el.textCorrect,el.textCurrent,el.textRemaining].forEach(function(e){e.style.fontFamily="'Noto Sans Devanagari','Mangal',sans-serif";});
     if(done){el.textCurrent.textContent='';}
   }
-  /* keyboard */
-  var keyEls={};
-  function drawKb(){
-    var f=el.keyboardFrame;f.innerHTML='';keyEls={};
-    var widths=[null,'w-tab',null,null];
-    ROWS.forEach(function(r,ri){
-      var row=document.createElement('div');row.className='k-row';
-      if(ri===3){var sl=document.createElement('div');sl.className='k-key label-key w-shift-l';sl.innerHTML='<span class="hi-main">\u21e7 Shift</span>';row.appendChild(sl);keyEls.ShiftLeft=sl;}
-      r.forEach(function(c){
-        var k=document.createElement('div');k.className='k-key';
-        var lbl=SHORTLBL[c]||MAP[c][1];
-        k.innerHTML='<span class="hi-shift">'+(/[\u0900-\u097f]/.test(MAP[c][1])||SHORTLBL[c]?lbl:'')+'</span><span class="hi-main">'+(MAP[c][0]==='\u094d'?'\u25cc\u094d':(/[\u093e-\u094f\u0900-\u0903\u093c\u0941-\u0948]/.test(MAP[c][0])&&MAP[c][0]!=='\u0930'?'\u25cc'+MAP[c][0]:MAP[c][0]))+'</span><span class="en-sub">'+QLBL(c)+'</span>';
-        if(c==='KeyF'||c==='KeyJ')k.classList.add('bump');
-        row.appendChild(k);keyEls[c]=k;
-      });
-      if(ri===3){var sr=document.createElement('div');sr.className='k-key label-key w-shift-r';sr.innerHTML='<span class="hi-main">\u21e7 Shift</span>';row.appendChild(sr);keyEls.ShiftRight=sr;}
-      f.appendChild(row);
+  /* ── lesson end: commit measurements, record, maybe unlock ── */
+  function commitMeasurements(){
+    var lessonAcc=acc();
+    var byKey={};
+    lessonEvents.forEach(function(e){
+      if(e.cp===' ')return;
+      if(!(e.ms>0)||e.typo)return;
+      (byKey[e.cp]||(byKey[e.cp]=[])).push(e.ms);
     });
-    var sp=document.createElement('div');sp.className='k-row';
-    sp.innerHTML='<div class="k-spacer" style="flex-grow:1.9"></div><div class="k-key label-key w-space"><span class="hi-main">Space</span></div><div class="k-spacer" style="flex-grow:1.9"></div>';
-    f.appendChild(sp);keyEls.Space=sp.querySelector('.w-space');
+    Object.keys(byKey).forEach(function(cp){
+      var st=ks(cp),times=byKey[cp],mean=trimMean(times);
+      st.modelTtt=st.modelTtt?.1*mean+.9*st.modelTtt:mean;
+      st.modelBest=st.modelBest?Math.min(st.modelBest,st.modelTtt):st.modelTtt;
+      st.lastLessonWpm=12000/mean;
+      st.lastAccuracy=lessonAcc;
+      if(cp===target().cp)st.recentLessonAccuracy=lessonAcc;
+      /* banked best: only 95%+ lessons, cumulative clean samples >= 10 */
+      if(lessonAcc>=95&&times.length>=3&&(st.modelSamples||0)+times.length>=10)st.accurateBest=st.accurateBest?Math.min(st.accurateBest,mean):mean;
+      st.modelSamples=(st.modelSamples||0)+times.length;
+    });
+    if(target().cp)ks(target().cp).targetLessons=(ks(target().cp).targetLessons||0)+1;
   }
-  function hint(){
-    Object.keys(keyEls).forEach(function(c){keyEls[c].classList.remove('target','shift-needed');});
-    if(done||pos>=cps.length){if(el.liveHintKey)el.liveHintKey.textContent='\u21b5';if(el.liveHintChar)el.liveHintChar.textContent='next lesson';if(el.liveHintDetail)el.liveHintDetail.textContent='Press Enter';return;}
-    var ch=cps[pos],r=REV[ch];
-    if(!r)return;
-    var ke=keyEls[r.code];if(ke)ke.classList.add('target');
-    if(r.shift&&keyEls.ShiftLeft){keyEls.ShiftLeft.classList.add('shift-needed');keyEls.ShiftRight.classList.add('shift-needed');}
-    if(el.liveHintKey)el.liveHintKey.textContent=(r.shift?'Shift+':'')+QLBL(r.code);
-    if(el.liveHintChar)el.liveHintChar.textContent=ch===' '?'space':(ch==='\u094d'?'\u25cc\u094d (halant)':ch==='\u093c'?'\u25cc\u093c (nukta)':ch);
-    if(el.liveHintDetail)el.liveHintDetail.textContent='';
+  function recordLesson(){
+    var ms=window.__insDur||1,min=ms/60000;
+    var wpm=min>0?(correct/5)/min:0,a=acc();
+    var complexity=new Set(lessonEvents.map(function(e){return e.cp;})).size;
+    var cpm=min>0?correct/min:0;
+    var score=complexity?Math.round(cpm*complexity/(errs+1)*(correct/50)):0;
+    S.lessons.push({w:+wpm.toFixed(2),a:+a.toFixed(2),s:score,ts:Date.now()});
+    if(S.lessons.length>60)S.lessons.shift();
+    S.total++;S.bestWpm=Math.max(S.bestWpm,wpm);S.bestScore=Math.max(S.bestScore,score);
+    S.streak=a>=95?S.streak+1:0;
   }
-  function produce(e){
-    var m=MAP[e.code];if(!m)return null;
-    if(e.shiftKey&&SHORT[e.code])return [SHORT[e.code],m[1]];
-    var out=m[e.shiftKey?1:0];
-    return [out];
+  function finishLesson(){
+    done=true;window.__insDur=Date.now()-t0;
+    commitMeasurements();recordLesson();
+    var st=unlockState();
+    var cleared=!review&&S.u===S.h&&st.ready&&acc()>=95&&S.u<LAST;
+    var clearedCp=target().cp;
+    if(cleared){
+      S.u++;S.h=Math.max(S.h,S.u);
+      if(typeof sound==='object'&&sound.unlock)sound.unlock();
+    }
+    save();
+    var guidance=cleared?'Key cleared: '+disp(clearedCp)+'! Next: '+disp(target().cp)
+      :st.ready?'Ready. Continue to practice.'
+      :!st.recentAccuracy?'Reach 95% accuracy in a completed lesson.'
+      :st.samples<10?'Need 10 clean target timings.'
+      :!st.starterReady?'Calibrate each starter key at goal speed.'
+      :'Best target speed is below your '+S.goal+' WPM goal.';
+    if(!review&&typeof flashPracticeEvent==='function')flashPracticeEvent(guidance);
+    /* keybr-style: the next lesson replaces the text instantly */
+    newLesson();
   }
-  function onKey(e){
-    if(e.ctrlKey||e.metaKey||e.altKey)return;
-    if(e.key==='Shift'||e.key==='CapsLock'||e.key==='Tab')return;
-    if(e.key==='Enter'){e.preventDefault();if(done||pos>=cps.length){newLesson();}return;}
-    if(e.key==='Backspace'){e.preventDefault();return;}
-    if(e.key==='Escape'){e.preventDefault();newLesson();return;}
-    var opts=produce(e);
-    if(!opts)return;
-    e.preventDefault();
+  /* ── input ── */
+  function produce(code,shiftKey){
+    var m=MAP[code];if(!m)return null;
+    if(shiftKey&&SHORT[code])return [SHORT[code],m[1]];
+    return [m[shiftKey?1:0]];
+  }
+  function type(code,shiftKey){
     if(done)return;
-    if(!t0)t0=Date.now();
-    var ok=false;
+    var opts=produce(code,shiftKey);
+    if(!opts)return;
+    var now=Date.now();
+    if(!t0)t0=now;
+    var interval=lastKeyTime===null?0:now-lastKeyTime;
+    var actions=1+(shiftKey?pendingShift.size||1:pendingShift.size);
+    pendingShift.clear();
+    lastKeyTime=now;
+    var valid=interval>=40&&interval<=12000?interval/actions:0;
+    var ok=false,matched=0,matchedCps=[];
     for(var i=0;i<opts.length&&!ok;i++){
       var s=opts[i],variants=[s];
       if(LATIN_DIG[s])variants.push(LATIN_DIG[s]);
       for(var j=0;j<variants.length;j++){
         var v=variants[j],a=Array.from(v);
-        if(cps.slice(pos,pos+a.length).join('')===v){pos+=a.length;correct+=a.length;ok=true;break;}
+        if(cps.slice(pos,pos+a.length).join('')===v){matched=a.length;matchedCps=a;ok=true;break;}
       }
     }
-    if(!ok){errs++;render(true);setTimeout(function(){el.textCurrent.classList.remove('error-flash');},250);stats();return;}
-    if(pos>=cps.length){done=true;window.__insDur=Date.now()-t0;clearInterval(timer);}
-    render();stats();hint();
-    var k=keyEls[e.code];if(k){k.classList.add('pressed');setTimeout(function(){k.classList.remove('pressed');},100);}
+    if(!ok){
+      prevWrong=true;errs++;
+      var exp=cps[pos],st=ks(exp);st.errors++;
+      if(typeof sound==='object'&&sound.error)sound.error();
+      render(true);setTimeout(function(){el.textCurrent.classList.remove('error-flash');},250);
+      stats();mastery();save();
+      return;
+    }
+    if(typeof sound==='object'&&sound.click)sound.click();
+    correct+=matched;
+    var per=valid>0?valid/matched:0;
+    matchedCps.forEach(function(cp){
+      lessonEvents.push({cp:cp,ms:per,typo:prevWrong,t:t0?now-t0:0});
+      if(cp!==' ')ks(cp).hits++;
+    });
+    prevWrong=false;
+    pos+=matched;
+    if(pos>=cps.length){render();finishLesson();}
+    else{render();stats();hint();mastery();}
+    var k=keyEls[code];if(k){k.classList.add('pressed');setTimeout(function(){k.classList.remove('pressed');},100);}
   }
-  /* capture so the Kruti Dev dispatcher never sees the key */
+  function onKey(e){
+    if(e.key==='Shift'){if(!e.repeat)pendingShift.add(e.code||'Shift');return;}
+    if(e.key==='CapsLock'||e.key==='Tab')return;
+    if(e.ctrlKey||e.metaKey||e.altKey)return;
+    if(e.key==='Backspace'){e.preventDefault();return;}
+    if(e.key==='Escape'){e.preventDefault();newLesson();return;}
+    if(e.key==='Enter'){e.preventDefault();return;}
+    if(e.key.length>1)return;
+    e.preventDefault();
+    type(e.code,e.shiftKey);
+  }
   input.addEventListener('keydown',function(e){e.stopImmediatePropagation();onKey(e);},true);
+  input.addEventListener('keyup',function(e){if(e.key==='Shift')pendingShift.delete(e.code||'Shift');},true);
   input.addEventListener('input',function(e){e.stopImmediatePropagation();input.value='';},true);
-  /* hide Remington-only hint text */
+  input.addEventListener('blur',function(){pendingShift.clear();lastKeyTime=null;});
+  window.addEventListener('blur',function(){lastKeyTime=null;pendingShift.clear();});
+
+  /* review banner + show-all toggle + goal control */
+  if(el.reviewResumeBtn)el.reviewResumeBtn.addEventListener('click',function(){review=false;save();newLesson();input.focus({preventScroll:true});});
+  var toggleBtn=document.getElementById('toggle-locked-keys-btn');
+  if(toggleBtn){
+    toggleBtn.textContent='Show All '+PROGRESSION.length+' Keys';
+    toggleBtn.onclick=function(){
+      showAll=!showAll;
+      toggleBtn.textContent=showAll?'Hide Locked Keys':'Show All '+PROGRESSION.length+' Keys';
+      strip();
+    };
+  }
+  var head=document.querySelector('.alphabet-header > span:first-child');
+  if(head)head.innerHTML='Inscript (Mangal) Progression (<span id="total-keys-header">'+PROGRESSION.length+'</span> Keys)';
+  var tm=document.querySelector('.target-metrics');
+  if(tm){
+    var chip=document.createElement('div');chip.className='metric-chip';
+    var lab=document.createElement('span');lab.textContent='Goal: ';
+    var sel=document.createElement('select');sel.id='ins-goal-select';sel.setAttribute('aria-label','Inscript target typing speed');
+    [10,15,20,25,30,35,40,45,50,60,70,80,100].forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v+' WPM';if(v===S.goal)o.selected=true;sel.appendChild(o);});
+    sel.addEventListener('change',function(){S.goal=parseInt(sel.value,10)||25;save();stats();mastery();strip();kbd();});
+    chip.appendChild(lab);chip.appendChild(sel);tm.appendChild(chip);
+  }
+  /* hide Remington-only daily-goal bits in the substats row */
+  var pg=document.getElementById('p-goal');if(pg&&pg.parentNode)pg.parentNode.style.display='none';
+  var gt=document.querySelector('.practice-substats .goal-track');if(gt)gt.style.display='none';
+  /* the goal select above is the single goal control in Inscript mode */
+  var lg=document.getElementById('lead-goal-speed');if(lg){var lc=lg.closest('.metric-chip');if(lc)lc.style.display='none';}
+
   var hs=document.getElementById('live-hint-strip');if(hs)hs.hidden=false;
   drawKb();newLesson();
   var ch=document.getElementById('canvas-hint-text');if(ch)ch.textContent='Start typing';
-  window.TankanInscript._state=function(){return {pos:pos,len:cps.length,errs:errs,correct:correct,done:done,text:cps.join('')};};
-  window.TankanInscript._setText=function(t){cps=Array.from(t.normalize('NFD'));clusters=[];var seg2=seg?Array.from(seg.segment(cps.join('')),function(s){return s.segment;}):cps;var i=0;seg2.forEach(function(p){var l=Array.from(p).length;clusters.push([i,i+l]);i+=l;});pos=0;errs=0;correct=0;t0=0;done=false;window.__insDur=0;render();hint();stats();};
+
+  /* test/introspection API */
+  window.TankanInscript._state=function(){return {pos:pos,len:cps.length,errs:errs,correct:correct,done:done,text:cps.join(''),lessons:S.total};};
+  window.TankanInscript._setText=function(t){setTextFromLesson(t);render();hint();stats();mastery();};
+  window.TankanInscript.type=type;
+  window.TankanInscript.newLesson=function(){newLesson();};
+  window.TankanInscript.eligibleWords=eligibleWords;
+  window.TankanInscript.lessonText=function(){return lessonText();};
+  Object.defineProperty(window.TankanInscript,'progress',{get:function(){return {unlockedIndex:S.u,highestUnlocked:S.h,goal:S.goal,keyStats:S.ks,lessons:S.lessons,reviewMode:review,total:S.total};}});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
