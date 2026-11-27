@@ -34,19 +34,17 @@ const path=require('node:path');
  await fire(false,'x',first.code);
  assert.equal(await pos(),1,'key works after Caps Lock is off');
  assert.ok(!(await page.locator('#capslock-notice').isVisible()),'notice hidden');
- // 4. a multi-key syllable is one intact text node, highlighted as a whole (no per-key bar or labels)
+ // 4. one keystroke at a time: रि lights र, then the ि alone (dotted circle); typed text is whole shaped text
  await boot();
- {const r=await page.evaluate(()=>{const I=TankanInscript;let guard=0;
-   const cur=()=>document.getElementById('text-current');
-   while(guard++<80){if(Array.from(cur().textContent).length>1)break;
-     const st=I._state(),ch=st.text[st.pos];if(ch===' ')I.type('Space',false);else{const q=I.REV[ch];I.type(q.code,q.shift);} if(I._state().done)break;}
-   const a={txt:cur().textContent,kids:cur().children.length,style:cur().getAttribute('style')||''};
-   const st=I._state(),q=I.REV[st.text[st.pos]];I.type(q.code,q.shift);
-   const b={txt:cur().textContent,kids:cur().children.length};
-   return {a,b};});
-  assert.equal(Array.from(r.a.txt).length,2,'syllable highlighted whole');
-  assert.equal(r.a.kids,0);assert.ok(!/gradient/.test(r.a.style),'no bar');
-  assert.equal(r.b.kids,0);}
+ {const r=await page.evaluate(()=>{const I=TankanInscript;
+   const set=(w,n)=>{I._setText(w);for(let i=0;i<n;i++){const s=I._state(),q=I.REV[s.text[s.pos]];I.type(q.code,q.shift);}
+     return {cur:document.getElementById('text-current').textContent,done:document.getElementById('text-correct').textContent,rem:document.getElementById('text-remaining').textContent};};
+   return {a:set('रि',0),b:set('रि',1),c:set('रु क्ष',1),d:set('क्ष',1),e:set('क्ष',2)};});
+  assert.deepEqual(r.a,{cur:'र',done:'',rem:'\u25CCि'});
+  assert.deepEqual(r.b,{cur:'\u25CCि',done:'र',rem:''});
+  assert.equal(r.c.cur,'\u25CCु');
+  assert.deepEqual(r.d,{cur:'\u25CC\u094D',done:'क',rem:'ष'});
+  assert.deepEqual(r.e,{cur:'ष',done:'क\u094D',rem:''});}
  // 5. font select changes the displayed font and persists
  await page.evaluate(()=>{document.getElementById('lesson-settings').open=true;});
  const sel=page.locator('#opt-font');
