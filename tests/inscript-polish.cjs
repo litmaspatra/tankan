@@ -59,6 +59,14 @@ const path=require('node:path');
  ff=await page.evaluate(()=>getComputedStyle(document.getElementById('text-remaining')).fontFamily);
  assert.match(ff,/Serif/,'font persists after reload');
  assert.equal(await page.locator('#opt-font').inputValue(),'serif');
+ // 6. migrated store with current key below the highest unlocked key still advances when its goal is cleared
+ {const ks={};for(const c of ['र','ि','क','ु','त'])ks[c]={hits:50,errors:0,modelSamples:20,modelTtt:100,modelBest:100,accurateBest:100,lastAccuracy:100,recentLessonAccuracy:100,lastLessonWpm:50,targetLessons:3};
+  await boot({ord:3,u:1,h:4,goal:25,ks,kl:{},lessons:[],total:3,daily:{}});
+  const res=await page.evaluate(()=>{const I=TankanInscript,realNow=Date.now;let now=realNow();Date.now=()=>now;
+   const before=I._state().lessons;let g=0;
+   while(I._state().lessons===before&&g++<4000){const st=I._state(),ch=st.text[st.pos];now+=250;if(ch===' ')I.type('Space',false);else{const r=I.REV[ch];I.type(r.code,r.shift);}}
+   Date.now=realNow;return {u:I.progress.unlockedIndex,h:I.progress.highestUnlocked,g};});
+  assert.equal(res.u,2,'current key moves on from F after the lesson (u was below h)');assert.equal(res.h,4);}
  assert.deepEqual(errors,[]);
  await browser.close();console.log('inscript polish ok');
 })().catch(e=>{console.error(e);process.exit(1);});

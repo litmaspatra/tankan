@@ -779,7 +779,8 @@ function start(){
     done=true;window.__insDur=Date.now()-t0;
     commitMeasurements();recordLesson();
     var st=unlockState();
-    var cleared=!review&&S.u===S.h&&st.ready&&acc()>=95&&S.u<LAST;
+    /* S.u can sit below S.h after an order migration (keys already unlocked): clearing still moves to the next key */
+    var cleared=!review&&st.ready&&acc()>=95&&S.u<LAST;
     var clearedCp=target().cp;
     if(cleared){
       S.u++;S.h=Math.max(S.h,S.u);
