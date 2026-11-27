@@ -109,3 +109,17 @@
 #keyboard-frame.zones-on .k-key.unlocked[data-zone="m"] { box-shadow: inset 0 -3px 0 #eab308; }
 #keyboard-frame.zones-on .k-key.unlocked[data-zone="i"] { box-shadow: inset 0 -3px 0 #22c55e; }
 #keyboard-frame.zones-on .k-key.unlocked[data-zone="t"] { box-shadow: inset 0 -3px 0 #3b82f6; }
+
+/* Inscript: cursor steps through each code point of a syllable (e.g. र then ु) */
+.text-current.ins-split{border-left:0;padding-left:0;animation:none;color:var(--km-text-faint,inherit)}
+.text-current.ins-split .ins-typed{color:var(--km-text-dim,inherit)}
+.text-current.ins-split .ins-rest{color:var(--km-text-faint,inherit)}
+.text-current.ins-split .ins-now{color:var(--km-accent,inherit);background:var(--km-accent-glow,transparent);border-bottom:2px solid var(--km-accent,currentColor)}
+.text-current.ins-split.error-flash .ins-now{color:var(--km-error,inherit);border-bottom-color:var(--km-error,currentColor)}
+
+/* Caps Lock notice */
+#capslock-notice{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9999;max-width:calc(100vw - 24px);
+  background:#b45309;color:#fff;border:2px solid #fbbf24;border-radius:8px;padding:8px 14px;font:600 14px/1.35 system-ui,sans-serif;
+  box-shadow:0 4px 16px rgba(0,0,0,.35);text-align:center}
+#capslock-notice[hidden]{display:none}
+#capslock-notice span{font-weight:500;margin-left:6px}

@@ -33,7 +33,7 @@ const path=require('node:path');
  await fresh();
  assert.equal(await page.evaluate(()=>TankanInscript.progress.unlockedIndex),3);
  let st=await page.evaluate(()=>({text:TankanInscript._state().text,unlocked:[...new Set(TankanInscript._state().text.replaceAll(' ',''))]}));
- assert.ok(st.unlocked.length>=1&&st.unlocked.every(c=>['र','क','त','ु'].includes(c)),'starter lesson uses only starter keys, got '+st.unlocked.join(''));
+ assert.ok(st.unlocked.length>=1&&st.unlocked.every(c=>['र','ि','क','ु'].includes(c)),'starter lesson uses only starter keys, got '+st.unlocked.join(''));
  assert.ok(st.text.trim().length>0,'lesson text present');
 
  // 2. UI: target card, stats strip, alphabet strip are live; counts are Inscript's
@@ -120,7 +120,7 @@ const path=require('node:path');
   return {allKept:oldUnlocked.every(c=>P.findIndex(x=>x.cp===c)<=pr.highestUnlocked),cur:P[pr.unlockedIndex].cp,ord:JSON.parse(localStorage.getItem('hikeybr_inscript_v1')).ord};});
  assert.ok(m.allKept,'order change keeps every previously unlocked key unlocked');
  assert.equal(m.cur,'न','current key follows its glyph to the new order');
- assert.equal(m.ord,2,'migrated store is marked with the new order');}
+ assert.equal(m.ord,3,'migrated store is marked with the new order');}
  assert.equal(await page.evaluate(()=>TankanInscript.progress.goal),30,'old store goal migrates');
  assert.equal(await page.evaluate(()=>localStorage.getItem('tankan_inscript_v1')),null,'old key removed after migration');
  assert.ok(await page.evaluate(()=>localStorage.getItem('hikeybr_inscript_v1')),'progress rewritten under the hikeybr_ key');

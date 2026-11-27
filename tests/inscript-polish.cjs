@@ -1,0 +1,64 @@
+// Inscript: balanced starter order + ord-2 migration, Caps Lock block and notice, per-key cursor inside a syllable, font select.
+const assert=require('node:assert/strict');
+const {chromium}=require('playwright');
+const path=require('node:path');
+(async()=>{
+ const launch={headless:true};
+ if(process.env.CHROME_PATH){launch.executablePath=process.env.CHROME_PATH;launch.args=['--no-sandbox'];}
+ const browser=await chromium.launch(launch);
+ const page=await browser.newPage({viewport:{width:1366,height:900}});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const url='file://'+path.resolve(__dirname,'../index.html');
+ const boot=async(seed)=>{await page.goto(url);await page.evaluate(seed=>{localStorage.clear();localStorage.setItem('tankan_layout','inscript');if(seed)localStorage.setItem('hikeybr_inscript_v1',JSON.stringify(seed));},seed);await page.reload();await page.waitForFunction(()=>window.TankanInscript);};
+ // 1. starters alternate hands (right, left, right, left)
+ await boot();
+ {const r=await page.evaluate(()=>TankanInscript.PROGRESSION.slice(0,6).map(p=>p.cp+':'+p.code));
+  assert.deepEqual(r.map(x=>x.split(':')[0]),['र','ि','क','ु','त','्']);
+  const hand=c=>['KeyA','KeyS','KeyD','KeyF','KeyG'].includes(c)?'L':'R';
+  assert.equal(r.slice(0,4).map(x=>hand(x.split(':')[1])).join(''),'RLRL','first four keys: two per hand');}
+ // 2. ord:2 store keeps every unlocked key
+ await boot({ord:2,u:3,h:3,goal:25,ks:{},kl:{},lessons:[],total:0,daily:{}});
+ {const m=await page.evaluate(()=>{const P=TankanInscript.PROGRESSION,pr=TankanInscript.progress;
+   return {kept:['र','क','त','ु'].every(c=>P.findIndex(x=>x.cp===c)<=pr.highestUnlocked),h:pr.highestUnlocked,ord:JSON.parse(localStorage.getItem('hikeybr_inscript_v1')).ord};});
+  assert.ok(m.kept,'ord 2 unlocked keys stay unlocked');assert.equal(m.ord,3);}
+ await boot({ord:2,u:60,h:60,goal:25,ks:{},kl:{},lessons:[],total:0,daily:{}});
+ assert.equal(await page.evaluate(()=>TankanInscript.progress.highestUnlocked),60,'later progress unchanged');
+ // 3. Caps Lock: keys are ignored and a notice shows
+ await boot();
+ const pos=()=>page.evaluate(()=>TankanInscript._state().pos);
+ const fire=(caps,key,code)=>page.evaluate(({caps,key,code})=>{const i=document.getElementById('hidden-input');i.focus();i.dispatchEvent(new KeyboardEvent('keydown',{key,code,modifierCapsLock:caps,bubbles:true,cancelable:true}));i.dispatchEvent(new KeyboardEvent('keyup',{key,code,modifierCapsLock:caps,bubbles:true,cancelable:true}));},{caps,key,code});
+ const first=await page.evaluate(()=>{const s=TankanInscript._state();const r=TankanInscript.REV[s.text[0]];return r;});
+ await fire(true,'x',first.code);
+ assert.equal(await pos(),0,'key ignored while Caps Lock is on');
+ assert.ok(await page.locator('#capslock-notice').isVisible(),'notice visible');
+ await fire(false,'x',first.code);
+ assert.equal(await pos(),1,'key works after Caps Lock is off');
+ assert.ok(!(await page.locator('#capslock-notice').isVisible()),'notice hidden');
+ // 4. cursor steps through a syllable one code point at a time
+ await boot();
+ {const r=await page.evaluate(()=>{const I=TankanInscript;let guard=0;
+   while(guard++<80){const st=I._state();if(document.getElementById('text-current').classList.contains('ins-split'))break;
+     const ch=st.text[st.pos];if(ch===' ')I.type('Space',false);else{const q=I.REV[ch];I.type(q.code,q.shift);} if(I._state().done)break;}
+   const cur=document.getElementById('text-current');
+   const first={split:cur.classList.contains('ins-split'),parts:[...cur.children].map(c=>c.className+':'+c.textContent)};
+   const st=I._state(),ch=st.text[st.pos],q=I.REV[ch];I.type(q.code,q.shift);
+   const cur2=document.getElementById('text-current');
+   return {first,second:[...cur2.children].map(c=>c.className+':'+c.textContent),text:cur2.textContent};});
+  assert.ok(r.first.split,'a multi-key syllable shows the split cursor');
+  assert.ok(r.first.parts[0].startsWith('ins-now')&&r.first.parts.slice(1).every(x=>x.startsWith('ins-rest')),'cursor on the first key only: '+r.first.parts);
+  assert.ok(r.second[0].startsWith('ins-typed')&&r.second[1].startsWith('ins-now'),'cursor moved to the next key of the same syllable: '+r.second);
+  await page.screenshot({path:'/tmp/split-cursor.png',clip:{x:0,y:230,width:1000,height:260}});}
+ // 5. font select changes the displayed font and persists
+ await page.evaluate(()=>{document.getElementById('lesson-settings').open=true;});
+ const sel=page.locator('#opt-font');
+ assert.deepEqual(await sel.locator('option').allTextContents(),['Noto Sans Devanagari','Noto Serif Devanagari','Mangal','System default']);
+ await sel.selectOption('serif');
+ let ff=await page.evaluate(()=>getComputedStyle(document.getElementById('text-remaining')).fontFamily);
+ assert.match(ff,/Serif/,'text uses the serif font, got '+ff);
+ await page.reload();await page.waitForFunction(()=>window.TankanInscript);
+ ff=await page.evaluate(()=>getComputedStyle(document.getElementById('text-remaining')).fontFamily);
+ assert.match(ff,/Serif/,'font persists after reload');
+ assert.equal(await page.locator('#opt-font').inputValue(),'serif');
+ assert.deepEqual(errors,[]);
+ await browser.close();console.log('inscript polish ok');
+})().catch(e=>{console.error(e);process.exit(1);});

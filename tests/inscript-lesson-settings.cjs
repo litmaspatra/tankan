@@ -15,7 +15,7 @@ const path = require('node:path');
         localStorage.clear();
         localStorage.setItem('tankan_layout', 'inscript');
         const P = null;
-        localStorage.setItem('hikeybr_inscript_v1', JSON.stringify({ ord: 2, u: 60, h: 60, goal: 25, ks: {}, kl: {}, lessons: [], total: 0, daily: {} }));
+        localStorage.setItem('hikeybr_inscript_v1', JSON.stringify({ ord: 3, u: 60, h: 60, goal: 25, ks: {}, kl: {}, lessons: [], total: 0, daily: {} }));
     });
     await page.reload(); await page.waitForTimeout(700);
     assert.equal(await page.evaluate(() => TankanInscript.active), true);

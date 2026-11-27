@@ -93,8 +93,10 @@ var PROGRESSION=[
    then the bottom row, then Shift letters row by row, then rare marks and
    digits. Within a row, the commoner letter comes first. ── */
 var OLD_ORDER=PROGRESSION.map(function(p){return p[0];});
+/* order shipped as ord:2 (home row led by र क त ु, three keys on one hand) */
+var ORD2=['र','क','त','ु','ि','्','प','च','े','ो','ट'];
 var NEW_ORDER=[
- 'र','क','त','ु','ि','्','प','च','े','ो','ट',                    /* home row, ordered by how many real words each key opens */
+ 'र','ि','क','ु','त','्','प','े','च','ो','ट',                    /* home row, hands alternate (right, left, ...), commoner keys first */
  'ा','ब','ज','ह','ी','ग','द','ू','ै','ौ','ड','़',                /* top row */
  'ल','न','म','स','य','व','ं',                                    /* bottom row */
  'अ','ख','उ','थ','ए','फ','इ','ठ','छ','ओ',                      /* Shift: home row */
@@ -123,9 +125,17 @@ function isDigitCp(cp){return cp>='०'&&cp<='९';}
    The key carries the hikeybr_ prefix so the backup sweep and account sync
    collect it together with the Remington store. The launch-day name
    (tankan_inscript_v1) is migrated on first load. */
+/* practice-text fonts for Unicode Hindi (the Kruti Dev fonts only draw Kruti-encoded text) */
+var INS_FONTS={
+  sans:{label:'Noto Sans Devanagari',stack:"'Noto Sans Devanagari','Mangal',sans-serif"},
+  serif:{label:'Noto Serif Devanagari',stack:"'Noto Serif Devanagari','Mangal',serif"},
+  mangal:{label:'Mangal',stack:"'Mangal','Nirmala UI','Kohinoor Devanagari','Noto Sans Devanagari',sans-serif"},
+  system:{label:'System default',stack:"system-ui,'Nirmala UI','Kohinoor Devanagari','Noto Sans Devanagari',sans-serif"}
+};
+function fontStack(){return (INS_FONTS[S&&S.font]||INS_FONTS.sans).stack;}
 var STORE='hikeybr_inscript_v1', OLD_STORE='tankan_inscript_v1';
 var S;
-function freshState(){return {ord:2,u:INITIAL-1,h:INITIAL-1,goal:25,ks:{},kl:{},lessons:[],bestWpm:0,bestAcc:0,bestScore:0,streak:0,bestStreak:0,total:0,secs:0,typed:0,terr:0,daily:{}};}
+function freshState(){return {ord:3,font:'sans',u:INITIAL-1,h:INITIAL-1,goal:25,ks:{},kl:{},lessons:[],bestWpm:0,bestAcc:0,bestScore:0,streak:0,bestStreak:0,total:0,secs:0,typed:0,terr:0,daily:{}};}
 function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}
   try{window.dispatchEvent(new Event('tankan-progress-changed'));}catch(e){}}
 function load(){
@@ -138,19 +148,23 @@ function load(){
     }
     var d=JSON.parse(raw||'null');
     if(d){
-      if(d.ord!==2&&Number.isInteger(d.h)){
-        /* store from the old frequency order: keep every unlocked key unlocked.
-           New h = last position in the new order of any key unlocked before. */
+      if(d.ord!==3&&Number.isInteger(d.h)){
+        /* store from an older unlock order: keep every unlocked key unlocked.
+           ord 2 only reordered the home row (ORD2 first, rest unchanged), anything
+           older used the frequency order. New h = last position in the new order of
+           any key unlocked before. */
+        var prev=d.ord===2?ORD2.concat(NEW_ORDER.filter(function(c){return ORD2.indexOf(c)<0;})):OLD_ORDER;
         var newIdx={};PROGRESSION.forEach(function(it,i){newIdx[it.cp]=i;});
         var hi=INITIAL-1;
-        for(var oi=0;oi<=Math.min(d.h,OLD_ORDER.length-1);oi++){var ni=newIdx[OLD_ORDER[oi]];if(ni>hi)hi=ni;}
-        var cur=Number.isInteger(d.u)?newIdx[OLD_ORDER[d.u]]:undefined;
+        for(var oi=0;oi<=Math.min(d.h,prev.length-1);oi++){var ni=newIdx[prev[oi]];if(ni>hi)hi=ni;}
+        var cur=Number.isInteger(d.u)?newIdx[prev[d.u]]:undefined;
         d.h=hi;d.u=cur===undefined?hi:Math.min(cur,hi);migrated=true;
       }
       if(Number.isInteger(d.u))S.u=Math.max(0,Math.min(d.u,LAST));
       if(Number.isInteger(d.h))S.h=Math.max(INITIAL-1,Math.min(d.h,LAST));
       if(S.u>S.h)S.u=S.h;
       if(typeof d.goal==='number'&&d.goal>=10&&d.goal<=100)S.goal=d.goal;
+      if(typeof d.font==='string'&&INS_FONTS[d.font])S.font=d.font;
       if(d.ks&&typeof d.ks==='object')S.ks=d.ks;
       if(d.kl&&typeof d.kl==='object')S.kl=d.kl;
       if(Array.isArray(d.lessons))S.lessons=d.lessons.slice(-400);
@@ -685,11 +699,23 @@ function start(){
     var cs=ci<clusters.length?clusters[ci][0]:cps.length,ce=ci<clusters.length?clusters[ci][1]:cps.length;
     el.textCorrect.textContent=cps.slice(0,cs).join('');
     el.textError.textContent='';
-    el.textCurrent.textContent=cps.slice(cs,ce).join('');
+    /* a cluster of several code points (consonant + matra) is typed one key at a time,
+       so the cursor marks only the code point being typed. The cluster stays in one
+       element so the browser still shapes it as one syllable. */
+    el.textCurrent.textContent='';
+    el.textCurrent.classList.toggle('ins-split',ce-cs>1&&!done);
+    if(ce-cs>1&&!done){
+      for(var j=cs;j<ce;j++){
+        var sp=document.createElement('span');
+        sp.className=j<pos?'ins-typed':(j===pos?'ins-now':'ins-rest');
+        sp.textContent=cps[j];
+        el.textCurrent.appendChild(sp);
+      }
+    }else el.textCurrent.textContent=cps.slice(cs,ce).join('');
     el.textCurrent.classList.toggle('space-cursor',cps[cs]===' ');
     el.textCurrent.classList.toggle('error-flash',!!flash);
     el.textRemaining.textContent=cps.slice(ce).join('');
-    [el.textCorrect,el.textCurrent,el.textRemaining].forEach(function(e){e.style.fontFamily="'Noto Sans Devanagari','Mangal',sans-serif";});
+    [el.textCorrect,el.textCurrent,el.textRemaining].forEach(function(e){e.style.fontFamily=fontStack();});
     if(done){el.textCurrent.textContent='';}
   }
   /* ── lesson end: commit measurements, record, maybe unlock ── */
@@ -812,6 +838,7 @@ function start(){
   function onKey(e){
     if(e.key==='Shift'){if(!e.repeat)pendingShift.add(e.code||'Shift');return;}
     if(e.key==='CapsLock'||e.key==='Tab')return;
+    if(e.getModifierState&&e.getModifierState('CapsLock')){if(e.key.length===1)e.preventDefault();return;}
     if(e.ctrlKey||e.metaKey||e.altKey)return;
     if(e.key==='Backspace'){e.preventDefault();return;}
     if(e.key==='Escape'){e.preventDefault();newLesson();return;}
@@ -857,6 +884,20 @@ function start(){
   /* lesson settings: the panel is shared with Kruti Dev. Rows that only the
      Kruti engine implements are hidden here. */
   (function(){
+    /* Font: in Inscript the select lists Unicode fonts and changes the practice text */
+    (function(){
+      var sel=document.getElementById('opt-font');if(!sel)return;
+      sel.textContent='';
+      Object.keys(INS_FONTS).forEach(function(k){sel.appendChild(new Option(INS_FONTS[k].label,k));});
+      var desc=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
+      /* the shared panel code writes the Kruti font key into this select; ignore keys that are not Inscript fonts */
+      Object.defineProperty(sel,'value',{configurable:true,get:function(){return desc.get.call(sel);},set:function(v){if(INS_FONTS[v])desc.set.call(sel,v);}});
+      sel.value=S.font;
+      sel.addEventListener('change',function(e){
+        e.stopImmediatePropagation();e.stopPropagation();
+        if(INS_FONTS[sel.value]){S.font=sel.value;save();render();}
+      },true);
+    })();
     var hideRow=function(id){var e=document.getElementById(id);if(!e)return;var r=e.closest('.ls-row,.ls-check');(r||e).classList.add('ins-hide');};
     ['jump-select','opt-strict','opt-repeat','opt-punct','opt-no-alt','no-alt-note','opt-stop','opt-skip','daily-goal-select-lesson','lp-keys','lp-current','lp-sample'].forEach(hideRow);
     Array.prototype.forEach.call(document.querySelectorAll('#lesson-settings h4'),function(h){if(/Lesson preview/.test(h.textContent))h.classList.add('ins-hide');});
