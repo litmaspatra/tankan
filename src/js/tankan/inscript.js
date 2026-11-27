@@ -429,7 +429,7 @@ function start(){
   document.body.classList.add('layout-inscript');
   /* stop the Remington engine from touching the screen; the key-history
      popup reads Remington stats, so it is suppressed here too */
-  ['updateDisplay','renderVirtualKeyboard','updateKeyboardHighlights','regenerateLesson','updateLiveStats','updateMasteryCard','updateAlphabetStrip'].forEach(function(n){
+  ['updateDisplay','renderVirtualKeyboard','updateKeyboardHighlights','updateLiveStats','updateMasteryCard','updateAlphabetStrip'].forEach(function(n){
     if(typeof window[n]==='function')window[n]=function(){};
   });
   var canvas=el.canvas, input=el.hiddenInput;
@@ -445,8 +445,99 @@ function start(){
     var parts=seg?Array.from(seg.segment(text),function(s){return s.segment;}):cps;
     parts.forEach(function(p){var l=Array.from(p).length;clusters.push([idx,idx+l]);idx+=l;});
   }
+  /* ── text sources (lesson settings tabs): guided words, official words,
+     books, essays and custom text, all typed as Unicode on Inscript ── */
+  var LESSON_WORDS=function(){return parseInt(el.wordsSelect&&el.wordsSelect.value,10)||25;};
+  /* keep a word only if every character can be typed; strip stray punctuation */
+  function typableWord(w,removePunct){
+    var out='';
+    var chars=Array.from(w);
+    for(var i=0;i<chars.length;i++){
+      var c=chars[i];
+      if(c==='\u200c'||c==='\u200d')continue;
+      var d=Array.from(c.normalize('NFD')),ok=true;
+      for(var j=0;j<d.length;j++)if(!(d[j] in REV))ok=false;
+      if(ok){
+        if(removePunct&&(c==='।'||c==='.'||c===','||c==='॥'))continue;
+        out+=c;continue;
+      }
+      if(/[\u0900-\u097f]/.test(c)&&!/[।॥]/.test(c))return '';
+      if(/[A-Za-z]/.test(c))return '';
+    }
+    return out;
+  }
+  var paraCache={};
+  function inscriptParagraphs(book){
+    var rp=!!(opts&&opts.removePunct);
+    var key=book.id+(rp?':np':':p')+(book.id==='custom'?':'+opts.customText.length+':'+opts.customText.slice(0,40):'');
+    if(paraCache[key])return paraCache[key];
+    var out=[];
+    (book.lines||[]).forEach(function(line){
+      var ws=[];
+      line.split(/\s+/).forEach(function(w){
+        if(!w)return;
+        var t=typableWord(w,rp);
+        if(t)ws.push(t);
+      });
+      if(ws.length){ws.endsSentence=/[।॥.!?][\s"'”’»\)\]]*$/.test(line.trim());out.push(ws);}
+    });
+    return paraCache[key]=out;
+  }
+  function bookText(book,count){
+    var paras=inscriptParagraphs(book);
+    if(!paras.length)return '';
+    var posB=Number.isInteger(bookPos[book.id])?((bookPos[book.id]%paras.length)+paras.length)%paras.length:0;
+    var out=[],n=0,used=0,ended=false,continuous=book.id!=='custom';
+    while((out.length<count||(continuous&&!ended))&&used<(continuous?paras.length-posB:paras.length)){
+      var para=paras[(posB+n)%paras.length];
+      out.push.apply(out,para);ended=para.endsSentence;n++;used++;
+    }
+    if(!continuous&&out.length>count*2)out.length=count*2;
+    bookPos[book.id]=(posB+n)%paras.length;
+    try{lastLessonParaStart=posB;}catch(e){}
+    var st=document.getElementById('word-pool-status');
+    if(st)st.textContent=book.title+' · '+book.author+' · paragraph '+(posB+1)+(n>1?'–'+(posB+n):'')+' of '+paras.length.toLocaleString();
+    try{if(typeof updateBookStatCard==='function')updateBookStatCard(posB);}catch(e){}
+    return out.join(' ');
+  }
+  function officialText(count){
+    var set=unlockedSet(),src=typeof OFFICIAL_WORDS!=='undefined'?OFFICIAL_WORDS:[],ok=[];
+    src.forEach(function(w){
+      var t=typableWord(w,true);if(!t)return;
+      var good=true;Array.from(norm(t)).forEach(function(c){if(!set[c])good=false;});
+      if(good&&ok.indexOf(t)<0)ok.push(t);
+    });
+    if(ok.length<8)return '';
+    var draw=drawFactory(),words=[],prev='';
+    for(var i=0;i<count;i++){var wd=draw(ok,prev)||prev;words.push(wd);prev=wd;}
+    return words.join(' ');
+  }
+  function sourceText(){
+    if(typeof textSource==='undefined'||textSource==='words')return '';
+    var count=LESSON_WORDS();
+    if(textSource==='official'){
+      var t=officialText(count);
+      if(t)return t;
+      textSource='words';
+      if(typeof syncSettingsUI==='function')syncSettingsUI();
+      if(typeof flashPracticeEvent==='function')flashPracticeEvent('Official words need a few more unlocked keys - too few fit your keys so far.');
+      return '';
+    }
+    var book=typeof findBook==='function'?findBook(textSource):null;
+    if(!book)return '';
+    if(typeof bookIsReady==='function'&&!bookIsReady(book)){
+      var id=book.id;
+      if(typeof ensureBookLoaded==='function')ensureBookLoaded(id).then(function(ok){
+        if(ok&&textSource===id){if(typeof populateTextSources==='function')populateTextSources();newLesson();}
+        else if(!ok&&textSource===id){textSource='words';if(typeof syncSettingsUI==='function')syncSettingsUI();newLesson();}
+      });
+      return 'लोड हो रहा है';
+    }
+    return bookText(book,count)||'';
+  }
+  window.regenerateLesson=function(){newLesson();};
   function newLesson(){
-    setTextFromLesson(lessonText());
+    setTextFromLesson(sourceText()||lessonText(LESSON_WORDS()));
     render();stats();hint();mastery();strip();kbd();
   }
 
@@ -763,6 +854,33 @@ function start(){
   /* the goal select above is the single goal control in Inscript mode */
   var lg=document.getElementById('lead-goal-speed');if(lg){var lc=lg.closest('.metric-chip');if(lc)lc.style.display='none';}
 
+  /* lesson settings: the panel is shared with Kruti Dev. Rows that only the
+     Kruti engine implements are hidden here. */
+  (function(){
+    var hideRow=function(id){var e=document.getElementById(id);if(!e)return;var r=e.closest('.ls-row,.ls-check');(r||e).classList.add('ins-hide');};
+    ['jump-select','opt-strict','opt-repeat','opt-punct','opt-no-alt','no-alt-note','opt-stop','opt-skip','daily-goal-select-lesson','lp-keys','lp-current','lp-sample'].forEach(hideRow);
+    Array.prototype.forEach.call(document.querySelectorAll('#lesson-settings h4'),function(h){if(/Lesson preview/.test(h.textContent))h.classList.add('ins-hide');});
+    var slider=document.getElementById('speed-goal-select'),ls=document.getElementById('lesson-settings');
+    var syncGoal=function(){
+      if(slider)slider.value=String(S.goal);
+      var gv=document.getElementById('speed-goal-val');if(gv)gv.textContent=S.goal.toFixed(1)+' wpm';
+      var gs=document.getElementById('ins-goal-select');
+      if(gs){if(!Array.prototype.some.call(gs.options,function(o){return o.value===String(S.goal);})){var o=document.createElement('option');o.value=S.goal;o.textContent=S.goal+' WPM';gs.appendChild(o);}gs.value=String(S.goal);}
+    };
+    if(ls&&slider){
+      ['input','change'].forEach(function(ev){ls.addEventListener(ev,function(e){
+        if(e.target!==slider)return;
+        e.stopPropagation();
+        var v=parseInt(slider.value,10)||25;
+        var gv=document.getElementById('speed-goal-val');if(gv)gv.textContent=v.toFixed(1)+' wpm';
+        if(ev==='change'){S.goal=v;save();stats();mastery();strip();kbd();syncGoal();}
+      },true);});
+      ls.addEventListener('toggle',syncGoal);
+      var gs0=document.getElementById('ins-goal-select');
+      if(gs0)gs0.addEventListener('change',function(){setTimeout(syncGoal,0);});
+      syncGoal();
+    }
+  })();
   var hs=document.getElementById('live-hint-strip');if(hs)hs.hidden=false;
   drawKb();newLesson();
   /* the first Inscript render is on screen: lift the boot veil */
