@@ -694,12 +694,15 @@ function start(){
     if(el.liveHintDetail)el.liveHintDetail.textContent=it?it.d:(ch==='्'?'halant':'');
   }
   /* ── rendering ── */
-  /* One keystroke is highlighted at a time (the way TypingBaba does it). Typed text is drawn as normal
-     shaped Hindi. The key to press next, and the rest of its word, are drawn one code point at a time, with a
-     dotted circle in front of any matra, halant or nukta so the mark can be seen on its own. */
+  /* One keystroke is highlighted at a time (the way TypingBaba does it). Typed text is drawn as normal shaped
+     Hindi, and so is all text the cursor has not reached. Only the syllable under the cursor is split into
+     its pieces: the key to press next, and the rest of that syllable, one code point at a time, with a dotted
+     circle in front of any matra, halant or nukta so the mark can be seen on its own. */
   var COMBINING=/[\u0900-\u0903\u093A-\u094F\u0951-\u0957\u0962\u0963]/;
   function lone(ch){return COMBINING.test(ch)?'\u25CC'+ch:ch;}
   function render(flash){
+    var ci=0;for(var i=0;i<clusters.length;i++){if(pos>=clusters[i][0]&&pos<clusters[i][1]){ci=i;break;}if(pos>=clusters[i][1])ci=i+1;}
+    var ce=ci<clusters.length?clusters[ci][1]:cps.length;
     el.textCorrect.textContent=cps.slice(0,pos).join('');
     el.textError.textContent='';
     ['backgroundImage','backgroundSize','backgroundPosition','backgroundRepeat'].forEach(function(k){el.textCurrent.style[k]='';});
@@ -708,14 +711,13 @@ function start(){
     el.textCurrent.textContent=ch===' '?' ':lone(ch);
     el.textCurrent.classList.toggle('space-cursor',ch===' ');
     el.textCurrent.classList.toggle('error-flash',!!flash);
-    var we=pos+1;while(we<cps.length&&cps[we]!==' ')we++;
     var rem=el.textRemaining;rem.textContent='';
     if(ch!==' '&&pos<cps.length){
       var fr=document.createDocumentFragment();
-      for(var k=pos+1;k<we;k++){var sp=document.createElement('span');sp.textContent=lone(cps[k]);fr.appendChild(sp);}
+      for(var k=pos+1;k<ce;k++){var sp=document.createElement('span');sp.textContent=lone(cps[k]);fr.appendChild(sp);}
       rem.appendChild(fr);
     }
-    rem.appendChild(document.createTextNode(cps.slice(Math.min(we,cps.length)).join('')));
+    rem.appendChild(document.createTextNode(cps.slice(Math.min(Math.max(ce,pos+1),cps.length)).join('')));
     [el.textCorrect,el.textCurrent,el.textRemaining].forEach(function(e){e.style.fontFamily=fontStack();});
     if(done){el.textCurrent.textContent='';}
   }

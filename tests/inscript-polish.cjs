@@ -39,10 +39,11 @@ const path=require('node:path');
  {const r=await page.evaluate(()=>{const I=TankanInscript;
    const set=(w,n)=>{I._setText(w);for(let i=0;i<n;i++){const s=I._state(),q=I.REV[s.text[s.pos]];I.type(q.code,q.shift);}
      return {cur:document.getElementById('text-current').textContent,done:document.getElementById('text-correct').textContent,rem:document.getElementById('text-remaining').textContent};};
-   return {a:set('रि',0),b:set('रि',1),c:set('रु क्ष',1),d:set('क्ष',1),e:set('क्ष',2)};});
+   return {a:set('रि',0),b:set('रि',1),c:set('रु क्ष',1),f:set('क्षमा',1),d:set('क्ष',1),e:set('क्ष',2)};});
   assert.deepEqual(r.a,{cur:'र',done:'',rem:'\u25CCि'});
   assert.deepEqual(r.b,{cur:'\u25CCि',done:'र',rem:''});
   assert.equal(r.c.cur,'\u25CCु');
+  assert.deepEqual(r.f,{cur:'\u25CC\u094D',done:'क',rem:'ष'.concat('')+'मा'},'later syllables stay whole until the cursor reaches them');
   assert.deepEqual(r.d,{cur:'\u25CC\u094D',done:'क',rem:'ष'});
   assert.deepEqual(r.e,{cur:'ष',done:'क\u094D',rem:''});}
  // 5. font select changes the displayed font and persists
