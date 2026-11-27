@@ -621,7 +621,7 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
     page = await newPage();
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => {
-        localStorage.setItem('hikeybr_inscript_v1', JSON.stringify({ u: 5, h: 5, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 2, secs: 120 }));
+        localStorage.setItem('hikeybr_inscript_v1', JSON.stringify({ ord: 2, u: 5, h: 5, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 2, secs: 120 }));
         localStorage.setItem('__syncDocs', JSON.stringify({
             u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 12, bestLessonWpm: 40 }) } }), savedAt: { seconds: 1794000000 } }
         }));
@@ -643,9 +643,9 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
     page = await newPage();
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => {
-        localStorage.setItem('hikeybr_inscript_v1', JSON.stringify({ u: 2, h: 2, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 1, secs: 60 }));
+        localStorage.setItem('hikeybr_inscript_v1', JSON.stringify({ ord: 2, u: 2, h: 2, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 1, secs: 60 }));
         localStorage.setItem('__syncDocs', JSON.stringify({
-            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_inscript_v1: JSON.stringify({ u: 10, h: 10, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 8, secs: 900 }) } }), savedAt: { seconds: 1794000000 } }
+            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_inscript_v1: JSON.stringify({ ord: 2, u: 10, h: 10, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 8, secs: 900 }) } }), savedAt: { seconds: 1794000000 } }
         }));
     });
     const cloudBefore25 = await readCloud(page);
@@ -664,9 +664,9 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
     await page.goto(base); await page.waitForTimeout(400);
     await page.evaluate(() => {
         localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 9, bestLessonWpm: 30 }));
-        localStorage.setItem('hikeybr_inscript_v1', JSON.stringify({ u: 1, h: 1, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 1, secs: 30 }));
+        localStorage.setItem('hikeybr_inscript_v1', JSON.stringify({ ord: 2, u: 1, h: 1, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 1, secs: 30 }));
         localStorage.setItem('__syncDocs', JSON.stringify({
-            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 3, bestLessonWpm: 20 }), hikeybr_inscript_v1: JSON.stringify({ u: 8, h: 8, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 5, secs: 500 }) } }), savedAt: { seconds: 1794000000 } }
+            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 3, bestLessonWpm: 20 }), hikeybr_inscript_v1: JSON.stringify({ ord: 2, u: 8, h: 8, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 5, secs: 500 }) } }), savedAt: { seconds: 1794000000 } }
         }));
     });
     await openProfile(page);

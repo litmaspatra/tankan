@@ -87,6 +87,29 @@ var PROGRESSION=[
  ['१','Digit 1'],['२','Digit 2'],['३','Digit 3'],['४','Digit 4'],['५','Digit 5'],
  ['६','Digit 6'],['७','Digit 7'],['८','Digit 8'],['९','Digit 9'],['०','Digit 0']
 ];
+/* ── Inscript unlock order (2026-11-27, Kartik: "home row keys will unlock
+   first"). Keys follow the keyboard, not Kruti Dev's frequency order: home
+   row first (the two index/middle consonants र क lead), then the top row,
+   then the bottom row, then Shift letters row by row, then rare marks and
+   digits. Within a row, the commoner letter comes first. ── */
+var OLD_ORDER=PROGRESSION.map(function(p){return p[0];});
+var NEW_ORDER=[
+ 'र','क','त','ु','ि','्','प','च','े','ो','ट',                    /* home row, ordered by how many real words each key opens */
+ 'ा','ब','ज','ह','ी','ग','द','ू','ै','ौ','ड','़',                /* top row */
+ 'ल','न','म','स','य','व','ं',                                    /* bottom row */
+ 'अ','ख','उ','थ','ए','फ','इ','ठ','छ','ओ',                      /* Shift: home row */
+ 'आ','ई','ऊ','ऐ','औ','भ','घ','ध','झ','ढ','ञ',                  /* Shift: top row */
+ 'ण','ष','श','ळ','ँ',                                            /* Shift: bottom row */
+ 'ृ','ॅ','ॉ','।','ः','ऋ','ऑ',                                    /* rare marks */
+ '१','२','३','४','५','६','७','८','९','०'
+];
+(function(){
+  var by={};PROGRESSION.forEach(function(p){by[p[0]]=p;});
+  var out=NEW_ORDER.map(function(c){return by[c];});
+  /* never drop an entry by accident */
+  PROGRESSION.forEach(function(p){if(out.indexOf(p)<0)out.push(p);});
+  PROGRESSION=out;
+})();
 PROGRESSION=PROGRESSION.map(function(p,i){
   var r=REV[p[0]];
   return {cp:p[0],d:p[1],code:r?r.code:null,shift:r?r.shift:false,finger:r?(FINGERS[r.code]||''):'',i:i};
@@ -102,7 +125,7 @@ function isDigitCp(cp){return cp>='०'&&cp<='९';}
    (tankan_inscript_v1) is migrated on first load. */
 var STORE='hikeybr_inscript_v1', OLD_STORE='tankan_inscript_v1';
 var S;
-function freshState(){return {u:INITIAL-1,h:INITIAL-1,goal:25,ks:{},kl:{},lessons:[],bestWpm:0,bestAcc:0,bestScore:0,streak:0,bestStreak:0,total:0,secs:0,typed:0,terr:0,daily:{}};}
+function freshState(){return {ord:2,u:INITIAL-1,h:INITIAL-1,goal:25,ks:{},kl:{},lessons:[],bestWpm:0,bestAcc:0,bestScore:0,streak:0,bestStreak:0,total:0,secs:0,typed:0,terr:0,daily:{}};}
 function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}
   try{window.dispatchEvent(new Event('tankan-progress-changed'));}catch(e){}}
 function load(){
@@ -115,6 +138,15 @@ function load(){
     }
     var d=JSON.parse(raw||'null');
     if(d){
+      if(d.ord!==2&&Number.isInteger(d.h)){
+        /* store from the old frequency order: keep every unlocked key unlocked.
+           New h = last position in the new order of any key unlocked before. */
+        var newIdx={};PROGRESSION.forEach(function(it,i){newIdx[it.cp]=i;});
+        var hi=INITIAL-1;
+        for(var oi=0;oi<=Math.min(d.h,OLD_ORDER.length-1);oi++){var ni=newIdx[OLD_ORDER[oi]];if(ni>hi)hi=ni;}
+        var cur=Number.isInteger(d.u)?newIdx[OLD_ORDER[d.u]]:undefined;
+        d.h=hi;d.u=cur===undefined?hi:Math.min(cur,hi);migrated=true;
+      }
       if(Number.isInteger(d.u))S.u=Math.max(0,Math.min(d.u,LAST));
       if(Number.isInteger(d.h))S.h=Math.max(INITIAL-1,Math.min(d.h,LAST));
       if(S.u>S.h)S.u=S.h;
@@ -360,6 +392,11 @@ window.TankanInscript={
   getLayout:function(){return layout;},
   setLayout:function(v){localStorage.setItem(KEY,v==='inscript'?'inscript':'kruti');location.reload();},
   profileSource:profileSource,
+  popupData:function(){
+    return {ks:S.ks,kl:S.kl||{},goal:S.goal,hi:S.h,
+      items:PROGRESSION.map(function(it){return {k:it.cp,h:disp(it.cp),sub:(it.code?((it.shift?'Shift+':'')+QLBL(it.code).toUpperCase()):''),finger:it.finger||''};}),
+      practice:function(idx){window.TankanInscript._practice(idx);}};
+  },
   reset:function(){S=freshState();save();}
 };
 
@@ -392,7 +429,7 @@ function start(){
   document.body.classList.add('layout-inscript');
   /* stop the Remington engine from touching the screen; the key-history
      popup reads Remington stats, so it is suppressed here too */
-  ['updateDisplay','renderVirtualKeyboard','updateKeyboardHighlights','regenerateLesson','updateLiveStats','updateMasteryCard','updateAlphabetStrip','showKeyPopup'].forEach(function(n){
+  ['updateDisplay','renderVirtualKeyboard','updateKeyboardHighlights','regenerateLesson','updateLiveStats','updateMasteryCard','updateAlphabetStrip'].forEach(function(n){
     if(typeof window[n]==='function')window[n]=function(){};
   });
   var canvas=el.canvas, input=el.hiddenInput;
@@ -735,6 +772,7 @@ function start(){
   /* test/introspection API */
   window.TankanInscript._state=function(){return {pos:pos,len:cps.length,errs:errs,correct:correct,done:done,text:cps.join(''),lessons:S.total};};
   window.TankanInscript._setText=function(t){setTextFromLesson(t);render();hint();stats();mastery();};
+  window.TankanInscript._practice=function(idx){review=idx!==S.h;reviewIdx=idx;save();newLesson();input.focus({preventScroll:true});};
   window.TankanInscript.type=type;
   window.TankanInscript.newLesson=function(){newLesson();};
   window.TankanInscript.eligibleWords=eligibleWords;

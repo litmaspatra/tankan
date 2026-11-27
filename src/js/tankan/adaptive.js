@@ -776,17 +776,17 @@
                 const color=ratio>=1?'var(--correct)':ratio>=.8?'#eab308':'var(--error)';
                 g+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${(padT+ih-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="${color}"><title>${r.h}: ${r.wpm.toFixed(1)} wpm over ${r.samples} clean hit(s)</title></rect>`;
                 // Full-column transparent hit area for the per-key popup (Remington keys only)
-                if(src.id==='kruti')g+=`<rect class="key-hit" tabindex="0" role="button" aria-label="${r.h} speed history" data-key="${r.k}" x="${(cx-iw/rows.length/2).toFixed(1)}" y="${padT}" width="${(iw/rows.length).toFixed(1)}" height="${ih}" fill="transparent"/>`;
+                g+=`<rect class="key-hit" tabindex="0" role="button" aria-label="${r.h} speed history" data-key="${r.k}" x="${(cx-iw/rows.length/2).toFixed(1)}" y="${padT}" width="${(iw/rows.length).toFixed(1)}" height="${ih}" fill="transparent"/>`;
                 g+=`<text x="${cx.toFixed(1)}" y="${(padT+ih+16).toFixed(1)}" font-size="12" text-anchor="middle" style="font-family:'Noto Sans Devanagari'">${r.h}</text>`;
                 g+=`<text x="${cx.toFixed(1)}" y="${(padT+ih+29).toFixed(1)}" font-size="9" text-anchor="middle" fill="var(--text-faint)">${r.wpm.toFixed(0)}</text>`;
             });
             // Target line and label drawn last: SVG paints in document order, so
             // drawing them before the bars hid the line behind any bar that tall.
             // The label gets a solid backing so it stays legible over the bars.
-            g+=`<line x1="${padL}" y1="${ty.toFixed(1)}" x2="${W-padR}" y2="${ty.toFixed(1)}" stroke="var(--error)" stroke-dasharray="6 4" stroke-width="1.5"/>`;
+            g+=`<line x1="${padL}" y1="${ty.toFixed(1)}" x2="${W-padR}" y2="${ty.toFixed(1)}" stroke="var(--error)" stroke-dasharray="6 4" stroke-width="1.5" pointer-events="none"/>`;
             const tLabel=`target ${goal} wpm`, tW=tLabel.length*6.6+12;
-            g+=`<rect class="target-label-bg" x="${(W-padR-tW-2).toFixed(1)}" y="${(ty-19).toFixed(1)}" width="${tW}" height="16" fill="var(--surface-card)" stroke="var(--error)" stroke-width="0.75"/>`;
-            g+=`<text x="${(W-padR-tW/2-2).toFixed(1)}" y="${(ty-7).toFixed(1)}" font-size="11" text-anchor="middle" fill="var(--error)">${tLabel}</text>`;
+            g+=`<rect class="target-label-bg" pointer-events="none" x="${(W-padR-tW-2).toFixed(1)}" y="${(ty-19).toFixed(1)}" width="${tW}" height="16" fill="var(--surface-card)" stroke="var(--error)" stroke-width="0.75"/>`;
+            g+=`<text x="${(W-padR-tW/2-2).toFixed(1)}" y="${(ty-7).toFixed(1)}" font-size="11" text-anchor="middle" fill="var(--error)" pointer-events="none">${tLabel}</text>`;
             box.innerHTML=svgWrap(W,H,g);
             const nat=box.querySelector('svg'); if(nat){ nat.style.minWidth=W+'px'; }
         }
@@ -844,7 +844,15 @@
             }
             return b.map((v,i)=>v/A[i][i]);
         }
+        /* Popup data source: the active layout's own store. Inscript keeps its
+           stats in its own module, so the card reads them from there. */
+        function kpCtx(){
+            const ins=window.TankanInscript&&TankanInscript.active&&TankanInscript.popupData;
+            if(ins){const d=TankanInscript.popupData();return{inscript:true,ks:d.ks,kl:d.kl,goal:d.goal,items:d.items,hi:d.hi,practice:d.practice};}
+            return{inscript:false,ks:keyStats,kl:keyLearning,goal:targetSpeedGoal,items:null,hi:highestUnlocked};
+        }
         function keyLearningRate(keyId){
+            const C=kpCtx(),keyLearning=C.kl,targetSpeedGoal=C.goal;
             const hist=keyLearning[keyId], speeds=(hist&&hist.speeds)||[];
             const n=speeds.length;
             const out={speeds,fit:null,degree:0,rate:NaN,certainty:0,remaining:NaN};
@@ -867,11 +875,12 @@
             return{speeds,fit,degree,rate,certainty,remaining};
         }
         function ownKeyLessons(keyId){
+            const keyLearning=kpCtx().kl;
             return ((keyLearning[keyId]||{}).lessons||[]).map(p=>Array.isArray(p)?{wpm:p[0],accuracy:p[1],samples:p[2],ts:p[3],lesson:p[4]}:p)
                 .filter(p=>p&&Number.isFinite(p.wpm)&&p.wpm>0).slice(-120);
         }
         function ownKeyBest(keyId){
-            const s=keyStats[keyId]||{};
+            const s=kpCtx().ks[keyId]||{};
             // accurateBest is an actual qualifying lesson mean, not the EMA.
             // Older unqualified lessons were not saved, so only recorded best
             // is knowable. Never turn the old smoothed series into lesson dots.
@@ -880,6 +889,7 @@
                 ...ownKeyLessons(keyId).map(p=>p.wpm));
         }
         function renderKeyHistory(keyId){
+            const targetSpeedGoal=kpCtx().goal;
             const points=ownKeyLessons(keyId).slice(-60),n=points.length;
             const W=Math.min(332,window.innerWidth-40),H=126,L=30,R=9,T=13,B=21,iw=W-L-R,ih=H-T-B;
             const values=points.map(p=>p.wpm);
@@ -910,17 +920,20 @@
         let keyPopupEl=null,keyPopupTimer=0,keyPopupAnchor=null,keyPopupPinned=false;
         function hideKeyPopup(){clearTimeout(keyPopupTimer);keyPopupTimer=0;keyPopupPinned=false;if(keyPopupEl)keyPopupEl.hidden=true;}
         function showKeyPopup(keyId,anchorRect){
-            const item=KEY_PROGRESSION.find(it=>it.k===keyId);if(!item)return;
+            const C=kpCtx(),keyStats=C.ks,targetSpeedGoal=C.goal,highestUnlocked=C.hi;
+            const KP=C.items||KEY_PROGRESSION;
+            const item=KP.find(it=>it.k===keyId);if(!item)return;
             const stat=keyStats[keyId]||{},pop=ensureKeyPopup(),best=ownKeyBest(keyId);
             const last=stat.lastLessonWpm>0?stat.lastLessonWpm.toFixed(1):'-';
             const average=stat.modelTtt>0?(12000/stat.modelTtt).toFixed(1):'-';
             const lr=keyLearningRate(keyId);
             const forecast=lr.certainty>=.5&&lr.remaining>0?`<div class="kp-forecast" title="Estimate from recent average-speed history, not an unlock promise. Accuracy and clean timing requirements still apply.">About ${lr.remaining} lesson${lr.remaining===1?'':'s'} to ${targetSpeedGoal} WPM <span>(estimate)</span></div>`:'';
-            const phys=item.k.toUpperCase(),idx=KEY_PROGRESSION.indexOf(item);
+            const phys=C.inscript?(item.sub||''):item.k.toUpperCase(),idx=KP.indexOf(item);
             pop.innerHTML=`<div class="kp-head"><span class="kp-glyph" id="kp-title">${item.h}</span><span class="kp-sub">Key ${phys} · ${item.finger}</span><button type="button" class="kp-close" aria-label="Close key history">✕</button></div><div class="kp-speeds"><span>Last <b>${last}</b></span><span title="Best recorded own-key lesson pace. Earlier unrecorded lesson speeds may be missing.">Best <b>${best?best.toFixed(1):'-'}</b></span><span title="Weighted average of clean key timing across lessons, converted to WPM.">Average <b>${average}</b></span><span class="kp-sub">WPM</span></div>${forecast}${renderKeyHistory(keyId)}${idx<=highestUnlocked?'<button type="button" class="kp-practice">Practice this key</button>':''}`;
             pop.querySelector('.kp-close').onclick=()=>{hideKeyPopup();if(keyPopupAnchor&&keyPopupAnchor.focus)keyPopupAnchor.focus({preventScroll:true});hideKeyPopup();};
             const practice=pop.querySelector('.kp-practice');
             if(practice)practice.onclick=()=>{
+                if(C.inscript){C.practice(idx);hideKeyPopup();return;}
                 reviewMode=idx!==highestUnlocked;unlockedIndex=idx;targetKeyBuffer=[];
                 populateJumpSelect();saveStorage();regenerateLesson();hideKeyPopup();
                 document.querySelector('.nav-tab[data-target="practice"]').click();
