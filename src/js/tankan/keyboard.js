@@ -24,6 +24,7 @@
                     if (item.label) classes.push('label-key');
                     if (item.bump) classes.push('bump');
                     keyEl.className = classes.join(' ');
+                    if (item.code) keyEl.dataset.code = item.code;
 
                     if (item.label) {
                         keyEl.innerHTML = `<span class="hi-main">${item.h}</span>`;

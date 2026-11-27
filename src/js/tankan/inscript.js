@@ -639,15 +639,15 @@ function start(){
     var f=el.keyboardFrame;f.innerHTML='';keyEls={};
     ROWS.forEach(function(r,ri){
       var row=document.createElement('div');row.className='k-row';
-      if(ri===3){var sl=document.createElement('div');sl.className='k-key label-key w-shift-l';sl.innerHTML='<span class="hi-main">⇧ Shift</span>';row.appendChild(sl);keyEls.ShiftLeft=sl;}
+      if(ri===3){var sl=document.createElement('div');sl.className='k-key label-key w-shift-l';sl.dataset.code='ShiftLeft';sl.innerHTML='<span class="hi-main">⇧ Shift</span>';row.appendChild(sl);keyEls.ShiftLeft=sl;}
       r.forEach(function(c){
-        var k=document.createElement('div');k.className='k-key';
+        var k=document.createElement('div');k.className='k-key';k.dataset.code=c;
         var lbl=SHORTLBL[c]||MAP[c][1];
         k.innerHTML='<span class="hi-shift">'+(/[ऀ-ॿ]/.test(MAP[c][1])||SHORTLBL[c]?lbl:'')+'</span><span class="hi-main">'+(MAP[c][0]==='्'?'◌्':(/[ा-ॏऀ-ः़ु-ै]/.test(MAP[c][0])&&MAP[c][0]!=='र'?'◌'+MAP[c][0]:MAP[c][0]))+'</span><span class="en-sub">'+QLBL(c)+'</span>';
         if(c==='KeyF'||c==='KeyJ')k.classList.add('bump');
         row.appendChild(k);keyEls[c]=k;
       });
-      if(ri===3){var sr=document.createElement('div');sr.className='k-key label-key w-shift-r';sr.innerHTML='<span class="hi-main">⇧ Shift</span>';row.appendChild(sr);keyEls.ShiftRight=sr;}
+      if(ri===3){var sr=document.createElement('div');sr.className='k-key label-key w-shift-r';sr.dataset.code='ShiftRight';sr.innerHTML='<span class="hi-main">⇧ Shift</span>';row.appendChild(sr);keyEls.ShiftRight=sr;}
       f.appendChild(row);
     });
     var sp=document.createElement('div');sp.className='k-row';
