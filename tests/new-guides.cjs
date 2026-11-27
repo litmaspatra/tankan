@@ -14,7 +14,7 @@ const server = http.createServer((req, res) => {
     res.setHeader('Content-Type', MIME[path.extname(file)] || 'application/octet-stream');
     fs.createReadStream(file).pipe(res);
 });
-const GUIDES = ['how-tankan-works', 'kruti-dev-layout', 'home-row', 'posture', 'common-mistakes', 'alt-codes', 'building-speed'];
+const GUIDES = ['how-tankan-works', 'kruti-dev-layout', 'inscript-layout', 'home-row', 'posture', 'common-mistakes', 'alt-codes', 'building-speed'];
 const ALL = GUIDES.concat(['terms', 'guides']);
 (async () => {
     await new Promise(r => server.listen(0, 'localhost', r));

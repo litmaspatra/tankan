@@ -2,19 +2,21 @@
 <html lang="hi" data-theme="dark">
 <head>
     <meta charset="UTF-8">
+    <script src="guide-theme.js?v=20261118-ink-default"></script>
+    <script src="src/js/tankan/layout-boot.js?v=20261127-flash1"></script>
     <script src="src/js/tankan/tour-boot.js?v=20261117"></script>
     <link rel="stylesheet" href="src/css/tour.css?v=20261117">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hindi Typing Tutor - टंकण | Free Remington Kruti Dev Practice</title>
-    <meta name="description" content="Free Hindi typing tutor for the Remington Kruti Dev layout. Learn Hindi typing step by step: keys unlock one by one, every lesson measures speed and accuracy, and you practise on real Hindi words.">
+    <title>Hindi Typing Tutor - टंकण | Free Kruti Dev & Inscript Practice</title>
+    <meta name="description" content="Free Hindi typing tutor for the Remington Kruti Dev and Inscript (Mangal) layouts. Learn Hindi typing step by step: keys unlock one by one, every lesson measures speed and accuracy, and you practise on real Hindi words.">
     <meta name="google-site-verification" content="gOfV1k8ntt_iD_YTsvcN2KivbH0QQseqy9G0BmYqCxs">
     <meta name='google-adsense-account' content='ca-pub-6008091465123832'>
     <link rel="canonical" href="https://tankan.in/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="टंकण">
     <meta property="og:url" content="https://tankan.in/">
-    <meta property="og:title" content="Hindi Typing Tutor - टंकण | Free Remington Kruti Dev Practice">
-    <meta property="og:description" content="Free Hindi typing tutor for the Remington Kruti Dev layout. Keys unlock one by one, and every lesson measures speed and accuracy.">
+    <meta property="og:title" content="Hindi Typing Tutor - टंकण | Free Kruti Dev & Inscript Practice">
+    <meta property="og:description" content="Free Hindi typing tutor for the Remington Kruti Dev and Inscript (Mangal) layouts. Keys unlock one by one, and every lesson measures speed and accuracy.">
     <meta property="og:image" content="https://tankan.in/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" href="/favicon.ico" sizes="any">
@@ -25,13 +27,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/tankan.css?v=20261126-marks10">
+    <link rel="stylesheet" href="src/css/tankan.css?v=20261127-profile1">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/css/keyboard.css?v=20261114a">
 
 </head>
 <body>
-    <h1 class="sr-only">टंकण - free Hindi Remington Kruti Dev typing tutor</h1>
+    <h1 class="sr-only">टंकण - free Hindi typing tutor: Remington Kruti Dev and Inscript (Mangal) practice</h1>
 
     <!-- ═══════════════════════════════════════════════════════════
          HEADER & LOGO
@@ -40,7 +42,7 @@
         <div class="brand" id="logo-btn">
             <div class="brand-icon">टं</div>
             <div class="brand-title">टंकण</div>
-            <div class="brand-badge">Remington Kruti Dev</div>
+            <div class="brand-badge">Kruti Dev + Inscript</div>
         </div>
 
         <nav>
@@ -377,9 +379,14 @@
                 <div class="card-header">
                     <div>
                         <h2>Your Typing Profile &amp; Performance</h2>
-                        <p>Track your accuracy, lesson speed, and confidence across every single Remington key.</p>
+                        <p>Track your accuracy, lesson speed, and confidence across every key. Each layout keeps its own stats.</p>
                     </div>
                 </div>
+                <div class="prof-layout-picker" role="tablist" aria-label="Which layout's stats to show">
+                    <button type="button" class="prof-layout-tab" id="prof-layout-kruti" role="tab" aria-selected="true">Remington Kruti Dev</button>
+                    <button type="button" class="prof-layout-tab" id="prof-layout-inscript" role="tab" aria-selected="false">Inscript (Mangal)</button>
+                </div>
+                <p class="prof-layout-note" id="prof-layout-note" hidden></p>
 
                                 <h3 class="prof-h">All time statistics</h3>
                 <div class="stats-strip prof-tiles" id="prof-tiles-all"></div>
@@ -604,7 +611,7 @@
     <div class="modal-overlay" id="confirm-modal">
         <div class="modal-dialog">
             <h3>Reset Progress?</h3>
-            <p>This will erase your unlocked progress, keystroke stats and typing speed records. Start fresh with the first four keys (क, ा, ि, र). Your theme, sound and practice preferences stay unchanged.</p>
+            <p id="reset-modal-text">This will erase your unlocked progress, keystroke stats and typing speed records. Start fresh with the first four keys (क, ा, ि, र). Your theme, sound and practice preferences stay unchanged.</p>
             <div class="modal-actions">
                 <button class="btn-modal cancel" id="modal-cancel-btn">Cancel</button>
                 <button class="btn-modal danger" id="modal-confirm-btn">Yes, Reset Progress</button>
@@ -657,16 +664,16 @@
     <script src="src/js/tankan/storage.js?v=20261120-fonts"></script>
     <script src="src/js/tankan/engine.js?v=20261119-glyphfix"></script>
     <script src="src/js/tankan/keyboard.js?v=20261114a"></script>
-    <script src="src/js/tankan/adaptive.js?v=20261120-graph"></script>
+    <script src="src/js/tankan/adaptive.js?v=20261127-profile1"></script>
     <script src="src/js/tankan/bookloader.js?v=20261117-audit2"></script>
     <script src="src/js/tankan/lessons.js?v=20261117-audit2"></script>
     <script src="src/js/shared/legacy-renderer.js?v=20261120-wrap2"></script>
     <script src="src/js/tankan/display.js?v=20261120-graph"></script>
     <script src="src/js/tankan/input.js?v=20261120-graph"></script>
-    <script src="src/js/tankan/ui.js?v=20261120-clip"></script>
+    <script src="src/js/tankan/ui.js?v=20261127-profile1"></script>
     <script src="src/js/tankan/backup.js?v=20261115c"></script>
     <script src="src/js/tankan/auth.js?v=20261114a"></script>
-    <script src="src/js/tankan/sync.js?v=20261115b"></script>
+    <script src="src/js/tankan/sync.js?v=20261127-inscript-sync1"></script>
     <script src="src/js/tankan/community.js?v=20261115f"></script>
     <div id="avatar-lightbox" hidden>
         <div class="avatar-lightbox-card" role="dialog" aria-label="Enlarged profile photo">
@@ -682,6 +689,6 @@
     <script src="src/js/tankan/nav-menu.js?v=20261116b"></script>
     <script src="src/js/tankan/init.js?v=20261116-font3"></script>
     <script src="src/js/tankan/tour.js?v=20261118-seo"></script>
-    <script src="src/js/tankan/inscript.js?v=20261127-inscript4"></script>
+    <script src="src/js/tankan/inscript.js?v=20261127-profile1"></script>
 </body>
 </html>

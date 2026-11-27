@@ -616,7 +616,69 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
     assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_store_v3 === 'not-json{', '23: explicit choice saves the device copy');
     await page.context().close();
 
+    // 24. Layouts split across sides merge without asking: device-only
+    //     Inscript + account-only Kruti Dev unite both ways, nothing lost.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        localStorage.setItem('hikeybr_inscript_v1', JSON.stringify({ u: 5, h: 5, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 2, secs: 120 }));
+        localStorage.setItem('__syncDocs', JSON.stringify({
+            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 12, bestLessonWpm: 40 }) } }), savedAt: { seconds: 1794000000 } }
+        }));
+    });
+    await openProfile(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(1500); // resolve + save merge + apply + reload
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()) && !(await page.locator('#sync-bind-prompt').isVisible()), '24: split layouts merge without a prompt');
+    const cloud24 = JSON.parse(await readCloud(page));
+    assert.ok(cloud24.data.hikeybr_store_v3 && cloud24.data.hikeybr_store_v3.includes('"unlockedIndex":12'), '24: account keeps its Kruti Dev progress');
+    assert.ok(cloud24.data.hikeybr_inscript_v1 && cloud24.data.hikeybr_inscript_v1.includes('"h":5'), '24: device-only Inscript progress saved to the account');
+    assert.ok(await page.evaluate(() => localStorage.getItem('hikeybr_store_v3') && localStorage.getItem('hikeybr_store_v3').includes('"unlockedIndex":12')), '24: account Kruti Dev progress landed on the device');
+    assert.ok(await page.evaluate(() => localStorage.getItem('hikeybr_inscript_v1') && localStorage.getItem('hikeybr_inscript_v1').includes('"h":5')), '24: device keeps its Inscript progress');
+    const stash24 = JSON.parse(await page.evaluate(() => localStorage.getItem('hikeybr_presync_backup') || 'null'));
+    assert.ok(stash24 && stash24.data && stash24.data.hikeybr_inscript_v1, '24: the pre-merge device copy is stashed');
+    await page.context().close();
+
+    // 25. Account ahead in Inscript only: applied automatically, no prompt,
+    //     nothing pushed back.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        localStorage.setItem('hikeybr_inscript_v1', JSON.stringify({ u: 2, h: 2, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 1, secs: 60 }));
+        localStorage.setItem('__syncDocs', JSON.stringify({
+            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_inscript_v1: JSON.stringify({ u: 10, h: 10, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 8, secs: 900 }) } }), savedAt: { seconds: 1794000000 } }
+        }));
+    });
+    const cloudBefore25 = await readCloud(page);
+    await openProfile(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(1200); // apply + reload
+    assert.ok(!(await page.locator('#sync-conflict').isVisible()), '25: no prompt when the account is simply further ahead');
+    assert.ok(await page.evaluate(() => localStorage.getItem('hikeybr_inscript_v1') && localStorage.getItem('hikeybr_inscript_v1').includes('"h":10')), '25: device picked up the account Inscript progress');
+    const stash25 = JSON.parse(await page.evaluate(() => localStorage.getItem('hikeybr_presync_backup') || 'null'));
+    assert.ok(stash25 && stash25.data && stash25.data.hikeybr_inscript_v1 && stash25.data.hikeybr_inscript_v1.includes('"h":2'), '25: the replaced device copy is stashed');
+    assert.deepEqual(JSON.parse(await readCloud(page)).data, JSON.parse(cloudBefore25).data, '25: account content not rewritten');
+    await page.context().close();
+
+    // 26. Each side ahead in a different layout: fail closed to the explicit
+    //     choice - no auto-resolve, no writes either way.
+    page = await newPage();
+    await page.goto(base); await page.waitForTimeout(400);
+    await page.evaluate(() => {
+        localStorage.setItem('hikeybr_store_v3', JSON.stringify({ unlockedIndex: 9, bestLessonWpm: 30 }));
+        localStorage.setItem('hikeybr_inscript_v1', JSON.stringify({ u: 1, h: 1, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 1, secs: 30 }));
+        localStorage.setItem('__syncDocs', JSON.stringify({
+            u1: { payload: JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: '2026-11-12T00:00:00Z', data: { hikeybr_store_v3: JSON.stringify({ unlockedIndex: 3, bestLessonWpm: 20 }), hikeybr_inscript_v1: JSON.stringify({ u: 8, h: 8, goal: 25, ks: {}, lessons: [], bestWpm: 0, bestScore: 0, streak: 0, total: 5, secs: 500 }) } }), savedAt: { seconds: 1794000000 } }
+        }));
+    });
+    await openProfile(page);
+    await page.click('#google-signin-btn'); await page.waitForTimeout(800);
+    assert.ok(await page.locator('#sync-conflict').isVisible(), '26: ahead in different layouts surfaces the choice');
+    assert.ok(await page.locator('#sync-use-device').isVisible() && await page.locator('#sync-use-account').isVisible(), '26: both choices offered');
+    assert.match(await page.locator('#sync-status').textContent(), /Progress differs/, '26: status says the copies differ');
+    assert.ok(JSON.parse(await readCloud(page)).data.hikeybr_inscript_v1.includes('"h":8'), '26: account copy untouched');
+    assert.ok(await page.evaluate(() => localStorage.getItem('hikeybr_inscript_v1').includes('"h":1') && localStorage.getItem('hikeybr_store_v3').includes('"unlockedIndex":9')), '26: device copies untouched');
+    await page.context().close();
+
     await browser.close();
     server.close();
-    console.log('PASS tests/sync.cjs (26 scenarios)');
+    console.log('PASS tests/sync.cjs (29 scenarios)');
 })().catch(e => { console.error('FAIL tests/sync.cjs:', e.message); server.close(); process.exit(1); });

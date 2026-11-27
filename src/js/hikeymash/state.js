@@ -13,7 +13,7 @@
         let totalTyped = 0;
         let isFinished = false;
         let isKeyboardVisible = true;
-        let currentTheme = 'light';
+        let currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
 
         // Advanced Diagnostics & Mistake tracking
         let mistakeWordIndices = new Set();

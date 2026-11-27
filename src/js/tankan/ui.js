@@ -214,8 +214,8 @@
                 if (targetPanel) targetPanel.classList.add('active');
 
                 if (target === 'profile') {
-                    updateProfileTable();
-                    renderProfileCharts();
+                    if (window.TankanProfileRefresh) TankanProfileRefresh();
+                    else { updateProfileTable(); renderProfileCharts(); }
                 }
                 if (target === 'practice') {
                     setTimeout(() => el.hiddenInput.focus({preventScroll:true}), 60);
@@ -485,10 +485,15 @@
 
         document.getElementById('key-font-select').addEventListener('change',e=>{keyFont=e.target.value;applyDisplayPreferences();saveStorage();});
         const smoothSlider=document.getElementById('smoothness');
-        if(smoothSlider)smoothSlider.addEventListener('input',renderSpeedChart);
+        if(smoothSlider)smoothSlider.addEventListener('input',()=>renderSpeedChart());
 
         // Reset Modal Handlers
         function openResetModal() {
+            const layoutId=(window.TankanProfileLayoutId&&TankanProfileLayoutId())||'kruti';
+            const txt=document.getElementById('reset-modal-text');
+            if(txt)txt.textContent=layoutId==='inscript'
+                ?'This will erase your Inscript progress, keystroke stats and typing speed records, and start the Inscript lessons fresh. Your Kruti Dev progress, theme, sound and practice preferences stay unchanged.'
+                :'This will erase your unlocked Kruti Dev progress, keystroke stats and typing speed records. Start fresh with the first four keys (क, ा, ि, र). Your Inscript progress, theme, sound and practice preferences stay unchanged.';
             el.confirmModal.classList.add('open');
         }
         function closeResetModal() {
@@ -502,6 +507,15 @@
         });
 
         el.modalConfirmBtn.addEventListener('click', () => {
+            const layoutId=(window.TankanProfileLayoutId&&TankanProfileLayoutId())||'kruti';
+            if(layoutId==='inscript'&&window.TankanInscript&&typeof TankanInscript.reset==='function'){
+                // Reset the Inscript store only; Kruti Dev progress stays.
+                TankanInscript.reset();
+                if(window.TankanProfileRefresh)TankanProfileRefresh();
+                closeResetModal();
+                setTimeout(() => el.hiddenInput.focus({preventScroll:true}), 60);
+                return;
+            }
             // Clear only learning data; immediately save the retained preferences.
             reviewMode=false;
             unlockedIndex = INITIAL_UNLOCKED_COUNT - 1;

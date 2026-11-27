@@ -59,6 +59,47 @@
         } catch (_) { return null; }
     };
     const practiceCmp = (a, b) => (a[0] - b[0]) || (a[1] - b[1]);
+    // Inscript keeps its own progress store (under the hikeybr_ prefix so
+    // the backup sweep and sync collect it). Its fields differ from the
+    // Kruti Dev store: h/u are highest-unlocked/current, total/secs are the
+    // practice volume.
+    const INSCRIPT_STORE_KEY = 'hikeybr_inscript_v1';
+    const inscriptKeysOf = text => {
+        try {
+            const s = JSON.parse(text || '{}');
+            if (typeof s.h === 'number') return s.h;
+            if (typeof s.u === 'number') return s.u;
+            return null;
+        } catch (_) { return null; }
+    };
+    const inscriptPracticeOf = text => {
+        try {
+            const s = JSON.parse(text || '{}');
+            return [typeof s.total === 'number' ? s.total : 0,
+                    typeof s.secs === 'number' ? s.secs : 0];
+        } catch (_) { return null; }
+    };
+    const PROGRESS_STORES = [
+        { key: STORE_KEY, keysOf: keysUnlockedOf, practiceOf: practiceOf },
+        { key: INSCRIPT_STORE_KEY, keysOf: inscriptKeysOf, practiceOf: inscriptPracticeOf }
+    ];
+    // One layout store's winner: 'local' or 'cloud' when one side is further
+    // ahead, 'add-local'/'add-cloud' when only one side has the layout,
+    // 'none' when neither does, 'unreadable' when a present copy cannot be
+    // compared. Practice volume breaks a keys tie; an exact tie keeps the
+    // account copy, the same rule the single-store flow uses.
+    const resolveProgressStore = (spec, localText, cloudText) => {
+        if (localText == null && cloudText == null) return 'none';
+        if (localText == null) return 'add-cloud';
+        if (cloudText == null) return 'add-local';
+        const lk = spec.keysOf(localText), ck = spec.keysOf(cloudText);
+        if (lk === null || ck === null) return 'unreadable';
+        if (lk > ck) return 'local';
+        if (ck > lk) return 'cloud';
+        const lp = spec.practiceOf(localText), cp = spec.practiceOf(cloudText);
+        if (!lp || !cp) return 'unreadable';
+        return practiceCmp(lp, cp) > 0 ? 'local' : 'cloud';
+    };
     // localStorage enumeration order is device-specific. Compare named values,
     // not serialized insertion order, or an identical restored account (for
     // example progress + avatar) immediately looks like a new conflict.
@@ -318,6 +359,73 @@
                 // setup (tens of seconds) the user may close the tab during.
                 push();
             } else {
+                // Per-layout resolution: Kruti Dev and Inscript advance on
+                // their own, so "further ahead" is decided per layout store,
+                // never for the whole backup at once. A layout present on
+                // only one side is copied across (additive); the further
+                // ahead side supplies its store. Unreadable stores, or each
+                // side ahead in a different layout, keep the explicit choice
+                // below - nothing is overwritten silently.
+                const localData = collect();
+                if (localData[INSCRIPT_STORE_KEY] != null || cloudObj.data[INSCRIPT_STORE_KEY] != null) {
+                    const picks = PROGRESS_STORES.map(spec => ({ key: spec.key, res: resolveProgressStore(spec, localData[spec.key], cloudObj.data[spec.key]) }));
+                    const aheadLocal = picks.some(p => p.res === 'local');
+                    const aheadCloud = picks.some(p => p.res === 'cloud');
+                    if (!picks.some(p => p.res === 'unreadable') && !(aheadLocal && aheadCloud)) {
+                        const merged = Object.assign({}, cloudObj.data);
+                        picks.forEach(p => { if (p.res === 'local' || p.res === 'add-local') merged[p.key] = localData[p.key]; });
+                        Object.keys(localData).forEach(k => { if (!(k in merged)) merged[k] = localData[k]; });
+                        if (dataJson(merged) === dataJson(cloudObj.data)) {
+                            setStatus('Your account is further ahead - bringing it to this device.');
+                            applyCloud(cloudObj);
+                            return;
+                        }
+                        bound = true;
+                        if (dataJson(merged) === dataJson(localData)) {
+                            try { localStorage.setItem(PRESYNC_KEY, JSON.stringify({ savedAt: new Date().toISOString(), data: cloudObj.data })); window.dispatchEvent(new Event('tankan-stash-updated')); } catch (_) {}
+                            push().then(ok => {
+                                if (ok && uid === user.uid) setStatus('This device is further ahead - saved this device\'s progress to your account.');
+                            });
+                            return;
+                        }
+                        // True merge: each side keeps the further-ahead copy
+                        // of a layout. Save the merged backup to the account,
+                        // then bring it to this device. If the save fails the
+                        // merge is applied anyway; the next sign-in resolves
+                        // the same merge again and retries the save.
+                        if (aheadLocal) {
+                            try { localStorage.setItem(PRESYNC_KEY, JSON.stringify({ savedAt: new Date().toISOString(), data: cloudObj.data })); window.dispatchEvent(new Event('tankan-stash-updated')); } catch (_) {}
+                        }
+                        const envelope = JSON.stringify({ app: 'tankan', kind: 'tankan-progress-backup', version: 1, exportedAt: new Date().toISOString(), data: merged });
+                        setStatus('Saving your merged progress to your account…');
+                        store.write(envelope).then(() => {
+                            if (uid !== user.uid) return;
+                            writeState(user.uid, { baseDataJson: JSON.stringify(merged), owedLocalJson: null });
+                        }).catch(() => {
+                            if (uid !== user.uid) return;
+                            pushPending = true;
+                            writeState(user.uid, { owedLocalJson: JSON.stringify(merged) });
+                        }).finally(() => {
+                            if (uid !== user.uid) return;
+                            applying = true;
+                            window.TANKAN_BACKUP.apply(JSON.parse(envelope));
+                            if (!aheadLocal) {
+                                try { localStorage.setItem(PRESYNC_KEY, JSON.stringify({ savedAt: new Date().toISOString(), data: localData })); window.dispatchEvent(new Event('tankan-stash-updated')); } catch (_) {}
+                            }
+                            location.reload();
+                        });
+                        return;
+                    }
+                    bound = false;
+                    conflictText.textContent = 'Your Kruti Dev and Inscript progress point different ways between this device and your account. Choose which copy to keep - the other is replaced only when you say so.';
+                    useDeviceBtn.hidden = false;
+                    useAccountBtn.hidden = false;
+                    useDeviceBtn.textContent = 'Keep this device\'s progress (update the account)';
+                    useAccountBtn.textContent = 'Use the account copy here (replace this device)';
+                    conflictBox.hidden = false;
+                    setStatus('Progress differs between this device and your account.');
+                    return;
+                }
                 // Auto-resolve by furthest progress: the copy with more keys
                 // unlocked wins, per the visitor's standing choice. The
                 // replaced copy is stashed first (the account copy below, the

@@ -9,7 +9,7 @@ const path=require('node:path');
  const page=await browser.newPage({viewport:{width:1366,height:900}});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const url='file://'+path.resolve(__dirname,'../index.html');
- const fresh=async(seed)=>{await page.goto(url);await page.evaluate(seed=>{localStorage.clear();localStorage.setItem('tankan_layout','inscript');if(seed)localStorage.setItem('tankan_inscript_v1',JSON.stringify(seed));},seed);await page.reload();};
+ const fresh=async(seed)=>{await page.goto(url);await page.evaluate(seed=>{localStorage.clear();localStorage.setItem('tankan_layout','inscript');if(seed)localStorage.setItem('hikeybr_inscript_v1',JSON.stringify(seed));},seed);await page.reload();};
  // type the whole lesson at `ms` per keystroke, page-side with a fake clock (fast, one round trip)
  const completeFast=async(ms=250,errorRate=0)=>page.evaluate(({ms,errorRate})=>{
   const I=TankanInscript,realNow=Date.now;let now=realNow();
@@ -111,10 +111,19 @@ const path=require('node:path');
  await page.reload();
  assert.equal(await page.evaluate(()=>TankanInscript.progress.goal),40,'goal persists');
 
- // 10. no page errors anywhere in Inscript mode
+ // 10. launch-day store name migrates: old key loads once, then is replaced
+ await page.goto(url);
+ await page.evaluate(()=>{localStorage.clear();localStorage.setItem('tankan_layout','inscript');localStorage.setItem('tankan_inscript_v1',JSON.stringify({u:7,h:9,goal:30,ks:{},lessons:[],bestWpm:0,bestScore:0,streak:0,total:3}));});
+ await page.reload();
+ assert.equal(await page.evaluate(()=>TankanInscript.progress.unlockedIndex),7,'old store key still loads');
+ assert.equal(await page.evaluate(()=>TankanInscript.progress.goal),30,'old store goal migrates');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('tankan_inscript_v1')),null,'old key removed after migration');
+ assert.ok(await page.evaluate(()=>localStorage.getItem('hikeybr_inscript_v1')),'progress rewritten under the hikeybr_ key');
+
+ // 11. no page errors anywhere in Inscript mode
  assert.deepEqual(errors,[],'no page errors: '+errors.join(' | '));
 
- // 11. Kruti Dev mode still boots clean with no page errors (regression guard)
+ // 12. Kruti Dev mode still boots clean with no page errors (regression guard)
  await page.evaluate(()=>{localStorage.clear();});
  await page.reload();
  assert.equal(await page.evaluate(()=>Tankan.unlockedIndex),3,'Remington mode unaffected');

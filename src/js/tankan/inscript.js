@@ -96,25 +96,42 @@ var NEEDS_DOT=/^[ऀ-ः़-्]/; // combining marks shown on a dotted circle
 function disp(cp){return NEEDS_DOT.test(cp)?'◌'+cp:cp;}
 function isDigitCp(cp){return cp>='०'&&cp<='९';}
 
-/* ── separate store: layout progress never mixes ── */
-var STORE='tankan_inscript_v1';
+/* ── separate store: layout progress never mixes ──
+   The key carries the hikeybr_ prefix so the backup sweep and account sync
+   collect it together with the Remington store. The launch-day name
+   (tankan_inscript_v1) is migrated on first load. */
+var STORE='hikeybr_inscript_v1', OLD_STORE='tankan_inscript_v1';
 var S;
-function freshState(){return {u:INITIAL-1,h:INITIAL-1,goal:25,ks:{},lessons:[],bestWpm:0,bestScore:0,streak:0,total:0};}
-function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
+function freshState(){return {u:INITIAL-1,h:INITIAL-1,goal:25,ks:{},kl:{},lessons:[],bestWpm:0,bestAcc:0,bestScore:0,streak:0,bestStreak:0,total:0,secs:0,typed:0,terr:0,daily:{}};}
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}
+  try{window.dispatchEvent(new Event('tankan-progress-changed'));}catch(e){}}
 function load(){
   S=freshState();
   try{
-    var d=JSON.parse(localStorage.getItem(STORE)||'null');
-    if(!d)return;
-    if(Number.isInteger(d.u))S.u=Math.max(0,Math.min(d.u,LAST));
-    if(Number.isInteger(d.h))S.h=Math.max(INITIAL-1,Math.min(d.h,LAST));
-    if(S.u>S.h)S.u=S.h;
-    if(typeof d.goal==='number'&&d.goal>=10&&d.goal<=100)S.goal=d.goal;
-    if(d.ks&&typeof d.ks==='object')S.ks=d.ks;
-    if(Array.isArray(d.lessons))S.lessons=d.lessons.slice(-60);
-    S.bestWpm=d.bestWpm||0;S.bestScore=d.bestScore||0;S.streak=d.streak||0;S.total=d.total||0;
+    var raw=localStorage.getItem(STORE),migrated=false;
+    if(raw===null){
+      var old=localStorage.getItem(OLD_STORE);
+      if(old!==null){raw=old;migrated=true;}
+    }
+    var d=JSON.parse(raw||'null');
+    if(d){
+      if(Number.isInteger(d.u))S.u=Math.max(0,Math.min(d.u,LAST));
+      if(Number.isInteger(d.h))S.h=Math.max(INITIAL-1,Math.min(d.h,LAST));
+      if(S.u>S.h)S.u=S.h;
+      if(typeof d.goal==='number'&&d.goal>=10&&d.goal<=100)S.goal=d.goal;
+      if(d.ks&&typeof d.ks==='object')S.ks=d.ks;
+      if(d.kl&&typeof d.kl==='object')S.kl=d.kl;
+      if(Array.isArray(d.lessons))S.lessons=d.lessons.slice(-400);
+      S.bestWpm=d.bestWpm||0;S.bestAcc=d.bestAcc||0;S.bestScore=d.bestScore||0;
+      S.streak=d.streak||0;S.bestStreak=d.bestStreak||0;S.total=d.total||0;
+      S.secs=typeof d.secs==='number'?d.secs:0;
+      S.typed=d.typed||0;S.terr=d.terr||0;
+      if(d.daily&&typeof d.daily==='object')S.daily=d.daily;
+    }
+    if(migrated){save();try{localStorage.removeItem(OLD_STORE);}catch(e){}}
   }catch(e){}
 }
+load(); /* load at boot in both layouts: Profile shows Inscript stats either way */
 function ks(cp){return S.ks[cp]||(S.ks[cp]={hits:0,errors:0,modelSamples:0,modelTtt:0,modelBest:0,accurateBest:0,lastAccuracy:0,recentLessonAccuracy:0,lastLessonWpm:0,targetLessons:0});}
 function targetMs(){return 12000/S.goal;}
 function target(){return PROGRESSION[review?reviewIdx:S.u];}
@@ -310,10 +327,40 @@ function lessonText(count){
 }
 var lastFocus=null;
 
+/* Normalized stats for the Profile tab, same shape the Remington source
+   produces (see adaptive.js krutiProfileSource). Available in both layout
+   modes because load() ran at boot. */
+function profileSource(){
+  var keys=PROGRESSION.map(function(it,idx){
+    var st=S.ks[it.cp]||{};
+    var kh=(S.kl||{})[it.cp]||{};
+    return {
+      id:it.cp, label:disp(it.cp),
+      sub:it.code?((it.shift?'Shift+':'')+QLBL(it.code).toUpperCase()):'',
+      finger:it.finger||'',
+      hits:st.hits||0, errors:st.errors||0,
+      modelTtt:st.modelTtt||0, modelSamples:st.modelSamples||0,
+      speeds:kh.speeds||[],
+      locked:idx>S.h, current:idx===S.u, mastered:heatOf(it.cp)===3,
+      measured:(st.modelSamples||0)>=1
+    };
+  });
+  return {
+    id:'inscript', label:'Inscript (Mangal)', goal:S.goal,
+    lessons:S.lessons.map(function(r){return {wpm:r.w,acc:r.a,keys:r.keys||0,ts:r.ts,seconds:r.secs||0};}),
+    totals:{lessons:S.total,seconds:S.secs||0,bestWpm:S.bestWpm||0,bestAcc:S.bestAcc||0,streak:S.streak||0,bestStreak:S.bestStreak||0},
+    daily:S.daily||{},
+    typed:S.typed||0, terr:S.terr||0, trainableCount:PROGRESSION.length,
+    keys:keys
+  };
+}
+
 window.TankanInscript={
   active:layout==='inscript', MAP:MAP, SHORT:SHORT, REV:REV, PROGRESSION:PROGRESSION,
   getLayout:function(){return layout;},
-  setLayout:function(v){localStorage.setItem(KEY,v==='inscript'?'inscript':'kruti');location.reload();}
+  setLayout:function(v){localStorage.setItem(KEY,v==='inscript'?'inscript':'kruti');location.reload();},
+  profileSource:profileSource,
+  reset:function(){S=freshState();save();}
 };
 
 /* ---------- header layout dropdown (index.html only) ---------- */
@@ -343,7 +390,6 @@ function start(){
   buildChip();
   if(layout!=='inscript'||!document.getElementById('panel-practice'))return;
   document.body.classList.add('layout-inscript');
-  load();
   /* stop the Remington engine from touching the screen; the key-history
      popup reads Remington stats, so it is suppressed here too */
   ['updateDisplay','renderVirtualKeyboard','updateKeyboardHighlights','regenerateLesson','updateLiveStats','updateMasteryCard','updateAlphabetStrip','showKeyPopup'].forEach(function(n){
@@ -537,6 +583,14 @@ function start(){
       /* banked best: only 95%+ lessons, cumulative clean samples >= 10 */
       if(lessonAcc>=95&&times.length>=3&&(st.modelSamples||0)+times.length>=10)st.accurateBest=st.accurateBest?Math.min(st.accurateBest,mean):mean;
       st.modelSamples=(st.modelSamples||0)+times.length;
+      /* per-key speed history for the Profile charts (same shape as the
+         Remington store's keyLearning records) */
+      var kh=S.kl||(S.kl={});
+      var hrec=kh[cp]||(kh[cp]={speeds:[],lessons:[]});
+      var keyWpm=+(12000/mean).toFixed(2);
+      hrec.speeds.push(keyWpm);if(hrec.speeds.length>30)hrec.speeds.shift();
+      hrec.lessons.push([keyWpm,+lessonAcc.toFixed(1),times.length,Date.now(),S.total+1]);
+      if(hrec.lessons.length>120)hrec.lessons.shift();
     });
     if(target().cp)ks(target().cp).targetLessons=(ks(target().cp).targetLessons||0)+1;
   }
@@ -546,10 +600,17 @@ function start(){
     var complexity=new Set(lessonEvents.map(function(e){return e.cp;})).size;
     var cpm=min>0?correct/min:0;
     var score=complexity?Math.round(cpm*complexity/(errs+1)*(correct/50)):0;
-    S.lessons.push({w:+wpm.toFixed(2),a:+a.toFixed(2),s:score,ts:Date.now()});
-    if(S.lessons.length>60)S.lessons.shift();
-    S.total++;S.bestWpm=Math.max(S.bestWpm,wpm);S.bestScore=Math.max(S.bestScore,score);
-    S.streak=a>=95?S.streak+1:0;
+    var secs=ms/1000;
+    S.lessons.push({w:+wpm.toFixed(2),a:+a.toFixed(2),s:score,keys:complexity,secs:+secs.toFixed(1),ts:Date.now()});
+    if(S.lessons.length>400)S.lessons.shift();
+    S.total++;S.secs=(S.secs||0)+secs;
+    S.typed=(S.typed||0)+correct;S.terr=(S.terr||0)+errs;
+    S.bestWpm=Math.max(S.bestWpm,wpm);S.bestAcc=Math.max(S.bestAcc||0,a);S.bestScore=Math.max(S.bestScore,score);
+    S.streak=a>=95?S.streak+1:0;S.bestStreak=Math.max(S.bestStreak||0,S.streak);
+    var day=new Date().toLocaleDateString('en-CA');
+    var dd=S.daily||(S.daily={});
+    var rec=dd[day]||(dd[day]={seconds:0,lessons:0,typed:0,errors:0});
+    rec.seconds+=secs;rec.lessons+=1;rec.typed+=correct;rec.errors+=errs;
   }
   function finishLesson(){
     done=true;window.__insDur=Date.now()-t0;
@@ -569,6 +630,7 @@ function start(){
       :!st.starterReady?'Calibrate each starter key at goal speed.'
       :'Best target speed is below your '+S.goal+' WPM goal.';
     if(!review&&typeof flashPracticeEvent==='function')flashPracticeEvent(guidance);
+    if(typeof window.TankanProfileRefresh==='function')window.TankanProfileRefresh();
     /* keybr-style: the next lesson replaces the text instantly */
     newLesson();
   }
@@ -666,6 +728,8 @@ function start(){
 
   var hs=document.getElementById('live-hint-strip');if(hs)hs.hidden=false;
   drawKb();newLesson();
+  /* the first Inscript render is on screen: lift the boot veil */
+  document.documentElement.setAttribute('data-ins-ready','1');
   var ch=document.getElementById('canvas-hint-text');if(ch)ch.textContent='Start typing';
 
   /* test/introspection API */
@@ -677,5 +741,10 @@ function start(){
   window.TankanInscript.lessonText=function(){return lessonText();};
   Object.defineProperty(window.TankanInscript,'progress',{get:function(){return {unlockedIndex:S.u,highestUnlocked:S.h,goal:S.goal,keyStats:S.ks,lessons:S.lessons,reviewMode:review,total:S.total};}});
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+/* The script sits at the end of <body>, so the DOM it needs already exists:
+   boot immediately. Waiting for DOMContentLoaded let the browser paint the
+   Remington lesson first on slow loads (the layout flash Kartik reported). */
+if(document.getElementById('panel-practice'))start();
+else if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
+else start();
 })();

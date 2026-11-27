@@ -574,19 +574,83 @@
         function profTile(label,value){
             return `<div class="stat-card"><span class="s-label">${label}</span><div class="s-value" style="font-size:1.12rem">${value}</div></div>`;
         }
-        function renderSummaryTiles(){
+        // ── Profile data sources: one per layout. Every Profile chart and
+        // table reads through this normalized shape, so the same code renders
+        // Remington stats (from this module's globals) and Inscript stats
+        // (from TankanInscript.profileSource()). Nothing here invents data.
+        let profileLayout = null; // null = follow the practice layout
+        try { profileLayout = localStorage.getItem('tankan_profile_layout'); } catch (_) {}
+        function krutiProfileSource(){
+            const keys=KEY_PROGRESSION.map((item, idx)=>({
+                id:item.k, label:item.h,
+                sub:item.alt?('Alt+'+item.alt):(item.conjunct?item.h:item.k.toUpperCase()),
+                finger:item.finger,
+                hits:(keyStats[item.k]&&keyStats[item.k].hits)||0,
+                errors:(keyStats[item.k]&&keyStats[item.k].errors)||0,
+                modelTtt:(keyStats[item.k]&&keyStats[item.k].modelTtt)||0,
+                modelSamples:(keyStats[item.k]&&keyStats[item.k].modelSamples)||0,
+                speeds:((keyLearning[item.k]||{}).speeds)||[],
+                skip:!!item.skip,
+                beyond:idx>unlockedIndex,
+                locked:idx>highestUnlocked, current:idx===unlockedIndex,
+                mastered:keyHeatLevel(item)===3,
+                measured:!!(keyStats[item.k]&&(keyStats[item.k].modelSamples||keyStats[item.k].tttSamples||0))
+            }));
+            return {
+                id:'kruti', label:'Remington Kruti Dev', goal:targetSpeedGoal, dailyGoalMin:dailyGoalMinutes,
+                lessons:lessonHistory.map(r=>({wpm:r.wpm,acc:typeof r.acc==='number'?r.acc:100,keys:r.keys||0,ts:r.ts,seconds:r.seconds||0})),
+                totals:{lessons:totalLessons,seconds:totalPracticeSeconds,bestWpm:bestLessonWpm,bestAcc:bestLessonAcc,streak:accuracyStreak,bestStreak:bestStreak},
+                daily:dailyStats, typed:totalTypedCount, terr:totalErrorsCount, trainableCount:TRAINABLE_KEY_COUNT,
+                keys:keys
+            };
+        }
+        function currentProfileSource(){
+            const want=profileLayout||(window.TankanInscript&&TankanInscript.active?'inscript':'kruti');
+            if(want==='inscript'&&window.TankanInscript&&typeof TankanInscript.profileSource==='function')return TankanInscript.profileSource();
+            return krutiProfileSource();
+        }
+        function paintProfileLayoutPicker(src){
+            const kBtn=document.getElementById('prof-layout-kruti'), iBtn=document.getElementById('prof-layout-inscript');
+            if(kBtn){kBtn.classList.toggle('sel',src.id==='kruti');kBtn.setAttribute('aria-selected',String(src.id==='kruti'));}
+            if(iBtn){iBtn.classList.toggle('sel',src.id==='inscript');iBtn.setAttribute('aria-selected',String(src.id==='inscript'));}
+            const note=document.getElementById('prof-layout-note');
+            if(note){
+                note.hidden=src.id!=='inscript';
+                note.textContent=src.id==='inscript'?'Inscript types matras and halant as keystrokes of their own, so WPM reads lower than Kruti Dev for the same fluency - expected, not a bug.':'';
+            }
+        }
+        function setProfileLayout(v){
+            profileLayout=v==='inscript'?'inscript':'kruti';
+            try { localStorage.setItem('tankan_profile_layout', profileLayout); } catch (_) {}
+            window.TankanProfileRefresh();
+        }
+        window.TankanProfileLayoutId=function(){return currentProfileSource().id;};
+        window.TankanProfileRefresh=function(){
+            const src=currentProfileSource();
+            paintProfileLayoutPicker(src);
+            updateProfileTable(src);
+            renderProfileCharts(src);
+        };
+        {
+            const kBtn=document.getElementById('prof-layout-kruti'), iBtn=document.getElementById('prof-layout-inscript');
+            if(kBtn)kBtn.addEventListener('click',()=>setProfileLayout('kruti'));
+            if(iBtn)iBtn.addEventListener('click',()=>setProfileLayout('inscript'));
+        }
+
+        function renderSummaryTiles(src){
+            src=src||currentProfileSource();
             const all=document.getElementById('prof-tiles-all'); if(!all) return;
-            const valid=lessonHistory.filter(r=>r&&typeof r.wpm==='number'&&r.wpm>0);
+            const valid=src.lessons.filter(r=>r&&typeof r.wpm==='number'&&r.wpm>0);
             const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
             all.innerHTML=
-                profTile('Time',fmtTime(totalPracticeSeconds))+
-                profTile('Lessons',totalLessons)+
-                profTile('Top speed',valid.length?bestLessonWpm.toFixed(1)+' wpm':'N/A')+
+                profTile('Time',fmtTime(src.totals.seconds))+
+                profTile('Lessons',src.totals.lessons)+
+                profTile('Top speed',valid.length?src.totals.bestWpm.toFixed(1)+' wpm':'N/A')+
                 profTile('Average speed',valid.length?avg(valid.map(r=>r.wpm)).toFixed(1)+' wpm':'N/A')+
-                profTile('Top accuracy',valid.length?bestLessonAcc.toFixed(1)+'%':'N/A')+
+                profTile('Top accuracy',valid.length?src.totals.bestAcc.toFixed(1)+'%':'N/A')+
                 profTile('Average accuracy',valid.length?avg(valid.map(r=>r.acc)).toFixed(1)+'%':'N/A');
             const day=new Date().toLocaleDateString('en-CA');
-            const today=(dailyStats&&dailyStats[day])||{seconds:0,lessons:0,typed:0,errors:0};
+            const today=(src.daily&&src.daily[day])||{seconds:0,lessons:0,typed:0,errors:0};
             const todayLessons=valid.filter(r=>r.ts&&new Date(r.ts).toLocaleDateString('en-CA')===day);
             document.getElementById('prof-tiles-today').innerHTML=
                 profTile('Time',fmtTime(today.seconds))+
@@ -596,15 +660,16 @@
                 profTile('Top accuracy',todayLessons.length?Math.max(...todayLessons.map(r=>r.acc)).toFixed(1)+'%':'N/A')+
                 profTile('Average accuracy',todayLessons.length?avg(todayLessons.map(r=>r.acc)).toFixed(1)+'%':'N/A');
             const line=document.getElementById('prof-streak-line');
-            if(line)line.textContent=(accuracyStreak||bestStreak)
-                ?`Accuracy streaks: current ${accuracyStreak} lesson(s) at 95%+ accuracy · longest ${bestStreak}.`
+            if(line)line.textContent=(src.totals.streak||src.totals.bestStreak)
+                ?`Accuracy streaks: current ${src.totals.streak} lesson(s) at 95%+ accuracy · longest ${src.totals.bestStreak}.`
                 :'No accuracy streaks yet - finish a lesson at 95%+ accuracy to start one.';
         }
 
-        function renderSpeedChart(){
+        function renderSpeedChart(src){
+            src=src||currentProfileSource();
             const box=document.getElementById('chart-speed'); if(!box) return;
             const legend=document.getElementById('chart-speed-legend');
-            const data=lessonHistory.filter(r=>r&&typeof r.wpm==='number'&&r.wpm>0).slice(-150);
+            const data=src.lessons.filter(r=>r&&typeof r.wpm==='number'&&r.wpm>0).slice(-150);
             if(data.length<2){
                 box.innerHTML='<div class="chart-empty">Not enough data yet - complete a couple of lessons and this chart draws itself.</div>';
                 if(legend)legend.textContent='';
@@ -650,9 +715,10 @@
                 `<span>horizontal axis: lesson number · smoothing α=${alpha.toFixed(4)}</span>`;
         }
 
-        function renderSpeedDist(){
+        function renderSpeedDist(src){
+            src=src||currentProfileSource();
             const box=document.getElementById('chart-speed-dist'); if(!box) return;
-            const values=lessonHistory.filter(r=>r&&r.wpm>0).map(r=>r.wpm);
+            const values=src.lessons.filter(r=>r&&r.wpm>0).map(r=>r.wpm);
             if(values.length<3){box.innerHTML='<div class="chart-empty">Not enough data yet - finish a few lessons.</div>';return;}
             const min=Math.min(...values), max=Math.max(...values);
             const width=ChartMath.bucketWidth(max-min||max||1);
@@ -683,15 +749,17 @@
             box.innerHTML=svgWrap(W,H,g);
         }
 
-        function renderKeySpeedChart(){
+        function renderKeySpeedChart(src){
+            src=src||currentProfileSource();
+            const goal=src.goal;
             const box=document.getElementById('chart-key-speed'); if(!box) return;
-            const rows=KEY_PROGRESSION
-                .filter(item=>{const s=keyStats[item.k];return s&&s.modelTtt>0&&(s.modelSamples||0)>=1;})
-                .map(item=>({k:item.k,h:item.h,wpm:12000/keyStats[item.k].modelTtt,samples:keyStats[item.k].modelSamples||0}));
+            const rows=src.keys
+                .filter(k=>k.modelTtt>0&&k.modelSamples>=1)
+                .map(k=>({k:k.id,h:k.label,wpm:12000/k.modelTtt,samples:k.modelSamples}));
             if(!rows.length){box.innerHTML='<div class="chart-empty">No per-key timings yet - they appear after your first measured lesson.</div>';return;}
             const W=720,H=260,padL=42,padR=12,padT=16,padB=42;
             const iw=W-padL-padR, ih=H-padT-padB;
-            const maxV=ChartMath.niceCeil(Math.max(targetSpeedGoal*1.2,...rows.map(r=>r.wpm)));
+            const maxV=ChartMath.niceCeil(Math.max(goal*1.2,...rows.map(r=>r.wpm)));
             const bw=Math.min(34,iw/rows.length-4);
             let g='';
             for(let t=0;t<=4;t++){
@@ -700,15 +768,15 @@
                 g+=`<text x="${padL-6}" y="${(y+4).toFixed(1)}" font-size="11" text-anchor="end">${val%1?val.toFixed(1):val}</text>`;
             }
             g+=`<text x="8" y="${padT+2}" font-size="10">WPM</text>`;
-            const ty=padT+ih*(1-targetSpeedGoal/maxV);
+            const ty=padT+ih*(1-goal/maxV);
             rows.forEach((r,i)=>{
                 const cx=padL+(i+.5)*iw/rows.length;
                 const h=ih*Math.min(r.wpm,maxV)/maxV;
-                const ratio=r.wpm/targetSpeedGoal;
+                const ratio=r.wpm/goal;
                 const color=ratio>=1?'var(--correct)':ratio>=.8?'#eab308':'var(--error)';
                 g+=`<rect x="${(cx-bw/2).toFixed(1)}" y="${(padT+ih-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="${color}"><title>${r.h}: ${r.wpm.toFixed(1)} wpm over ${r.samples} clean hit(s)</title></rect>`;
-                // Full-column transparent hit area for the per-key popup
-                g+=`<rect class="key-hit" tabindex="0" role="button" aria-label="${r.h} speed history" data-key="${r.k}" x="${(cx-iw/rows.length/2).toFixed(1)}" y="${padT}" width="${(iw/rows.length).toFixed(1)}" height="${ih}" fill="transparent"/>`;
+                // Full-column transparent hit area for the per-key popup (Remington keys only)
+                if(src.id==='kruti')g+=`<rect class="key-hit" tabindex="0" role="button" aria-label="${r.h} speed history" data-key="${r.k}" x="${(cx-iw/rows.length/2).toFixed(1)}" y="${padT}" width="${(iw/rows.length).toFixed(1)}" height="${ih}" fill="transparent"/>`;
                 g+=`<text x="${cx.toFixed(1)}" y="${(padT+ih+16).toFixed(1)}" font-size="12" text-anchor="middle" style="font-family:'Noto Sans Devanagari'">${r.h}</text>`;
                 g+=`<text x="${cx.toFixed(1)}" y="${(padT+ih+29).toFixed(1)}" font-size="9" text-anchor="middle" fill="var(--text-faint)">${r.wpm.toFixed(0)}</text>`;
             });
@@ -716,17 +784,18 @@
             // drawing them before the bars hid the line behind any bar that tall.
             // The label gets a solid backing so it stays legible over the bars.
             g+=`<line x1="${padL}" y1="${ty.toFixed(1)}" x2="${W-padR}" y2="${ty.toFixed(1)}" stroke="var(--error)" stroke-dasharray="6 4" stroke-width="1.5"/>`;
-            const tLabel=`target ${targetSpeedGoal} wpm`, tW=tLabel.length*6.6+12;
+            const tLabel=`target ${goal} wpm`, tW=tLabel.length*6.6+12;
             g+=`<rect class="target-label-bg" x="${(W-padR-tW-2).toFixed(1)}" y="${(ty-19).toFixed(1)}" width="${tW}" height="16" fill="var(--surface-card)" stroke="var(--error)" stroke-width="0.75"/>`;
             g+=`<text x="${(W-padR-tW/2-2).toFixed(1)}" y="${(ty-7).toFixed(1)}" font-size="11" text-anchor="middle" fill="var(--error)">${tLabel}</text>`;
             box.innerHTML=svgWrap(W,H,g);
             const nat=box.querySelector('svg'); if(nat){ nat.style.minWidth=W+'px'; }
         }
 
-        function renderKeyFreqChart(){
+        function renderKeyFreqChart(src){
+            src=src||currentProfileSource();
             const box=document.getElementById('chart-key-freq'); if(!box) return;
-            const rows=KEY_PROGRESSION
-                .map(item=>({h:item.h,hits:(keyStats[item.k]&&keyStats[item.k].hits)||0,errors:(keyStats[item.k]&&keyStats[item.k].errors)||0}))
+            const rows=src.keys
+                .map(k=>({h:k.label,hits:k.hits,errors:k.errors}))
                 .filter(r=>r.hits+r.errors>0);
             if(!rows.length){box.innerHTML='<div class="chart-empty">No keystrokes recorded yet.</div>';return;}
             // Fixed column width per key: the key glyph and its numbers always
@@ -929,33 +998,35 @@
             window.addEventListener('resize',hideKeyPopup);
         }
 
-        function renderProgressOverview(){
+        function renderProgressOverview(src){
+            src=src||currentProfileSource();
+            const goal=src.goal;
             const box=document.getElementById('chart-progress'); if(!box) return;
             box.replaceChildren();
-            const rows=KEY_PROGRESSION
-                .map(item=>({item,samples:((keyLearning[item.k]||{}).speeds)||[]}))
-                .filter(r=>r.samples.length>=2);
+            const rows=src.keys
+                .filter(k=>k.speeds&&k.speeds.length>=2);
             if(!rows.length){box.innerHTML='<div class="chart-empty">Not enough per-key history yet - each key needs two measured lessons.</div>';return;}
             for(const r of rows){
                 const row=document.createElement('div');row.className='pg-row';
-                const label=document.createElement('span');label.className='pg-key';label.textContent=r.item.h;row.appendChild(label);
+                const label=document.createElement('span');label.className='pg-key';label.textContent=r.label;row.appendChild(label);
                 const cells=document.createElement('span');cells.className='pg-cells';
-                r.samples.slice(-24).forEach(wpm=>{
+                r.speeds.slice(-24).forEach(wpm=>{
                     const c=document.createElement('i');
-                    c.style.background=speedColor(wpm/targetSpeedGoal);
-                    c.title=`${r.item.h}: ${wpm.toFixed(1)} wpm (target ${targetSpeedGoal})`;
+                    c.style.background=speedColor(wpm/goal);
+                    c.title=`${r.label}: ${wpm.toFixed(1)} wpm (target ${goal})`;
                     cells.appendChild(c);
                 });
                 row.appendChild(cells);box.appendChild(row);
             }
         }
 
-        function renderCalendar(){
+        function renderCalendar(src){
+            src=src||currentProfileSource();
             const box=document.getElementById('chart-calendar'); if(!box) return;
             box.replaceChildren();
-            const days=Object.keys(dailyStats||{}).filter(d=>dailyStats[d]&&dailyStats[d].lessons>0);
+            const days=Object.keys(src.daily||{}).filter(d=>src.daily[d]&&src.daily[d].lessons>0);
             if(!days.length){box.innerHTML='<div class="chart-empty">No practice days recorded yet.</div>';return;}
-            const goalSeconds=dailyGoalMinutes*60;
+            const goalSeconds=((src.dailyGoalMin!=null?src.dailyGoalMin:dailyGoalMinutes))*60;
             const now=new Date();
             const months=[];
             for(let back=3;back>=0;back--)months.push(new Date(now.getFullYear(),now.getMonth()-back,1));
@@ -972,7 +1043,7 @@
                 for(let d=1;d<=daysIn;d++){
                     const key=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                     const cell=document.createElement('span');cell.className='cal-cell';
-                    const rec=dailyStats[key];
+                    const rec=src.daily[key];
                     if(rec&&rec.lessons>0){
                         const frac=goalSeconds?rec.seconds/goalSeconds:0;
                         const op=frac>=1?1:frac>=.5?.6:frac>0?.3:0;
@@ -993,15 +1064,16 @@
             box.appendChild(legend);
         }
 
-        function renderProfileCharts(){
+        function renderProfileCharts(src){
+            src=src||currentProfileSource();
             initKeyPopup();
-            renderSummaryTiles();
-            renderSpeedChart();
-            renderSpeedDist();
-            renderKeySpeedChart();
-            renderKeyFreqChart();
-            renderProgressOverview();
-            renderCalendar();
+            renderSummaryTiles(src);
+            renderSpeedChart(src);
+            renderSpeedDist(src);
+            renderKeySpeedChart(src);
+            renderKeyFreqChart(src);
+            renderProgressOverview(src);
+            renderCalendar(src);
         }
 
         let showAllKeys = false;
@@ -1014,39 +1086,41 @@
                 updateProfileTable();
             };
         }
-        function updateProfileTable() {
+        function updateProfileTable(src) {
+            src=src||currentProfileSource();
             if (!el.profileTableBody) return;
             el.profileTableBody.innerHTML = '';
 
             let masteredCount = 0;
 
-            KEY_PROGRESSION.forEach((item, idx) => {
-                const s = keyStats[item.k] || { hits: 0, errors: 0 };
-                if (item.skip) return;
-                if (!showAllKeys && idx > unlockedIndex && (s.hits || 0) === 0) return;
-                const total = s.hits + s.errors;
-                const acc = total > 0 ? Math.round((s.hits / total) * 100) + '%' : '—';
+            src.keys.forEach((k) => {
+                if (k.skip) return;
+                if (!showAllKeys && k.beyond && (k.hits || 0) === 0) return;
+                const total = k.hits + k.errors;
+                const acc = total > 0 ? Math.round((k.hits / total) * 100) + '%' : '—';
                 // Learned = currently green (recent speed at/above goal and a
                 // recent 95%+ lesson), the same rule as the key colour, so the
                 // tag can never contradict a green key. keybr behaves the same:
                 // a key that later slows down turns red again and needs review.
-                const isMastered = keyHeatLevel(item)===3;
-                const isLearning = idx === unlockedIndex;
+                const isMastered = k.mastered;
+                const isLearning = k.current;
                 if (isMastered) masteredCount++;
 
                 const tr = document.createElement('tr');
-                tr.dataset.key = item.k;
-                tr.tabIndex=0;tr.setAttribute('role','button');tr.setAttribute('aria-label',item.h+' speed history');
+                if(src.id==='kruti'){
+                    tr.dataset.key = k.id;
+                    tr.tabIndex=0;tr.setAttribute('role','button');tr.setAttribute('aria-label',k.label+' speed history');
+                }
                 tr.innerHTML = `
-                    <td style="font-family:'Noto Sans Devanagari'; font-size:1.15rem; font-weight:700; color:var(--text);">${item.h}</td>
-                    <td><span class="key-chip">${item.alt ? ('Alt+' + item.alt) : (item.conjunct ? item.h : item.k.toUpperCase())}</span></td>
-                    <td style="color:var(--text-dim); font-size:0.78rem;">${item.finger}</td>
-                    <td style="font-weight:700; color:var(--correct);">${s.hits}</td>
-                    <td style="color:var(--error);">${s.errors}</td>
+                    <td style="font-family:'Noto Sans Devanagari'; font-size:1.15rem; font-weight:700; color:var(--text);">${k.label}</td>
+                    <td><span class="key-chip">${k.sub}</span></td>
+                    <td style="color:var(--text-dim); font-size:0.78rem;">${k.finger}</td>
+                    <td style="font-weight:700; color:var(--correct);">${k.hits}</td>
+                    <td style="color:var(--error);">${k.errors}</td>
                     <td style="font-weight:700;">${acc}</td>
                     <td>
                         <span class="badge-status ${isMastered ? 'mastered' : isLearning ? 'learning' : 'locked'}">
-                            ${isMastered ? '✓ Learned' : idx>highestUnlocked ? 'Locked' : !(s.modelSamples||s.tttSamples||0) ? 'Unmeasured' : isLearning ? 'Learning' : 'Needs review'}
+                            ${isMastered ? '✓ Learned' : k.locked ? 'Locked' : !k.measured ? 'Unmeasured' : isLearning ? 'Learning' : 'Needs review'}
                         </span>
                     </td>
                 `;
@@ -1054,7 +1128,7 @@
             });
 
             const masteredLine=document.getElementById('prof-mastered-line');
-            if(masteredLine)masteredLine.textContent=`${masteredCount} / ${TRAINABLE_KEY_COUNT} keys learned · ${totalTypedCount.toLocaleString()} lifetime keystrokes · ${totalTypedCount>0?Math.round((1-totalErrorsCount/totalTypedCount)*100)+'%':'N/A'} lifetime accuracy`;
+            if(masteredLine)masteredLine.textContent=`${masteredCount} / ${src.trainableCount} keys learned · ${src.typed.toLocaleString()} lifetime keystrokes · ${src.typed>0?Math.round((1-src.terr/src.typed)*100)+'%':'N/A'} lifetime accuracy`;
             refreshTableScrollHint();
         }
 

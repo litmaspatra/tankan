@@ -2223,3 +2223,18 @@ body.layout-inscript #panel-practice .lesson-settings{display:none!important}
 body.layout-inscript #panel-practice #stat-card-book{display:none!important}
 body.layout-inscript #panel-practice #ins-goal-select{background:var(--surface,#1b1b1b);color:var(--text);border:1px solid var(--border,#333);border-radius:6px;font:inherit;font-size:.85rem;padding:2px 6px;margin-left:4px}
 body.layout-inscript #text-stream-container{font-size:2.1rem;line-height:1.7}
+
+/* ---- Boot veil: no theme/layout flash ---- */
+/* In Inscript mode, hide the Remington-rendered page until the Inscript
+   engine has drawn its first lesson (layout-boot.js sets data-layout before
+   first paint; inscript.js sets data-ins-ready after its first render, with
+   an 8s safety timeout). */
+html[data-layout="inscript"]:not([data-ins-ready]){background:var(--bg)}
+html[data-layout="inscript"]:not([data-ins-ready]) body{visibility:hidden}
+
+/* ---- Profile layout picker (Remington / Inscript stats) ---- */
+.prof-layout-picker{display:flex;gap:6px;margin:10px 0 4px}
+.prof-layout-tab{background:var(--surface-card);color:var(--text-dim);border:1px solid var(--border-subtle);border-radius:8px;padding:6px 14px;font:inherit;font-size:.85rem;cursor:pointer}
+.prof-layout-tab:hover{background:var(--surface-hover)}
+.prof-layout-tab.sel{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+.prof-layout-note{font-size:.8rem;color:var(--text-faint);margin:2px 0 8px}

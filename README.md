@@ -1,6 +1,6 @@
 # टंकण
 
-Adaptive Hindi typing practice for the **Remington (Kruti Dev 010)** layout.
+Adaptive Hindi typing practice for the **Remington (Kruti Dev 010)** and **Inscript (Mangal)** layouts.
 
 **Try it: https://tankan.in**
 
