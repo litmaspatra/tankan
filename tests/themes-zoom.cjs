@@ -15,7 +15,7 @@ const path = require('node:path');
     await page.click('#avatar-corner');
     await page.click('#avatar-menu button.nav-tab[data-target="settings"]');
     await page.selectOption('#theme-select', 'blackwhite');
-    await page.click('text=Practice');
+    await page.click('button.nav-tab[data-target="practice"]');
     await page.waitForTimeout(600);
     assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgb(0, 0, 0)');
     await page.reload();
