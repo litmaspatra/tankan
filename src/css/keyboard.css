@@ -101,11 +101,11 @@
 #keyboard-frame.zones-on .k-key.heat-1,
 #keyboard-frame.zones-on .k-key.heat-2,
 #keyboard-frame.zones-on .k-key.heat-3 { background: var(--key-bg); }
-#keyboard-frame.zones-on .k-key[data-zone="p"] { background-image: linear-gradient(rgba(236, 72, 153, 0.34), rgba(236, 72, 153, 0.34)); }
-#keyboard-frame.zones-on .k-key[data-zone="r"] { background-image: linear-gradient(rgba(249, 115, 22, 0.34), rgba(249, 115, 22, 0.34)); }
-#keyboard-frame.zones-on .k-key[data-zone="m"] { background-image: linear-gradient(rgba(234, 179, 8, 0.34), rgba(234, 179, 8, 0.34)); }
-#keyboard-frame.zones-on .k-key[data-zone="i"] { background-image: linear-gradient(rgba(34, 197, 94, 0.32), rgba(34, 197, 94, 0.32)); }
-#keyboard-frame.zones-on .k-key[data-zone="t"] { background-image: linear-gradient(rgba(59, 130, 246, 0.32), rgba(59, 130, 246, 0.32)); }
+#keyboard-frame.zones-on .k-key[data-zone="p"] { background-image: linear-gradient(rgba(190, 100, 150, 0.25), rgba(190, 100, 150, 0.25)); }
+#keyboard-frame.zones-on .k-key[data-zone="r"] { background-image: linear-gradient(rgba(205, 135, 80, 0.25), rgba(205, 135, 80, 0.25)); }
+#keyboard-frame.zones-on .k-key[data-zone="m"] { background-image: linear-gradient(rgba(200, 175, 70, 0.25), rgba(200, 175, 70, 0.25)); }
+#keyboard-frame.zones-on .k-key[data-zone="i"] { background-image: linear-gradient(rgba(80, 165, 110, 0.25), rgba(80, 165, 110, 0.25)); }
+#keyboard-frame.zones-on .k-key[data-zone="t"] { background-image: linear-gradient(rgba(85, 130, 200, 0.25), rgba(85, 130, 200, 0.25)); }
 
 /* Inscript: cursor steps through each code point of a syllable (e.g. र then ु) */
 .text-current.ins-split{border-left:0;padding-left:0;animation:none;color:var(--km-text-faint,inherit)}
