@@ -699,28 +699,11 @@ function start(){
     var cs=ci<clusters.length?clusters[ci][0]:cps.length,ce=ci<clusters.length?clusters[ci][1]:cps.length;
     el.textCorrect.textContent=cps.slice(0,cs).join('');
     el.textError.textContent='';
-    /* A syllable of several code points (consonant + matra) is typed one key at a time.
-       The font draws it as one glyph (e.g. रु), so no highlight can be put on just the
-       matra. The syllable stays one text node, so shaping is untouched, and a bar under
-       it shows one segment per keystroke: typed (dim), current (bright), still to type (faint). */
+    /* The syllable being typed is highlighted as a whole. Fonts draw joined letters (रु, रि) as one
+       glyph in on-screen order, so no per-key highlight or bar is shown: it would mislead for ि. */
     el.textCurrent.textContent=cps.slice(cs,ce).join('');
-    var multi=ce-cs>1&&!done;
-    el.textCurrent.classList.toggle('ins-split',multi);
-    if(multi){
-      var n=ce-cs,imgs=[],sizes=[],poss=[];
-      for(var j=0;j<n;j++){
-        var col=j<pos-cs?'var(--km-text-dim,#888)':(j===pos-cs?'var(--km-accent,#fb0)':'rgba(128,128,128,.35)');
-        imgs.push('linear-gradient('+col+','+col+')');
-        sizes.push((100/n-4).toFixed(2)+'% 5px');
-        poss.push((n===1?0:(j*100/(n-1))).toFixed(2)+'% 100%');
-      }
-      el.textCurrent.style.backgroundImage=imgs.join(',');
-      el.textCurrent.style.backgroundSize=sizes.join(',');
-      el.textCurrent.style.backgroundPosition=poss.join(',');
-      el.textCurrent.style.backgroundRepeat='no-repeat';
-    }else{
-      ['backgroundImage','backgroundSize','backgroundPosition','backgroundRepeat'].forEach(function(k){el.textCurrent.style[k]='';});
-    }
+    el.textCurrent.classList.remove('ins-split');
+    ['backgroundImage','backgroundSize','backgroundPosition','backgroundRepeat'].forEach(function(k){el.textCurrent.style[k]='';});
     el.textCurrent.classList.toggle('space-cursor',cps[cs]===' ');
     el.textCurrent.classList.toggle('error-flash',!!flash);
     el.textRemaining.textContent=cps.slice(ce).join('');

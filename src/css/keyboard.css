@@ -107,9 +107,6 @@
 #keyboard-frame.zones-on .k-key[data-zone="i"] { background-image: linear-gradient(rgba(80, 165, 110, 0.25), rgba(80, 165, 110, 0.25)); }
 #keyboard-frame.zones-on .k-key[data-zone="t"] { background-image: linear-gradient(rgba(85, 130, 200, 0.25), rgba(85, 130, 200, 0.25)); }
 
-/* Inscript: a syllable typed in several keystrokes (e.g. र then ु) shows a bar under it, one segment per key */
-.text-current.ins-split{padding-bottom:6px}
-
 /* Caps Lock notice */
 #capslock-notice{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9999;max-width:calc(100vw - 24px);
   background:#b45309;color:#fff;border:2px solid #fbbf24;border-radius:8px;padding:8px 14px;font:600 14px/1.35 system-ui,sans-serif;
