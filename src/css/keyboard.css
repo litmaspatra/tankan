@@ -95,20 +95,17 @@
 }
 
 /* Finger zones (keybr-style): one colour per finger, mirrored left/right.
-   Keys that are not unlocked yet (and every key outside guided lessons) get
-   the zone as a tint. Unlocked keys keep their unlocked/heat colour and show
-   the zone only as a thin coloured edge along the bottom, so progress stays
-   readable. */
-#keyboard-frame.zones-on .k-key[data-zone="p"]:not(.unlocked) { background-image: linear-gradient(rgba(236, 72, 153, 0.26), rgba(236, 72, 153, 0.26)); }
-#keyboard-frame.zones-on .k-key[data-zone="r"]:not(.unlocked) { background-image: linear-gradient(rgba(249, 115, 22, 0.26), rgba(249, 115, 22, 0.26)); }
-#keyboard-frame.zones-on .k-key[data-zone="m"]:not(.unlocked) { background-image: linear-gradient(rgba(234, 179, 8, 0.26), rgba(234, 179, 8, 0.26)); }
-#keyboard-frame.zones-on .k-key[data-zone="i"]:not(.unlocked) { background-image: linear-gradient(rgba(34, 197, 94, 0.24), rgba(34, 197, 94, 0.24)); }
-#keyboard-frame.zones-on .k-key[data-zone="t"]:not(.unlocked) { background-image: linear-gradient(rgba(59, 130, 246, 0.24), rgba(59, 130, 246, 0.24)); }
-#keyboard-frame.zones-on .k-key.unlocked[data-zone="p"] { box-shadow: inset 0 -3px 0 #ec4899; }
-#keyboard-frame.zones-on .k-key.unlocked[data-zone="r"] { box-shadow: inset 0 -3px 0 #f97316; }
-#keyboard-frame.zones-on .k-key.unlocked[data-zone="m"] { box-shadow: inset 0 -3px 0 #eab308; }
-#keyboard-frame.zones-on .k-key.unlocked[data-zone="i"] { box-shadow: inset 0 -3px 0 #22c55e; }
-#keyboard-frame.zones-on .k-key.unlocked[data-zone="t"] { box-shadow: inset 0 -3px 0 #3b82f6; }
+   With zones on the keyboard shows zone colours only: the unlocked and
+   speed (heat) colours are switched off. Turn zones off to get them back. */
+#keyboard-frame.zones-on .k-key.unlocked,
+#keyboard-frame.zones-on .k-key.heat-1,
+#keyboard-frame.zones-on .k-key.heat-2,
+#keyboard-frame.zones-on .k-key.heat-3 { background: var(--key-bg); }
+#keyboard-frame.zones-on .k-key[data-zone="p"] { background-image: linear-gradient(rgba(236, 72, 153, 0.34), rgba(236, 72, 153, 0.34)); }
+#keyboard-frame.zones-on .k-key[data-zone="r"] { background-image: linear-gradient(rgba(249, 115, 22, 0.34), rgba(249, 115, 22, 0.34)); }
+#keyboard-frame.zones-on .k-key[data-zone="m"] { background-image: linear-gradient(rgba(234, 179, 8, 0.34), rgba(234, 179, 8, 0.34)); }
+#keyboard-frame.zones-on .k-key[data-zone="i"] { background-image: linear-gradient(rgba(34, 197, 94, 0.32), rgba(34, 197, 94, 0.32)); }
+#keyboard-frame.zones-on .k-key[data-zone="t"] { background-image: linear-gradient(rgba(59, 130, 246, 0.32), rgba(59, 130, 246, 0.32)); }
 
 /* Inscript: cursor steps through each code point of a syllable (e.g. र then ु) */
 .text-current.ins-split{border-left:0;padding-left:0;animation:none;color:var(--km-text-faint,inherit)}
