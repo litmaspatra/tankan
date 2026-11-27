@@ -99,7 +99,7 @@
         function syncSettingsUI(){
             const $=id=>document.getElementById(id);
             const tab=currentTab();
-            document.querySelectorAll('.ls-tab').forEach(t=>t.classList.toggle('active',t.dataset.lstab===tab));
+            document.querySelectorAll('.ls-tab').forEach(t=>{const on=t.dataset.lstab===tab;t.classList.toggle('active',on);t.setAttribute('aria-selected',on?'true':'false');});
             document.querySelectorAll('.ls-pane').forEach(p=>p.hidden=p.dataset.pane!==tab);
             const bc=$('book-controls');if(bc)bc.hidden=!(tab==='books'||tab==='essays');
             $('opt-strict').checked=!!opts.strict;
@@ -111,7 +111,7 @@
             $('opt-stop').checked=!!opts.stopOnError;$('opt-skip').checked=!!opts.spaceSkips;
             $('opt-cursor').checked=opts.cursorHighlight!==false;
             const osw=$('opt-slow-words');if(osw){osw.checked=!!opts.slowWords;const sc=$('slow-words-count');if(sc)sc.textContent=slowOfficialPool().length;}
-            const oi=$('official-info');if(oi)oi.textContent=`Formal words from government and office writing. ${officialPool().length} of ${OFFICIAL_WORDS.length.toLocaleString()} words fit the keys you have unlocked so far.`;
+            const oi=$('official-info');if(typeof window.__insOfficialInfo==='function')window.__insOfficialInfo();else if(oi)oi.textContent=`Formal words from government and office writing. ${officialPool().length} of ${OFFICIAL_WORDS.length.toLocaleString()} words fit the keys you have unlocked so far.`;
             document.querySelectorAll('input[name=snd]').forEach(r=>r.checked=r.value===(soundEnabled?opts.soundMode:'none'));
             $('opt-volume').value=opts.volume;$('opt-volume-val').textContent=opts.volume+'%';
             $('opt-theme').value=opts.soundTheme;

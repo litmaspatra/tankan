@@ -46,6 +46,12 @@ const path=require('node:path');
   assert.deepEqual(r.f,{cur:'\u25CC\u094D',done:'क',rem:'ष'.concat('')+'मा'},'later syllables stay whole until the cursor reaches them');
   assert.deepEqual(r.d,{cur:'\u25CC\u094D',done:'क',rem:'ष'});
   assert.deepEqual(r.e,{cur:'ष',done:'क\u094D',rem:''});}
+ // 4b. screen readers get the visible lesson; tabs expose selected; official words explain the unlock need
+ {const r=await page.evaluate(()=>{const I=TankanInscript;I._setText('कर रि क्ष');const vis=(document.getElementById('text-correct').textContent+document.getElementById('text-current').textContent+document.getElementById('text-remaining').textContent).replace(/\u25CC/g,'');
+   return {vis,sr:document.getElementById('sr-lesson').textContent,sel:[...document.querySelectorAll('.ls-tab')].map(t=>t.className.includes('active')+':'+t.getAttribute('aria-selected')),info:document.getElementById('official-info').textContent};});
+  assert.equal(r.sr,'कर रि क्ष','screen-reader text is the lesson text');assert.equal(r.vis,r.sr,'visible text matches screen-reader text');
+  assert.equal(r.sel[0],'true:true','active tab exposes aria-selected=true');assert.ok(r.sel.slice(1).every(x=>x==='false:false'),'other tabs are false');
+  assert.match(r.info,/words fit your keys|Needs at least 8/);}
  // 5. font select changes the displayed font and persists
  await page.evaluate(()=>{document.getElementById('lesson-settings').open=true;});
  const sel=page.locator('#opt-font');

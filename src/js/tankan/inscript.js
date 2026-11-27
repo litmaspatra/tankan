@@ -550,7 +550,16 @@ function start(){
     return bookText(book,count)||'';
   }
   window.regenerateLesson=function(){newLesson();};
+  /* tell the user up front how many official words fit their unlocked keys (this tab needs a few more keys early on) */
+  function officialInfo(){
+    var n=document.getElementById('official-info');if(!n)return;
+    var set=unlockedSet(),src=typeof OFFICIAL_WORDS!=='undefined'?OFFICIAL_WORDS:[],c=0,seen={};
+    src.forEach(function(w){var t=typableWord(w,true);if(!t||seen[t])return;seen[t]=1;var good=true;Array.from(norm(t)).forEach(function(x){if(!set[x])good=false;});if(good)c++;});
+    n.textContent='Formal words from government and office writing, filtered to the keys you have unlocked. '+(c>=8?c+' words fit your keys now.':'Needs at least 8 words that fit your unlocked keys; '+c+' fit so far. Unlock more keys to use this tab.');
+  }
+  window.__insOfficialInfo=officialInfo;
   function newLesson(){
+    officialInfo();
     setTextFromLesson(sourceText()||lessonText(LESSON_WORDS()));
     render();stats();hint();mastery();strip();kbd();
   }
@@ -701,6 +710,9 @@ function start(){
   var COMBINING=/[\u0900-\u0903\u093A-\u094F\u0951-\u0957\u0962\u0963]/;
   function lone(ch){return COMBINING.test(ch)?'\u25CC'+ch:ch;}
   function render(flash){
+    /* screen readers get the same Unicode lesson that is drawn on screen (the visible stream is aria-hidden) */
+    var srTxt=cps.join('');
+    if(el.srLesson&&el.srLesson.dataset.text!==srTxt){el.srLesson.dataset.text=srTxt;el.srLesson.textContent=srTxt;}
     var ci=0;for(var i=0;i<clusters.length;i++){if(pos>=clusters[i][0]&&pos<clusters[i][1]){ci=i;break;}if(pos>=clusters[i][1])ci=i+1;}
     var ce=ci<clusters.length?clusters[ci][1]:cps.length;
     el.textCorrect.textContent=cps.slice(0,pos).join('');
