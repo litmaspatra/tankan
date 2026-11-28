@@ -155,7 +155,18 @@ const path = require('node:path');
     await page.evaluate(() => window.__HIKEYMASH__.showLobby());
     await page.evaluate(() => localStorage.removeItem('hikeybr_book_progress_idgah'));
 
+    // 3z. Plain numpad keys never type; only Alt+numpad (Alt codes) works.
+    await page.evaluate(() => window.__HIKEYMASH__.loadSnippet({ id: 'tnum', title: 'n', author: 'n', category: 'prose', genre: 'n', text: '12345' }));
+    await page.click('#typing-canvas');
+    for (const k of ['Numpad1', 'Numpad2', 'Numpad3']) await page.keyboard.press(k);
+    let sn = await page.evaluate(() => window.__HIKEYMASH__.getState());
+    assert.equal(sn.currentIndex, 0, 'plain numpad digits do not type');
+    assert.equal(sn.mistakes, 0, 'plain numpad digits add no mistakes');
+    await page.keyboard.type('123');
+    sn = await page.evaluate(() => window.__HIKEYMASH__.getState());
+    assert.equal(sn.currentIndex, 3, 'top-row digits still type');
+
     assert.deepEqual(errors, [], 'no page errors: ' + errors.join(' | '));
-    console.log('PASS: Remington punctuation keys, single typing view, inline keymash-style results, next/retry flow.');
+    console.log('PASS: numpad digits blocked, Remington punctuation keys, single typing view, inline keymash-style results, next/retry flow.');
     await browser.close();
 })().catch(e => { console.error(e); process.exit(1); });

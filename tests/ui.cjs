@@ -125,6 +125,20 @@ const path = require('node:path');
     assert.equal(await page.evaluate(() => Tankan.sessionErrors), 0, 'late OS symbol adds no error');
     assert.equal(await page.evaluate(() => Tankan.sessionCorrect), 5, '3 Alt glyphs + 2 spaces, each glyph one input unit');
 
+    // 3e. Plain numpad keys never type: number-row practice must come from the
+    //     top row. Alt+numpad (Alt codes) keeps working (tested in 3/3b/3d).
+    await page.evaluate(() => {
+        const t = document.getElementById('custom-text');
+        t.value = '12345';
+        t.dispatchEvent(new Event('change'));
+    });
+    await page.click('#typing-canvas');
+    for (const k of ['Numpad1', 'Numpad2', 'Numpad3']) await page.keyboard.press(k);
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 0, 'plain numpad digits do not type');
+    assert.equal(await page.evaluate(() => Tankan.sessionErrors), 0, 'plain numpad digits add no errors');
+    await page.keyboard.type('123');
+    assert.equal(await page.evaluate(() => Tankan.cursorIndex), 3, 'top-row digits still type');
+
     // 3c. Only legacy Remington fonts are offered (Unicode fonts dropped: their
     //     matras/half letters could not highlight per keystroke). Per-byte
     //     highlighting reassembles the lesson byte stream in any listed font.
@@ -275,6 +289,6 @@ const path = require('node:path');
     assert.notEqual(guided.afterText, guided.first, 'fresh lesson text generated');
 
     assert.deepEqual(errors, [], 'no page errors: ' + errors.join(' | '));
-    console.log('PASS: real key events, custom text focus, Alt-code unit scoring, speed control sync, reload persistence, strict unlock, save-failure warning.');
+    console.log('PASS: numpad digits blocked (Alt codes unaffected), real key events, custom text focus, Alt-code unit scoring, speed control sync, reload persistence, strict unlock, save-failure warning.');
     await browser.close();
 })().catch(e => { console.error(e); process.exit(1); });

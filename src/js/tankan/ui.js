@@ -61,6 +61,14 @@
                 return;
             }
 
+            // Numpad never types: number-row practice must come from the top
+            // row, so plain numpad keys are ignored. The only numpad path is
+            // Alt-code entry (handled above).
+            if (e.code && e.code.startsWith('Numpad')) {
+                e.preventDefault();
+                return;
+            }
+
             // Ignored system keys
             if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'Escape',
                  'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'].includes(e.key)) {
