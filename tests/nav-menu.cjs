@@ -129,6 +129,24 @@ const server = http.createServer((req, res) => {
     await mob.waitForTimeout(200);
     assert.strictEqual(await mob.evaluate(() => document.documentElement.getAttribute('data-theme')), 'sunshine', 'mobile: theme picks');
 
+    // 6b. Phone: the layout chip shows the selected layout in the header as a
+    //     slim pill, vertically centered on the brand text, with an invisible
+    //     tap area extending past the pill.
+    const chipBox = await mob.locator('.layout-chip').boundingBox();
+    assert.ok(chipBox, 'mobile: layout chip rendered');
+    assert.ok(chipBox.height < 24, 'mobile: chip stays a slim pill, got ' + chipBox.height);
+    const centers = await mob.evaluate(() => {
+        const c = el => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
+        return { title: c(document.querySelector('.brand-title')), chip: c(document.querySelector('.layout-chip')) };
+    });
+    assert.ok(Math.abs(centers.title - centers.chip) < 1.5, 'mobile: chip centered on the brand text, got ' + JSON.stringify(centers));
+    await mob.mouse.click(chipBox.x + chipBox.width / 2, chipBox.y + chipBox.height + 5);
+    await mob.waitForTimeout(150);
+    assert.ok(await mob.locator('.layout-menu').isVisible(), 'mobile: extended tap area opens the layout menu');
+    await mob.click('.brand-title');
+    await mob.waitForTimeout(150);
+    assert.ok(!(await mob.locator('.layout-menu').isVisible()), 'mobile: layout menu closes again');
+
     assert.deepStrictEqual(errors, [], 'no page errors: ' + errors.join(' | '));
     await browser.close();
     server.close();

@@ -2217,7 +2217,13 @@ html.focus-mode #panel-practice>.practice-toolbar{position:relative;z-index:1201
 .layout-opt:hover{background:var(--accent-soft)}
 .layout-opt.sel{border-color:var(--accent);background:var(--accent-soft)}
 .layout-menu-note{font-size:.72rem;color:var(--text-faint,#888);padding:6px 8px 2px}
-@media (max-width:600px){.layout-picker{display:none}}
+@media (max-width:600px){
+.layout-picker{display:flex;align-items:center;align-self:center}
+/* slim pill so the header stays compact; the invisible ::after ring keeps
+   the comfortable tap area the global 36px button rule provided */
+.layout-chip{position:relative;font-size:.6rem;padding:1px 7px;line-height:1.3;min-height:0;border-radius:10px;white-space:nowrap}
+.layout-chip::after{content:'';position:absolute;inset:-9px -8px}
+}
 body.layout-inscript #panel-practice .alt-helper-bar{display:none!important}
 .ins-hide{display:none!important}
 body.layout-inscript #panel-practice #stat-card-book{display:none!important}
@@ -2238,3 +2244,12 @@ html[data-layout="inscript"]:not([data-ins-ready]) body{visibility:hidden}
 .prof-layout-tab:hover{background:var(--surface-hover)}
 .prof-layout-tab.sel{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
 .prof-layout-note{font-size:.8rem;color:var(--text-faint);margin:2px 0 8px}
+
+/* Mobile: breathing room for the small progress labels */
+@media(max-width:650px){
+  .practice-substats{font-size:.8rem;line-height:1.75;gap:8px 18px;margin:12px 0 8px}
+  .practice-substats .wp-status{font-size:.76rem}
+  .stat-card{padding:10px 12px;gap:5px}
+  .stat-card .s-label{font-size:.66rem;letter-spacing:.06em;line-height:1.5}
+  .stat-card .s-unit{font-size:.72rem}
+}

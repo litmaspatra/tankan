@@ -362,7 +362,9 @@ footer a, .footer a {
 
 /* Responsive mobile header and nav (Fix Bugs #8, #9, #10) */
 @media (max-width: 600px) {
-    .brand-badge {
+    /* the layout chip stays: it is the only place the selected layout shows
+       on mobile; only the static brand badge hides */
+    .brand-badge:not(.layout-chip) {
         display: none !important;
     }
 }
