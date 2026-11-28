@@ -31,6 +31,7 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
 
     // Controllable auth stub. Signed out at first; __authUser switches user.
     await page.addInitScript(() => {
+        try { localStorage.setItem('tankan_tour_v1', '1'); } catch (e) {}
         window.__authUser = null;
         window.__authCbs = [];
         window.__setAuthUser = u => { window.__authUser = u; window.__authCbs.forEach(cb => cb(u)); };

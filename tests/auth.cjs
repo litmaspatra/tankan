@@ -30,6 +30,7 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
 
     // Stub Firebase client: signed-out at first; controllable sign-in/out.
     const stub = user => {
+        try { localStorage.setItem('tankan_tour_v1', '1'); } catch (e) {}
         // Test-only seed survives reloads via a localStorage key; set after
         // the preservation snapshots so it never pollutes them.
         window.__authUser = user || JSON.parse(localStorage.getItem('__authSeed') || 'null');
@@ -104,6 +105,7 @@ const openProfile = async page => { await page.click('#avatar-corner'); await pa
     //    either reports signed-out (network OK) or degrades honestly.
     const page2 = await browser.newPage({ viewport: { width: 1366, height: 900 } });
     const errors2 = []; page2.on('pageerror', e => errors2.push(e.message));
+    await page2.addInitScript(() => { try { localStorage.setItem('tankan_tour_v1', '1'); } catch (e) {} });
     await page2.goto(base);
     await page2.waitForTimeout(4000);
     await openProfile(page2);
