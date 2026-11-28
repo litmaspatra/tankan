@@ -9,6 +9,8 @@
      (Shift+5..8) split evenly across the codepoints they produce;
    - a key unlocks when its banked best (95%+ accuracy lessons only) reaches
      the goal, with 10+ cumulative clean samples and a recent 95%+ lesson;
+     keys that already meet the bar advance automatically (at load and at
+     lesson end), so a migrated store walks straight to its real frontier;
    - WPM = correct codepoints / 5 / minutes: honestly lower than Kruti Dev
      for the same fluency, because Inscript needs more keystrokes per word.
    Progress lives in a separate store: each layout keeps its own stats.
@@ -174,7 +176,10 @@ function load(){
       S.typed=d.typed||0;S.terr=d.terr||0;
       if(d.daily&&typeof d.daily==='object')S.daily=d.daily;
     }
-    if(migrated){save();try{localStorage.removeItem(OLD_STORE);}catch(e){}}
+    /* auto-advance keys that already meet the unlock bar (see advanceFrontier):
+       fixes migrated stores whose target sat below already-mastered keys */
+    var walked=advanceFrontier();
+    if(migrated||walked.length){save();try{if(migrated)localStorage.removeItem(OLD_STORE);}catch(e){}}
   }catch(e){}
 }
 load(); /* load at boot in both layouts: Profile shows Inscript stats either way */
@@ -196,6 +201,15 @@ function unlockState(){
   var ready=bank>=1&&samples>=10&&recentAcc&&starterReady;
   var pct=ready?100:Math.min(99,Math.round(Math.min(samples/10,isFinite(measuredBest)?tm/measuredBest:0)*100));
   return {samples:samples,bank:bank,measuredBest:measuredBest,recentAccuracy:recentAcc,starterReady:starterReady,ready:ready,pct:pct};
+}
+/* walk past consecutive already-qualified keys: an order migration can leave
+   the target below keys the user has already mastered; each one still has to
+   meet the full bar (banked best at goal, 10+ clean samples, recent 95%+
+   accuracy, starters calibrated) */
+function advanceFrontier(){
+  var moved=[];
+  while(S.u<LAST&&unlockState().ready){moved.push(target().cp);S.u++;S.h=Math.max(S.h,S.u);}
+  return moved;
 }
 /* live readiness: banked + this lesson's clean timings for the target */
 var lessonEvents=[];
@@ -787,13 +801,14 @@ function start(){
     var st=unlockState();
     /* S.u can sit below S.h after an order migration (keys already unlocked): clearing still moves to the next key */
     var cleared=!review&&st.ready&&acc()>=95&&S.u<LAST;
-    var clearedCp=target().cp;
+    var clearedCps=[];
     if(cleared){
-      S.u++;S.h=Math.max(S.h,S.u);
+      clearedCps.push(target().cp);S.u++;S.h=Math.max(S.h,S.u);
+      clearedCps=clearedCps.concat(advanceFrontier());
       if(typeof sound==='object'&&sound.unlock)sound.unlock();
     }
     save();
-    var guidance=cleared?'Key cleared: '+disp(clearedCp)+'! Next: '+disp(target().cp)
+    var guidance=cleared?(clearedCps.length>1?'Keys cleared: '+clearedCps.map(disp).join(', '):'Key cleared: '+disp(clearedCps[0])+'!')+' Next: '+disp(target().cp)
       :st.ready?'Ready. Continue to practice.'
       :!st.recentAccuracy?'Reach 95% accuracy in a completed lesson.'
       :st.samples<10?'Need 10 clean target timings.'
