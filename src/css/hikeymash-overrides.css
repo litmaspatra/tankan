@@ -205,6 +205,7 @@
         :root, :root[data-theme="dark"], :root[data-theme="navy"], :root[data-theme="forest"] { --on-accent: #0b1210; }
         :root[data-theme="light"], :root[data-theme="paper"], :root[data-theme="sunshine"] { --on-accent: #ffffff; }
         :root[data-theme="amber"] { --on-accent: #0b0604; }
+        :root[data-theme="epaper"] { --on-accent: #e4e3dd; }
         .res-subtab.active {
             background: var(--km-accent);
             color: var(--on-accent);
