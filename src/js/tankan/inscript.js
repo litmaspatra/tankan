@@ -716,6 +716,24 @@ function start(){
     if(el.liveHintChar)el.liveHintChar.textContent=ch===' '?'space':disp(ch);
     if(el.liveHintDetail)el.liveHintDetail.textContent=it?it.d:(ch==='्'?'halant':'');
   }
+  /* Screen-reader keystroke progress. The visible stream is aria-hidden and
+     #sr-lesson holds the whole (static) lesson for orientation, so progress
+     speaks through this polite live region instead: after each keystroke it
+     names the next physical key - the highlighted key on the on-screen
+     keyboard is invisible to a blind user. Lesson end is already announced
+     by flashPracticeEvent. The position counter keeps repeats unique so the
+     announcement re-fires when the same key comes twice in a row. */
+  var errStreak=0;
+  function announce(kind){
+    if(!el.srAnnounce||done||pos>=cps.length)return;
+    var ch=cps[pos],r=REV[ch];
+    var charLbl=ch===' '?'space':disp(ch);
+    var keyLbl=r?((r.shift?'Shift+':'')+QLBL(r.code).toUpperCase()):charLbl;
+    var lbl=keyLbl+(keyLbl!==charLbl?' ('+charLbl+')':'');
+    el.srAnnounce.textContent=kind==='error'
+      ?'Expected '+lbl+(errStreak>1?' - error '+errStreak:'')
+      :'Next '+(pos+1)+' of '+cps.length+': '+lbl;
+  }
   /* ── rendering ── */
   /* One keystroke is highlighted at a time (the way TypingBaba does it). Typed text is drawn as normal shaped
      Hindi, and so is all text the cursor has not reached. Only the syllable under the cursor is split into
@@ -850,7 +868,7 @@ function start(){
       var exp=cps[pos],st=ks(exp);st.errors++;
       if(typeof sound==='object'&&sound.error)sound.error();
       render(true);setTimeout(function(){el.textCurrent.classList.remove('error-flash');},250);
-      stats();mastery();save();
+      errStreak++;announce('error');stats();mastery();save();
       return;
     }
     if(typeof sound==='object'&&sound.click)sound.click();
@@ -860,10 +878,10 @@ function start(){
       lessonEvents.push({cp:cp,ms:per,typo:prevWrong,t:t0?now-t0:0});
       if(cp!==' ')ks(cp).hits++;
     });
-    prevWrong=false;
+    prevWrong=false;errStreak=0;
     pos+=matched;
     if(pos>=cps.length){render();finishLesson();}
-    else{render();stats();hint();mastery();}
+    else{render();stats();hint();mastery();announce('next');}
     var k=keyEls[code];if(k){k.classList.add('pressed');setTimeout(function(){k.classList.remove('pressed');},100);}
   }
   function onKey(e){

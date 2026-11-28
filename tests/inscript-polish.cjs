@@ -52,6 +52,21 @@ const path=require('node:path');
   assert.equal(r.sr,'कर रि क्ष','screen-reader text is the lesson text');assert.equal(r.vis,r.sr,'visible text matches screen-reader text');
   assert.equal(r.sel[0],'true:true','active tab exposes aria-selected=true');assert.ok(r.sel.slice(1).every(x=>x==='false:false'),'other tabs are false');
   assert.match(r.info,/words fit your keys|Needs at least 8/);}
+ // 4c. screen readers: a polite live region announces the next physical key after each keystroke, and errors
+ await boot();
+ {const r=await page.evaluate(()=>{const I=TankanInscript;I._setText('कर रि');
+   const s=()=>document.getElementById('sr-announce').textContent;
+   const cur=()=>{const st=I._state();return st.text[st.pos];};
+   const st=I._state(),q=I.REV[cur()];
+   I.type(q.code,q.shift);const afterOk=s();
+   const wrongP=I.PROGRESSION.filter(p=>p.cp!==cur()&&p.cp!=='्')[0];
+   I.type(wrongP.code,wrongP.shift);const afterErr=s();
+   I.type(wrongP.code,wrongP.shift);const afterErr2=s();
+   return {afterOk,afterErr,afterErr2,live:document.getElementById('sr-announce').getAttribute('aria-live')};});
+  assert.equal(r.live,'polite','sr-announce is a polite live region');
+  assert.match(r.afterOk,/^Next 2 of 5: /,'correct key announces the next position and key');
+  assert.match(r.afterErr,/^Expected /,'wrong key announces the expected key');
+  assert.ok(r.afterErr2.includes('- error 2'),'repeated errors stay unique so they re-announce');}
  // 5. font select changes the displayed font and persists
  await page.evaluate(()=>{document.getElementById('lesson-settings').open=true;});
  const sel=page.locator('#opt-font');

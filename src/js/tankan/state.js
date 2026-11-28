@@ -68,6 +68,7 @@
             canvas: document.getElementById('typing-canvas'),
             textStreamContainer: document.getElementById('text-stream-container'),
             srLesson: document.getElementById('sr-lesson'),
+            srAnnounce: document.getElementById('sr-announce'),
             textCorrect: document.getElementById('text-correct'),
             textError: document.getElementById('text-error'),
             textCurrent: document.getElementById('text-current'),
