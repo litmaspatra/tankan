@@ -43,6 +43,12 @@
             // Apply after punctuation conversion, before generic reph movement.
             s = s.replace(/(?<![\u0900-\u097F])कर्त्तव्य(?![\u0900-\u097F])/g, 'dÙkZO;');
 
+            // ङ has no KrutiDev half-form or key of its own: in Remington
+            // practice ङ्ग is typed as anusvara + ग. The converter used to emit
+            // the anusvara AND a visible halant, so अङ्ग rendered as "अं्ग".
+            // Absorb the halant the same way the nukta conjuncts above do.
+            s = s.replace(/ङ्/g, 'ं');
+
             // 1. Reph reordering: र् + consonant (+ matras) -> consonant (+ matras) + Z
             s = s.replace(/\u0930\u094D([\u0915-\u0939](\u093E|\u093F|\u0940|\u0941|\u0942|\u0947|\u0948|\u094B|\u094C|\u0902)?)/g, '$1Z');
 
